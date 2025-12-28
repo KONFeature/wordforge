@@ -17,7 +17,12 @@ class UpdateTemplate extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Update a block template or template part content.', 'wordforge' );
+		return __(
+			'Modify block template or template part content in Full Site Editing themes. Can update via raw block markup or structured block array. ' .
+			'Optionally update template title and description. Updates to theme templates create custom overrides (original preserved). Changes affect ' .
+			'all pages using this template. Use this to customize site layouts, modify headers/footers, or adjust template designs. FSE-only.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

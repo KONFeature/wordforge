@@ -17,7 +17,13 @@ class UpdateTerm extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Update an existing taxonomy term.', 'wordforge' );
+		return __(
+			'Modify an existing taxonomy term (category, tag, or custom taxonomy). Supports partial updates - only provide fields ' .
+			'to change. Can update name, slug, description, and parent (for hierarchical taxonomies). WARNING: Changing the slug ' .
+			'changes the term\'s URLs, which may break external links. Use this to rename terms, reorganize hierarchies, or update ' .
+			'descriptions for SEO.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

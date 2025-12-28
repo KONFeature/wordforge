@@ -25,7 +25,18 @@ class UploadMedia extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Upload media to the library from a URL or base64 encoded data.', 'wordforge' );
+		$max_upload_mb = wp_max_upload_size() / 1048576;
+		return __(
+			sprintf(
+				'Upload media files (images, documents, videos, audio) to the WordPress media library. ' .
+				'Accepts files either by URL (automatically downloaded) or base64-encoded data. ' .
+				'Supports common formats: JPEG, PNG, GIF, WebP, PDF, MP4, MP3, etc. ' .
+				'Automatically generates image thumbnails and metadata. Maximum file size: %.0fMB. ' .
+				'Use this before setting featured images or inserting media into content.',
+				$max_upload_mb
+			),
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {
@@ -39,35 +50,45 @@ class UploadMedia extends AbstractAbility {
 			'properties' => [
 				'url' => [
 					'type'        => 'string',
-					'description' => 'URL to download the media from.',
+					'format'      => 'uri',
+					'description' => 'URL to download the file from. WordPress will fetch and upload the file. Must be publicly accessible. Provide either "url" OR "base64", not both.',
+					'pattern'     => '^https?://',
 				],
 				'base64' => [
 					'type'        => 'string',
-					'description' => 'Base64 encoded file content (without data URI prefix).',
+					'description' => 'Base64-encoded file content. Provide the encoded data WITHOUT the data URI prefix (e.g., just "iVBORw0KGgo..." not "data:image/png;base64,iVBORw0KGgo..."). Provide either "url" OR "base64", not both.',
 				],
 				'filename' => [
 					'type'        => 'string',
-					'description' => 'Desired filename for the uploaded media.',
+					'description' => 'Desired filename including extension (e.g., "photo.jpg", "document.pdf"). Must include a valid file extension. WordPress will sanitize the name and add numbers if a file with this name already exists (e.g., photo-1.jpg).',
+					'pattern'     => '^[^/\\\\?%*:|"<>]+\\.[a-zA-Z0-9]+$',
+					'minLength'   => 5,
+					'maxLength'   => 255,
 				],
 				'title' => [
 					'type'        => 'string',
-					'description' => 'Media title.',
+					'description' => 'Human-readable media title shown in the media library. Auto-generated from filename if not provided (e.g., "My Photo" from "my-photo.jpg").',
+					'maxLength'   => 200,
 				],
 				'alt' => [
 					'type'        => 'string',
-					'description' => 'Alt text for images (important for SEO and accessibility).',
+					'description' => 'Alternative text for images (CRITICAL for SEO and accessibility). Describes the image content for screen readers and search engines. Example: "Golden retriever playing in a park" not "image001.jpg". Strongly recommended for all images.',
+					'maxLength'   => 500,
 				],
 				'caption' => [
 					'type'        => 'string',
-					'description' => 'Media caption.',
+					'description' => 'Image caption displayed below the image when inserted into content. Typically used for photo credits or brief context.',
+					'maxLength'   => 500,
 				],
 				'description' => [
 					'type'        => 'string',
-					'description' => 'Media description.',
+					'description' => 'Longer description of the media file. Visible in media library and can be used by themes/plugins for additional context.',
+					'maxLength'   => 2000,
 				],
 				'parent_id' => [
 					'type'        => 'integer',
-					'description' => 'Post ID to attach the media to.',
+					'description' => 'Post or page ID to attach this media to. Creates a parent-child relationship useful for organizing media by the content it belongs to. Optional.',
+					'minimum'     => 1,
 				],
 			],
 		];

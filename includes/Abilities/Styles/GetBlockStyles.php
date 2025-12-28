@@ -21,7 +21,12 @@ class GetBlockStyles extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Get registered block styles and their CSS.', 'wordforge' );
+        return __(
+            'Retrieve registered block style variations for Gutenberg blocks. Block styles are alternative visual designs for blocks (e.g., ' .
+            '"Outlined" or "Fill" button styles). Returns style name, label, inline CSS, and default status. Can filter by specific block type. ' .
+            'Use this to discover available block style variations or understand block styling options.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

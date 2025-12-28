@@ -17,7 +17,12 @@ class UpdatePageBlocks extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Update the Gutenberg blocks structure of a page or post.', 'wordforge' );
+        return __(
+            'Update the Gutenberg block structure of a page or post. Replaces entire block content with new block array. Automatically creates ' .
+            'revisions for safety (can be disabled). Blocks must be provided as structured array with name, attributes, and content. Use this ' .
+            'to programmatically modify page layouts, replace specific blocks, or restructure content. More precise than updating raw HTML content.',
+            'wordforge'
+        );
     }
 
     public function get_input_schema(): array {

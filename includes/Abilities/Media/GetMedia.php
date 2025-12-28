@@ -29,7 +29,13 @@ class GetMedia extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Get detailed information about a specific media item including all sizes and metadata.', 'wordforge' );
+		return __(
+			'Retrieve complete details about a specific media item (image, document, video, etc.) including all available ' .
+			'image sizes, dimensions, file information, and EXIF metadata. For images, returns URLs for all registered sizes ' .
+			'(thumbnail, medium, large, full, etc.). Use this to get media URLs for inserting into content, check file details, ' .
+			'or retrieve metadata before updates.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

@@ -21,7 +21,13 @@ class DeleteProduct extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Delete a WooCommerce product.', 'wordforge' );
+        return __(
+            'Delete a WooCommerce product from the store. By default, products are moved to trash (recoverable). Use force=true for permanent ' .
+            'deletion (cannot be undone). Permanently deleting a product removes all associated data including order history references. ' .
+            'WARNING: Deleting products that have been ordered may affect order records and reporting. For variable products, also deletes ' .
+            'all variations. Use with caution.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

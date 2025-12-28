@@ -31,7 +31,13 @@ class GetContent extends AbstractAbility {
      * {@inheritDoc}
      */
     public function get_description(): string {
-        return __( 'Get a single post, page, or custom post type by ID or slug.', 'wordforge' );
+        return __(
+            'Retrieve detailed information about a single WordPress content item (post, page, or custom post type). ' .
+            'Can fetch by either post ID or slug. Optionally includes post metadata (custom fields) and taxonomy terms ' .
+            '(categories, tags). Use this to view full content details, check current values before updates, or retrieve ' .
+            'content for editing. Returns complete content including all fields from the WordPress post object.',
+            'wordforge'
+        );
     }
 
     /**
@@ -43,29 +49,31 @@ class GetContent extends AbstractAbility {
             'properties' => [
                 'id' => [
                     'type'        => 'integer',
-                    'description' => 'The post ID to retrieve.',
+                    'description' => 'Post ID to retrieve. Most direct method when you know the ID. Provide either "id" OR "slug" + "post_type".',
+                    'minimum'     => 1,
                 ],
                 'slug' => [
                     'type'        => 'string',
-                    'description' => 'The post slug to retrieve (requires post_type).',
+                    'description' => 'URL slug to retrieve (e.g., "my-post"). Requires "post_type" to be specified. Useful when you know the permalink but not the ID.',
+                    'pattern'     => '^[a-z0-9-]+$',
                 ],
                 'post_type' => [
                     'type'        => 'string',
-                    'description' => 'The post type (required when using slug).',
+                    'description' => 'Post type when searching by slug. Required when using "slug" parameter. Examples: "post", "page", or any custom post type.',
                     'default'     => 'post',
                 ],
                 'include_meta' => [
                     'type'        => 'boolean',
-                    'description' => 'Include post meta in the response.',
+                    'description' => 'Include custom fields (post meta) in the response. Set to true to retrieve all non-internal meta keys and their values. Internal meta (keys starting with "_") are excluded for security.',
                     'default'     => false,
                 ],
                 'include_taxonomies' => [
                     'type'        => 'boolean',
-                    'description' => 'Include taxonomy terms in the response.',
+                    'description' => 'Include taxonomy terms (categories, tags, custom taxonomies) in the response. Set to true to get all terms assigned to this content, grouped by taxonomy.',
                     'default'     => false,
                 ],
             ],
-            'oneOf' => [
+            'oneOf'      => [
                 [ 'required' => [ 'id' ] ],
                 [ 'required' => [ 'slug', 'post_type' ] ],
             ],

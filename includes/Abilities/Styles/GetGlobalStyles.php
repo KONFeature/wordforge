@@ -21,7 +21,12 @@ class GetGlobalStyles extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Get the global styles (theme.json) settings for the site.', 'wordforge' );
+        return __(
+            'Retrieve global styles configuration (theme.json) for the site including color palettes, typography settings, spacing presets, and ' .
+            'applied styles. Full Site Editing (FSE) themes use this to control site-wide design. Can fetch all settings or specific sections ' .
+            '(settings, styles, custom templates). Use this to view current design system before making style changes.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

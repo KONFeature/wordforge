@@ -21,7 +21,12 @@ class ListTemplates extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'List block templates and template parts (Full Site Editing).', 'wordforge' );
+		return __(
+			'List block templates and template parts for Full Site Editing (FSE) themes. Templates define page layouts (index, single, archive, etc.). ' .
+			'Template parts are reusable sections (header, footer, sidebar). Shows both theme-provided and custom user templates. Filter template ' .
+			'parts by area (header/footer/sidebar). Use this to discover available templates or template parts before editing. Requires FSE theme support.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {
