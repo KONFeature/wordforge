@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class UpdateProduct extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-woocommerce';
+    }
+
     public function get_title(): string {
         return __( 'Update Product', 'wordforge' );
     }

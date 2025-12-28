@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class DeleteProduct extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-woocommerce';
+    }
+
     public function get_title(): string {
         return __( 'Delete Product', 'wordforge' );
     }

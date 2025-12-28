@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class UpdateGlobalStyles extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-styles';
+    }
+
     public function get_title(): string {
         return __( 'Update Global Styles', 'wordforge' );
     }

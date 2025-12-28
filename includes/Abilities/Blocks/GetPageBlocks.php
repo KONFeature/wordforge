@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class GetPageBlocks extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-blocks';
+    }
+
     public function get_title(): string {
         return __( 'Get Page Blocks', 'wordforge' );
     }

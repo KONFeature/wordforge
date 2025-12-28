@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class GetBlockStyles extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-styles';
+    }
+
     public function get_title(): string {
         return __( 'Get Block Styles', 'wordforge' );
     }

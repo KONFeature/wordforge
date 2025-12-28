@@ -44,6 +44,16 @@ abstract class AbstractAbility {
     abstract public function execute( array $args ): array;
 
     /**
+     * Get the category slug for this ability.
+     * Override in subclasses to set specific categories.
+     *
+     * @return string
+     */
+    public function get_category(): string {
+        return 'wordforge-content';
+    }
+
+    /**
      * Get the capability required to use this ability.
      *
      * @return string
@@ -68,20 +78,38 @@ abstract class AbstractAbility {
      * @return void
      */
     public function register( string $name ): void {
-        if ( ! function_exists( 'register_ability' ) ) {
+        if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
 
-        register_ability(
+        wp_register_ability(
             $name,
             [
-                'title'               => $this->get_title(),
+                'label'               => $this->get_title(),
                 'description'         => $this->get_description(),
+                'category'            => $this->get_category(),
                 'input_schema'        => $this->get_input_schema(),
                 'permission_callback' => [ $this, 'check_permission' ],
                 'execute_callback'    => [ $this, 'execute' ],
+                'meta'                => [
+                    'mcp' => [
+                        'public' => true,
+                    ],
+                    'annotations' => [
+                        'readonly'    => $this->is_read_only(),
+                        'destructive' => $this->is_destructive(),
+                    ],
+                ],
             ]
         );
+    }
+
+    protected function is_read_only(): bool {
+        return false;
+    }
+
+    protected function is_destructive(): bool {
+        return false;
     }
 
     /**

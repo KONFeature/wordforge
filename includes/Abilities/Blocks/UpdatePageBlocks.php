@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class UpdatePageBlocks extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-blocks';
+    }
+
     public function get_title(): string {
         return __( 'Update Page Blocks', 'wordforge' );
     }

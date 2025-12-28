@@ -10,7 +10,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: wordforge
  * Domain Path: /languages
- * Requires at least: 6.4
+ * Requires at least: 6.8
  * Requires PHP: 8.0
  *
  * @package WordForge
@@ -29,38 +29,45 @@ define( 'WORDFORGE_PLUGIN_FILE', __FILE__ );
 define( 'WORDFORGE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WORDFORGE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+$autoloader_loaded = false;
 if ( file_exists( WORDFORGE_PLUGIN_DIR . 'vendor/autoload_packages.php' ) ) {
     require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload_packages.php';
+    $autoloader_loaded = true;
 } elseif ( file_exists( WORDFORGE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload.php';
-} else {
-    spl_autoload_register( function ( string $class ): void {
-        $prefix = 'WordForge\\';
-        $base_dir = WORDFORGE_PLUGIN_DIR . 'includes/';
-
-        $len = strlen( $prefix );
-        if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-            return;
-        }
-
-        $relative_class = substr( $class, $len );
-        $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-        if ( file_exists( $file ) ) {
-            require_once $file;
-        }
-    } );
+    $autoloader_loaded = true;
 }
 
-// Bootstrap bundled dependencies (order matters: abilities-api before mcp-adapter)
-$abilities_api_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/abilities-api/abilities-api.php';
-if ( file_exists( $abilities_api_file ) && ! defined( 'WP_ABILITIES_API_DIR' ) ) {
-    require_once $abilities_api_file;
-}
+spl_autoload_register( function ( string $class ): void {
+    $prefix = 'WordForge\\';
+    $base_dir = WORDFORGE_PLUGIN_DIR . 'includes/';
 
-$mcp_adapter_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/mcp-adapter/mcp-adapter.php';
-if ( file_exists( $mcp_adapter_file ) && ! defined( 'WP_MCP_DIR' ) ) {
-    require_once $mcp_adapter_file;
+    $len = strlen( $prefix );
+    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+        return;
+    }
+
+    $relative_class = substr( $class, $len );
+    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+    if ( file_exists( $file ) ) {
+        require_once $file;
+    }
+} );
+
+if ( $autoloader_loaded ) {
+    $abilities_api_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/abilities-api/abilities-api.php';
+    if ( file_exists( $abilities_api_file ) && ! defined( 'WP_ABILITIES_API_DIR' ) ) {
+        require_once $abilities_api_file;
+    }
+
+    $mcp_adapter_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/mcp-adapter/mcp-adapter.php';
+    if ( file_exists( $mcp_adapter_file ) && ! defined( 'WP_MCP_DIR' ) ) {
+        if ( ! defined( 'WP_MCP_AUTOLOAD' ) ) {
+            define( 'WP_MCP_AUTOLOAD', false );
+        }
+        require_once $mcp_adapter_file;
+    }
 }
 
 function get_settings(): array {
@@ -86,30 +93,57 @@ function init(): void {
         return;
     }
 
-    add_action( 'mcp_adapter_init', __NAMESPACE__ . '\\setup_mcp_server' );
+    add_action( 'wp_abilities_api_categories_init', __NAMESPACE__ . '\\register_ability_categories' );
+    add_action( 'wp_abilities_api_init', __NAMESPACE__ . '\\register_abilities' );
 }
 
-function setup_mcp_server( $adapter ): void {
+/**
+ * Register WordForge ability categories.
+ * Categories must be registered before abilities that use them.
+ */
+function register_ability_categories(): void {
+    if ( ! function_exists( 'wp_register_ability_category' ) ) {
+        return;
+    }
+
+    wp_register_ability_category(
+        'wordforge-content',
+        [
+            'label'       => __( 'Content Management', 'wordforge' ),
+            'description' => __( 'Abilities for managing WordPress posts, pages, and custom post types.', 'wordforge' ),
+        ]
+    );
+
+    wp_register_ability_category(
+        'wordforge-blocks',
+        [
+            'label'       => __( 'Block Editor', 'wordforge' ),
+            'description' => __( 'Abilities for working with Gutenberg blocks and page structures.', 'wordforge' ),
+        ]
+    );
+
+    wp_register_ability_category(
+        'wordforge-styles',
+        [
+            'label'       => __( 'Theme Styling', 'wordforge' ),
+            'description' => __( 'Abilities for managing global styles and block styles.', 'wordforge' ),
+        ]
+    );
+
+    if ( is_woocommerce_active() ) {
+        wp_register_ability_category(
+            'wordforge-woocommerce',
+            [
+                'label'       => __( 'WooCommerce', 'wordforge' ),
+                'description' => __( 'Abilities for managing WooCommerce products and store data.', 'wordforge' ),
+            ]
+        );
+    }
+}
+
+function register_abilities(): void {
     $registry = new AbilityRegistry();
     $registry->register_all();
-
-    $settings = get_settings();
-    $ability_names = $registry->get_ability_names();
-
-    $adapter->create_server(
-        'wordforge',
-        $settings['namespace'],
-        $settings['route'],
-        'WordForge',
-        'Forge your WordPress site through conversation',
-        WORDFORGE_VERSION,
-        [ \WP\MCP\Transport\HttpTransport::class ],
-        \WP\MCP\Infrastructure\ErrorHandling\ErrorLogMcpErrorHandler::class,
-        \WP\MCP\Infrastructure\Observability\NullMcpObservabilityHandler::class,
-        $ability_names,
-        [],
-        []
-    );
 }
 
 function missing_mcp_adapter_notice(): void {
