@@ -74,15 +74,15 @@ function get_settings(): array {
     return wp_parse_args(
         get_option( 'wordforge_settings', [] ),
         [
-            'namespace' => 'wordforge/v1',
-            'route'     => 'mcp',
+            'mcp_enabled'   => true,
+            'mcp_namespace' => 'wordforge',
+            'mcp_route'     => 'mcp',
         ]
     );
 }
 
 function get_endpoint_url(): string {
-    $settings = get_settings();
-    return rest_url( $settings['namespace'] . '/' . $settings['route'] );
+    return Mcp\ServerManager::get_endpoint_url();
 }
 
 function init(): void {
@@ -92,6 +92,8 @@ function init(): void {
         add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
         return;
     }
+
+    new Mcp\ServerManager();
 
     add_action( 'wp_abilities_api_categories_init', __NAMESPACE__ . '\\register_ability_categories' );
     add_action( 'wp_abilities_api_init', __NAMESPACE__ . '\\register_abilities' );
@@ -194,3 +196,20 @@ function is_woocommerce_active(): bool {
 }
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
+
+/**
+ * Add Settings link to plugins page.
+ *
+ * @param array $links Existing plugin action links.
+ * @return array Modified links with Settings added.
+ */
+function add_settings_link( array $links ): array {
+    $settings_link = sprintf(
+        '<a href="%s">%s</a>',
+        esc_url( admin_url( 'options-general.php?page=wordforge' ) ),
+        esc_html__( 'Settings', 'wordforge' )
+    );
+    array_unshift( $links, $settings_link );
+    return $links;
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), __NAMESPACE__ . '\\add_settings_link' );
