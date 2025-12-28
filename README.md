@@ -11,14 +11,29 @@ WordForge extends the [WordPress MCP Adapter](https://github.com/WordPress/mcp-a
 - Full support for taxonomies, meta fields, and featured images
 - Pagination and filtering built-in
 
+### Media Library
+- **List, upload, update, delete** media files
+- Update alt text, captions, and descriptions (critical for SEO)
+- Support for URL and base64 uploads
+
+### Taxonomy Management
+- **List, create, update, delete** terms for any taxonomy
+- Categories, tags, and custom taxonomies
+- Hierarchical taxonomy support
+
 ### Gutenberg Blocks
 - **Get and update** page block structures
-- **Create revisions** before making changes
+- Auto-create revisions before changes
 - Parse blocks in full or simplified format
+
+### Templates (FSE)
+- **List and update** block templates
+- Template parts management (headers, footers)
+- Full Site Editing compatible
 
 ### Theme Styling
 - **Global styles** (theme.json) - colors, typography, spacing
-- **Block styles** - register and manage custom block variations
+- **Block styles** - view registered block variations
 - Full Site Editing compatible
 
 ### WooCommerce (Optional)
@@ -49,6 +64,7 @@ composer require flavor-studio/wordforge
 
 ## Available MCP Tools
 
+### Content
 | Tool | Description |
 |------|-------------|
 | `wordforge/list-content` | List posts, pages, or custom post types |
@@ -56,20 +72,57 @@ composer require flavor-studio/wordforge
 | `wordforge/create-content` | Create new content |
 | `wordforge/update-content` | Update existing content |
 | `wordforge/delete-content` | Delete or trash content |
+
+### Media
+| Tool | Description |
+|------|-------------|
+| `wordforge/list-media` | List media library items with filtering |
+| `wordforge/get-media` | Get media details including all sizes |
+| `wordforge/upload-media` | Upload media from URL or base64 |
+| `wordforge/update-media` | Update alt text, title, caption |
+| `wordforge/delete-media` | Delete a media item |
+
+### Taxonomy
+| Tool | Description |
+|------|-------------|
+| `wordforge/list-terms` | List terms for any taxonomy |
+| `wordforge/create-term` | Create a new term |
+| `wordforge/update-term` | Update an existing term |
+| `wordforge/delete-term` | Delete a term |
+
+### Blocks & Templates
+| Tool | Description |
+|------|-------------|
 | `wordforge/get-page-blocks` | Get Gutenberg blocks of a page |
-| `wordforge/update-page-blocks` | Update page blocks |
-| `wordforge/create-revision` | Create a revision before changes |
+| `wordforge/update-page-blocks` | Update page blocks (auto-revision) |
+| `wordforge/list-templates` | List block templates (FSE) |
+| `wordforge/get-template` | Get template with blocks |
+| `wordforge/update-template` | Update template content |
+
+### Styles
+| Tool | Description |
+|------|-------------|
 | `wordforge/get-global-styles` | Get theme.json global styles |
 | `wordforge/update-global-styles` | Update global styles |
 | `wordforge/get-block-styles` | Get registered block styles |
-| `wordforge/update-block-styles` | Register custom block styles |
-| `wordforge/list-products` | List WooCommerce products* |
-| `wordforge/get-product` | Get product details* |
-| `wordforge/create-product` | Create a product* |
-| `wordforge/update-product` | Update a product* |
-| `wordforge/delete-product` | Delete a product* |
+
+### WooCommerce*
+| Tool | Description |
+|------|-------------|
+| `wordforge/list-products` | List products |
+| `wordforge/get-product` | Get product details |
+| `wordforge/create-product` | Create a product |
+| `wordforge/update-product` | Update a product |
+| `wordforge/delete-product` | Delete a product |
 
 *WooCommerce tools only available when WooCommerce is active.
+
+### AI Prompts
+| Prompt | Description |
+|--------|-------------|
+| `wordforge/generate-content` | Generate blog posts, pages with SEO |
+| `wordforge/review-content` | Review and improve existing content |
+| `wordforge/seo-optimization` | Analyze content for SEO optimization |
 
 ## Usage Examples
 
@@ -186,8 +239,12 @@ includes/
 └── Abilities/
     ├── AbstractAbility.php → Base class with helpers
     ├── Content/            → Post/page CRUD
+    ├── Media/              → Media library management
+    ├── Taxonomy/           → Categories, tags, custom taxonomies
     ├── Blocks/             → Gutenberg operations
+    ├── Templates/          → FSE templates management
     ├── Styles/             → Theme styling
+    ├── Prompts/            → AI prompt templates
     └── WooCommerce/        → Product management
 ```
 

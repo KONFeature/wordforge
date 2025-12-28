@@ -138,6 +138,30 @@ function register_ability_categories(): void {
         ]
     );
 
+    wp_register_ability_category(
+        'wordforge-media',
+        [
+            'label'       => __( 'Media Library', 'wordforge' ),
+            'description' => __( 'Abilities for managing media files, images, and attachments.', 'wordforge' ),
+        ]
+    );
+
+    wp_register_ability_category(
+        'wordforge-taxonomy',
+        [
+            'label'       => __( 'Taxonomy Management', 'wordforge' ),
+            'description' => __( 'Abilities for managing categories, tags, and custom taxonomies.', 'wordforge' ),
+        ]
+    );
+
+    wp_register_ability_category(
+        'wordforge-templates',
+        [
+            'label'       => __( 'Templates', 'wordforge' ),
+            'description' => __( 'Abilities for managing block templates and template parts (FSE).', 'wordforge' ),
+        ]
+    );
+
     if ( is_woocommerce_active() ) {
         wp_register_ability_category(
             'wordforge-woocommerce',
