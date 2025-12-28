@@ -18,10 +18,7 @@ class CreateProduct extends AbstractAbility {
 
     public function get_description(): string {
         return __(
-            'Create a new WooCommerce product of any type (simple, variable, grouped, external). Supports full product configuration ' .
-            'including pricing, inventory management, dimensions/weight, product images, categories/tags, and custom attributes. ' .
-            'Products default to "draft" status for safety. Use this to add new products to your store, including physical products, ' .
-            'digital downloads, or service-based offerings.',
+            'Create WooCommerce products (simple, variable, grouped, external) with pricing, inventory, images, and taxonomies. Defaults to draft status.',
             'wordforge'
         );
     }
@@ -37,90 +34,90 @@ class CreateProduct extends AbstractAbility {
             'properties' => [
                 'name' => [
                     'type'        => 'string',
-                    'description' => 'Product name/title displayed in the store. This is the main product heading customers see.',
+                    'description' => 'Product name displayed in store.',
                     'minLength'   => 1,
                     'maxLength'   => 200,
                 ],
                 'type' => [
                     'type'        => 'string',
-                    'description' => 'Product type: "simple" (standard product with single SKU), "variable" (product with variations like size/color), "grouped" (collection of related products), "external" (product sold on external site). Defaults to "simple".',
+                    'description' => 'Product type: "simple" (single SKU), "variable" (variations), "grouped" (collection), "external" (offsite).',
                     'enum'        => [ 'simple', 'variable', 'grouped', 'external' ],
                     'default'     => 'simple',
                 ],
                 'status' => [
                     'type'        => 'string',
-                    'description' => 'Publication status: "publish" (live in store), "draft" (saved but not visible), "pending" (awaiting review), "private" (hidden from public). Defaults to "draft" for safety.',
+                    'description' => 'Publication status: "publish" (live), "draft" (not visible), "pending" (review), "private" (hidden).',
                     'enum'        => [ 'publish', 'draft', 'pending', 'private' ],
                     'default'     => 'draft',
                 ],
                 'description' => [
                     'type'        => 'string',
-                    'description' => 'Full product description with details, features, specifications. Supports HTML formatting. Displayed on product page in main content area.',
+                    'description' => 'Full product description with details and features. Supports HTML.',
                 ],
                 'short_description' => [
                     'type'        => 'string',
-                    'description' => 'Brief product summary displayed above add-to-cart button. Keep concise (1-3 sentences). Supports HTML.',
+                    'description' => 'Brief summary above add-to-cart button. Supports HTML.',
                     'maxLength'   => 1000,
                 ],
                 'sku' => [
                     'type'        => 'string',
-                    'description' => 'Stock Keeping Unit - unique identifier for inventory tracking. Recommended for inventory management. Example: "WOO-SHIRT-BLUE-M".',
+                    'description' => 'Stock Keeping Unit for inventory tracking, e.g., "WOO-SHIRT-BLUE-M".',
                     'maxLength'   => 100,
                 ],
                 'regular_price' => [
                     'type'        => 'string',
-                    'description' => 'Regular price in store currency (e.g., "19.99"). Use decimal format without currency symbols. Required for most product types.',
+                    'description' => 'Regular price, e.g., "19.99". Decimal format without currency symbols.',
                     'pattern'     => '^\\d+(\\.\\d{1,2})?$',
                 ],
                 'sale_price' => [
                     'type'        => 'string',
-                    'description' => 'Sale/discounted price if product is on sale (e.g., "14.99"). Must be less than regular_price. Leave empty if not on sale.',
+                    'description' => 'Sale price, e.g., "14.99". Must be less than regular_price.',
                     'pattern'     => '^\\d+(\\.\\d{1,2})?$',
                 ],
                 'stock_status' => [
                     'type'        => 'string',
-                    'description' => 'Stock availability: "instock" (available for purchase), "outofstock" (unavailable), "onbackorder" (can order but currently out of stock).',
+                    'description' => 'Stock availability: "instock" (available), "outofstock" (unavailable), "onbackorder" (orderable but out).',
                     'enum'        => [ 'instock', 'outofstock', 'onbackorder' ],
                 ],
                 'stock_quantity' => [
                     'type'        => 'integer',
-                    'description' => 'Exact number of items in stock. Only used if manage_stock is true. WooCommerce will automatically update this when orders are placed.',
+                    'description' => 'Number of items in stock. Only used if manage_stock is true.',
                     'minimum'     => 0,
                 ],
                 'manage_stock' => [
                     'type'        => 'boolean',
-                    'description' => 'Enable automatic stock management. When true, WooCommerce tracks inventory and prevents overselling based on stock_quantity.',
+                    'description' => 'Enable automatic stock tracking and overselling prevention.',
                     'default'     => false,
                 ],
                 'weight' => [
                     'type'        => 'string',
-                    'description' => 'Product weight in store\'s default weight unit (usually kg or lbs). Used for shipping calculations. Example: "2.5" for 2.5kg.',
+                    'description' => 'Product weight in default unit for shipping, e.g., "2.5".',
                     'pattern'     => '^\\d+(\\.\\d+)?$',
                 ],
                 'dimensions' => [
                     'type'        => 'object',
-                    'description' => 'Product dimensions for shipping calculations. Provide in store\'s default length unit (usually cm or inches).',
+                    'description' => 'Product dimensions for shipping in default unit.',
                     'properties'  => [
                         'length' => [
                             'type'        => 'string',
-                            'description' => 'Product length (e.g., "30" for 30cm).',
+                            'description' => 'Product length, e.g., "30".',
                             'pattern'     => '^\\d+(\\.\\d+)?$',
                         ],
                         'width' => [
                             'type'        => 'string',
-                            'description' => 'Product width (e.g., "20" for 20cm).',
+                            'description' => 'Product width, e.g., "20".',
                             'pattern'     => '^\\d+(\\.\\d+)?$',
                         ],
                         'height' => [
                             'type'        => 'string',
-                            'description' => 'Product height (e.g., "10" for 10cm).',
+                            'description' => 'Product height, e.g., "10".',
                             'pattern'     => '^\\d+(\\.\\d+)?$',
                         ],
                     ],
                 ],
                 'categories' => [
                     'type'        => 'array',
-                    'description' => 'Product category assignments. Provide category IDs (integers) or slugs (strings). Creates product organization and filtering.',
+                    'description' => 'Product category assignments. Provide category IDs or slugs.',
                     'items'       => [
                         'oneOf' => [
                             [
@@ -138,7 +135,7 @@ class CreateProduct extends AbstractAbility {
                 ],
                 'tags' => [
                     'type'        => 'array',
-                    'description' => 'Product tag assignments for additional categorization and search. Provide tag names or slugs.',
+                    'description' => 'Product tag assignments. Provide tag names or slugs.',
                     'items'       => [
                         'type'        => 'string',
                         'description' => 'Tag name or slug',
@@ -148,27 +145,27 @@ class CreateProduct extends AbstractAbility {
                 ],
                 'featured' => [
                     'type'        => 'boolean',
-                    'description' => 'Mark as featured product. Featured products appear in special sections/widgets. Good for promotions or bestsellers.',
+                    'description' => 'Mark as featured product for special sections/widgets.',
                     'default'     => false,
                 ],
                 'virtual' => [
                     'type'        => 'boolean',
-                    'description' => 'Virtual product (no shipping required). Set true for services, digital goods, bookings. Disables shipping fields.',
+                    'description' => 'Virtual product (no shipping). True for services/digital goods.',
                     'default'     => false,
                 ],
                 'downloadable' => [
                     'type'        => 'boolean',
-                    'description' => 'Downloadable product (provides digital files). Set true for software, ebooks, music. Enables download configuration.',
+                    'description' => 'Downloadable product. True for software/ebooks/music.',
                     'default'     => false,
                 ],
                 'image_id' => [
                     'type'        => 'integer',
-                    'description' => 'Main product image attachment ID. Upload media first using upload-media ability. This image shows in product listings and at top of product page.',
+                    'description' => 'Main product image attachment ID. Upload media first.',
                     'minimum'     => 1,
                 ],
                 'gallery_image_ids' => [
                     'type'        => 'array',
-                    'description' => 'Additional product images shown in gallery below main image. Provide array of attachment IDs. Customers can browse through these images.',
+                    'description' => 'Additional gallery images. Provide attachment IDs.',
                     'items'       => [
                         'type'        => 'integer',
                         'description' => 'Media attachment ID',

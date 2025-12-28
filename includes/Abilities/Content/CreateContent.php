@@ -28,11 +28,7 @@ class CreateContent extends AbstractAbility {
      */
     public function get_description(): string {
         return __(
-            'Create new WordPress content including blog posts, pages, and custom post types. ' .
-            'Supports full content formatting with HTML and Gutenberg blocks, taxonomy assignment ' .
-            '(categories/tags), featured images, author attribution, and custom fields. ' .
-            'New content defaults to "draft" status for safety. Use this ability when you need ' .
-            'to publish new articles, pages, or custom content types.',
+            'Create WordPress posts, pages, or custom post types with HTML/Gutenberg content, taxonomies, and metadata. Defaults to draft status.',
             'wordforge'
         );
     }
@@ -116,60 +112,60 @@ class CreateContent extends AbstractAbility {
             'properties' => [
                 'title' => [
                     'type'        => 'string',
-                    'description' => 'Content title displayed as the main heading. Will be used to auto-generate the slug if not provided.',
+                    'description' => 'Content title displayed as main heading. Auto-generates slug if not provided.',
                     'minLength'   => 1,
                     'maxLength'   => 255,
                 ],
                 'content' => [
                     'type'        => 'string',
-                    'description' => 'Main content body supporting both HTML markup and Gutenberg block syntax. For blocks, use HTML comment syntax: <!-- wp:paragraph --><p>Text</p><!-- /wp:paragraph -->. Can be empty to create a placeholder draft.',
+                    'description' => 'Main content body supporting HTML and Gutenberg blocks. Use <!-- wp:paragraph --><p>Text</p><!-- /wp:paragraph --> for blocks.',
                     'default'     => '',
                 ],
                 'excerpt' => [
                     'type'        => 'string',
-                    'description' => 'Short summary or teaser text shown in archives and search results. Auto-generated from content if not provided.',
+                    'description' => 'Short summary shown in archives and search. Auto-generated if omitted.',
                     'maxLength'   => 500,
                 ],
                 'post_type' => [
                     'type'        => 'string',
-                    'description' => 'Content type: "post" for blog posts, "page" for static pages, or any registered custom post type slug. Different post types may have different capabilities and features.',
+                    'description' => 'Content type: "post" for blog posts, "page" for static pages, or custom post type slug.',
                     'default'     => 'post',
                 ],
                 'status' => [
                     'type'        => 'string',
-                    'description' => 'Publication status: "publish" (immediately live and visible to all), "draft" (saved privately for editing), "pending" (awaiting editorial review), "private" (published but only visible to users with read_private_posts capability). Defaults to "draft" for safety.',
+                    'description' => 'Publication status: "publish" (live), "draft" (private), "pending" (review), "private" (read_private_posts only).',
                     'enum'        => [ 'publish', 'draft', 'pending', 'private' ],
                     'default'     => 'draft',
                 ],
                 'slug' => [
                     'type'        => 'string',
-                    'description' => 'URL-friendly slug used in the permalink (e.g., "my-post" in /my-post/). Auto-generated from title if omitted. Use lowercase letters, numbers, and hyphens only.',
+                    'description' => 'URL slug used in permalink, e.g., "my-post". Auto-generated from title if omitted.',
                     'pattern'     => '^[a-z0-9-]+$',
                     'maxLength'   => 200,
                 ],
                 'author' => [
                     'type'        => 'integer',
-                    'description' => 'WordPress user ID to attribute as content author. Must have appropriate publishing capabilities. Defaults to current user if not specified.',
+                    'description' => 'User ID to attribute as author. Defaults to current user.',
                     'minimum'     => 1,
                 ],
                 'parent' => [
                     'type'        => 'integer',
-                    'description' => 'Parent content ID for hierarchical post types (e.g., pages). Creates a hierarchy visible in navigation and breadcrumbs. Only applicable to hierarchical types.',
+                    'description' => 'Parent content ID for hierarchical types. Creates hierarchy in navigation.',
                     'minimum'     => 0,
                 ],
                 'menu_order' => [
                     'type'        => 'integer',
-                    'description' => 'Numeric position for manual sorting (lower numbers appear first). Primarily used for pages in navigation menus. 0 means no specific order.',
+                    'description' => 'Manual sort position (lower first). Used for pages in navigation.',
                     'default'     => 0,
                 ],
                 'featured_image' => [
                     'type'        => 'integer',
-                    'description' => 'Media attachment ID to use as the featured/thumbnail image. Upload media first using the upload-media ability to get an ID. Displayed prominently in archives and at the top of single content views.',
+                    'description' => 'Featured image attachment ID. Upload media first to get ID.',
                     'minimum'     => 1,
                 ],
                 'categories' => [
                     'type'        => 'array',
-                    'description' => 'Category assignments for posts. Can provide category IDs (integers) or slugs (strings). Creates hierarchical organization. Only applicable to posts and post types supporting categories.',
+                    'description' => 'Category assignments. Provide category IDs or slugs.',
                     'items'       => [
                         'oneOf' => [
                             [
@@ -179,7 +175,7 @@ class CreateContent extends AbstractAbility {
                             ],
                             [
                                 'type'        => 'string',
-                                'description' => 'Category slug (e.g., "technology", "news")',
+                                'description' => 'Category slug',
                                 'pattern'     => '^[a-z0-9-]+$',
                             ],
                         ],
@@ -187,7 +183,7 @@ class CreateContent extends AbstractAbility {
                 ],
                 'tags' => [
                     'type'        => 'array',
-                    'description' => 'Tag assignments for posts. Provide tag names or slugs as strings. Tags are created automatically if they don\'t exist. Used for non-hierarchical content classification.',
+                    'description' => 'Tag assignments. Provide tag names or slugs. Created automatically if missing.',
                     'items'       => [
                         'type'        => 'string',
                         'description' => 'Tag name or slug',
@@ -197,7 +193,7 @@ class CreateContent extends AbstractAbility {
                 ],
                 'meta' => [
                     'type'                 => 'object',
-                    'description'          => 'Custom field key-value pairs for storing additional metadata. Keys should be prefixed to avoid conflicts (e.g., "my_plugin_field"). Values can be strings, numbers, booleans, or nested objects/arrays.',
+                    'description'          => 'Custom field key-value pairs. Prefix keys to avoid conflicts.',
                     'additionalProperties' => true,
                 ],
             ],
