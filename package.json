@@ -1,0 +1,19 @@
+{
+    "name": "wordforge",
+    "version": "1.0.0",
+    "description": "Forge your WordPress site through conversation",
+    "private": true,
+    "scripts": {
+        "start": "wp-env start",
+        "stop": "wp-env stop",
+        "build": "./build.sh",
+        "composer:install": "composer install",
+        "lint:php": "composer run-script lint:php"
+    },
+    "devDependencies": {
+        "@wordpress/env": "^10.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

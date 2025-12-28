@@ -1,0 +1,28 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# WordPress Environment
+/.wp-env/
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+debug.log
+
+# Build artifacts
+/build/
+/dist/
+*.zip
+
+# Local config
+.env
+.env.local
