@@ -16,6 +16,10 @@ use WordForge\Abilities\AbstractAbility;
  */
 class DeleteContent extends AbstractAbility {
 
+    protected function is_destructive(): bool {
+        return true;
+    }
+
     /**
      * {@inheritDoc}
      */

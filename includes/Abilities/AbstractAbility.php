@@ -36,6 +36,41 @@ abstract class AbstractAbility {
     abstract public function get_input_schema(): array;
 
     /**
+     * Get the output schema for the ability.
+     * Override in subclasses for specific output schemas.
+     *
+     * @return array<string, mixed>
+     */
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [
+                    'type'        => 'boolean',
+                    'description' => 'Whether the operation succeeded.',
+                ],
+                'data' => [
+                    'type'        => 'object',
+                    'description' => 'The response data.',
+                ],
+                'message' => [
+                    'type'        => 'string',
+                    'description' => 'Optional message about the operation.',
+                ],
+                'error' => [
+                    'type'        => 'object',
+                    'description' => 'Error details if success is false.',
+                    'properties'  => [
+                        'code'    => [ 'type' => 'string' ],
+                        'message' => [ 'type' => 'string' ],
+                    ],
+                ],
+            ],
+            'required' => [ 'success' ],
+        ];
+    }
+
+    /**
      * Execute the ability.
      *
      * @param array<string, mixed> $args The input arguments.
@@ -82,6 +117,20 @@ abstract class AbstractAbility {
             return;
         }
 
+        // All abilities register as tools for uniform discoverability and execution.
+        // The readOnlyHint annotation indicates safe/idempotent operations.
+        $meta = [
+            'mcp'         => [
+                'public' => true,
+                'type'   => 'tool',
+            ],
+            'annotations' => [
+                'readonly'    => $this->is_read_only(),
+                'destructive' => $this->is_destructive(),
+                'idempotent'  => $this->is_idempotent(),
+            ],
+        ];
+
         wp_register_ability(
             $name,
             [
@@ -89,27 +138,42 @@ abstract class AbstractAbility {
                 'description'         => $this->get_description(),
                 'category'            => $this->get_category(),
                 'input_schema'        => $this->get_input_schema(),
+                'output_schema'       => $this->get_output_schema(),
                 'permission_callback' => [ $this, 'check_permission' ],
                 'execute_callback'    => [ $this, 'execute' ],
-                'meta'                => [
-                    'mcp' => [
-                        'public' => true,
-                    ],
-                    'annotations' => [
-                        'readonly'    => $this->is_read_only(),
-                        'destructive' => $this->is_destructive(),
-                    ],
-                ],
+                'meta'                => $meta,
             ]
         );
     }
 
+    /**
+     * Whether this ability only reads data (doesn't modify state).
+     * Override in subclasses. Read-only abilities are exposed as MCP resources.
+     *
+     * @return bool
+     */
     protected function is_read_only(): bool {
         return false;
     }
 
+    /**
+     * Whether this ability may perform destructive operations (delete/destroy).
+     * Override in subclasses.
+     *
+     * @return bool
+     */
     protected function is_destructive(): bool {
         return false;
+    }
+
+    /**
+     * Whether calling this ability repeatedly with the same args has no additional effect.
+     * By default, read-only operations are considered idempotent.
+     *
+     * @return bool
+     */
+    protected function is_idempotent(): bool {
+        return $this->is_read_only();
     }
 
     /**

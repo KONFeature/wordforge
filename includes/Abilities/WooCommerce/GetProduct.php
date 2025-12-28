@@ -12,6 +12,10 @@ class GetProduct extends AbstractAbility {
         return 'wordforge-woocommerce';
     }
 
+    protected function is_read_only(): bool {
+        return true;
+    }
+
     public function get_title(): string {
         return __( 'Get Product', 'wordforge' );
     }

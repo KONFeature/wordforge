@@ -16,6 +16,10 @@ use WordForge\Abilities\AbstractAbility;
  */
 class GetContent extends AbstractAbility {
 
+    protected function is_read_only(): bool {
+        return true;
+    }
+
     /**
      * {@inheritDoc}
      */

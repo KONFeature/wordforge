@@ -12,6 +12,10 @@ class GetGlobalStyles extends AbstractAbility {
         return 'wordforge-styles';
     }
 
+    protected function is_read_only(): bool {
+        return true;
+    }
+
     public function get_title(): string {
         return __( 'Get Global Styles', 'wordforge' );
     }

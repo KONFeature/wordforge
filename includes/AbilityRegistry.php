@@ -16,6 +16,10 @@ use WordForge\Abilities\Styles\GetGlobalStyles;
 use WordForge\Abilities\Styles\UpdateGlobalStyles;
 use WordForge\Abilities\Styles\GetBlockStyles;
 use WordForge\Abilities\Styles\UpdateBlockStyles;
+use WordForge\Abilities\Prompts\ContentGeneratorPrompt;
+use WordForge\Abilities\Prompts\ContentReviewPrompt;
+use WordForge\Abilities\Prompts\SEOOptimizationPrompt;
+use WordForge\Abilities\Prompts\ProductDescriptionPrompt;
 use WordForge\Abilities\WooCommerce\ListProducts;
 use WordForge\Abilities\WooCommerce\GetProduct;
 use WordForge\Abilities\WooCommerce\CreateProduct;
@@ -39,6 +43,12 @@ class AbilityRegistry {
         'wordforge/update-block-styles'  => UpdateBlockStyles::class,
     ];
 
+    private const CORE_PROMPTS = [
+        'wordforge/generate-content' => ContentGeneratorPrompt::class,
+        'wordforge/review-content'   => ContentReviewPrompt::class,
+        'wordforge/seo-optimization' => SEOOptimizationPrompt::class,
+    ];
+
     private const WOOCOMMERCE_ABILITIES = [
         'wordforge/list-products'  => ListProducts::class,
         'wordforge/get-product'    => GetProduct::class,
@@ -47,21 +57,34 @@ class AbilityRegistry {
         'wordforge/delete-product' => DeleteProduct::class,
     ];
 
+    private const WOOCOMMERCE_PROMPTS = [
+        'wordforge/product-description' => ProductDescriptionPrompt::class,
+    ];
+
     private array $registered_names = [];
 
     public function register_all(): void {
         $this->register_abilities( self::CORE_ABILITIES );
+        $this->register_abilities( self::CORE_PROMPTS );
 
         if ( is_woocommerce_active() ) {
             $this->register_abilities( self::WOOCOMMERCE_ABILITIES );
+            $this->register_abilities( self::WOOCOMMERCE_PROMPTS );
         }
     }
 
     public function get_ability_names(): array {
-        $names = array_keys( self::CORE_ABILITIES );
+        $names = array_merge(
+            array_keys( self::CORE_ABILITIES ),
+            array_keys( self::CORE_PROMPTS )
+        );
 
         if ( is_woocommerce_active() ) {
-            $names = array_merge( $names, array_keys( self::WOOCOMMERCE_ABILITIES ) );
+            $names = array_merge(
+                $names,
+                array_keys( self::WOOCOMMERCE_ABILITIES ),
+                array_keys( self::WOOCOMMERCE_PROMPTS )
+            );
         }
 
         return $names;

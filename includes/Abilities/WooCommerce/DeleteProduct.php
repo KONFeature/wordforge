@@ -12,6 +12,10 @@ class DeleteProduct extends AbstractAbility {
         return 'wordforge-woocommerce';
     }
 
+    protected function is_destructive(): bool {
+        return true;
+    }
+
     public function get_title(): string {
         return __( 'Delete Product', 'wordforge' );
     }

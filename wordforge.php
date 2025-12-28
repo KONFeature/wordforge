@@ -130,6 +130,14 @@ function register_ability_categories(): void {
         ]
     );
 
+    wp_register_ability_category(
+        'wordforge-prompts',
+        [
+            'label'       => __( 'AI Prompts', 'wordforge' ),
+            'description' => __( 'Prompt templates for AI-assisted content generation and optimization.', 'wordforge' ),
+        ]
+    );
+
     if ( is_woocommerce_active() ) {
         wp_register_ability_category(
             'wordforge-woocommerce',
