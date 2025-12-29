@@ -25,7 +25,9 @@
       "env": {
         "WORDPRESS_MCP_URL": "${user_config.wordpress_url}",
         "WORDPRESS_USERNAME": "${user_config.username}",
-        "WORDPRESS_APP_PASSWORD": "${user_config.app_password}"
+        "WORDPRESS_APP_PASSWORD": "${user_config.app_password}",
+        "WORDFORGE_EXCLUDE_CATEGORIES": "${user_config.exclude_categories}",
+        "WORDFORGE_DEBUG": "${user_config.debug}"
       }
     }
   },
@@ -49,6 +51,18 @@
       "description": "WordPress application password (generate at Users > Profile > Application Passwords)",
       "sensitive": true,
       "required": true
+    },
+    "exclude_categories": {
+      "type": "string",
+      "title": "Exclude Categories",
+      "description": "Comma-separated list of ability categories to exclude (e.g., 'woocommerce,prompts'). Available: content, blocks, styles, media, taxonomy, templates, woocommerce, prompts",
+      "required": false
+    },
+    "debug": {
+      "type": "boolean",
+      "title": "Enable Debug Logging",
+      "description": "Log detailed debug information to stderr",
+      "required": false
     }
   },
   "compatibility": {
