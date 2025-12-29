@@ -18,12 +18,12 @@
   "keywords": ["wordpress", "cms", "content", "woocommerce", "gutenberg"],
   "server": {
     "type": "node",
-    "entry_point": "dist/index.js",
+    "entry_point": "dist/index.cjs",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/dist/index.js"],
+      "args": ["${__dirname}/dist/index.cjs"],
       "env": {
-        "WORDPRESS_MCP_URL": "${user_config.wordpress_url}",
+        "WORDPRESS_URL": "${user_config.wordpress_url}",
         "WORDPRESS_USERNAME": "${user_config.username}",
         "WORDPRESS_APP_PASSWORD": "${user_config.app_password}",
         "WORDFORGE_EXCLUDE_CATEGORIES": "${user_config.exclude_categories}",
@@ -35,8 +35,8 @@
   "user_config": {
     "wordpress_url": {
       "type": "string",
-      "title": "WordPress MCP Endpoint URL",
-      "description": "The full URL to your WordPress MCP endpoint (e.g., https://yoursite.com/wp-json/wordforge/mcp)",
+      "title": "WordPress Abilities API URL",
+      "description": "The full URL to the WordPress Abilities REST API (e.g., https://yoursite.com/wp-json/wp-abilities/v1)",
       "required": true
     },
     "username": {

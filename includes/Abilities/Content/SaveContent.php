@@ -8,6 +8,10 @@ use WordForge\Abilities\AbstractAbility;
 
 class SaveContent extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-content';
+    }
+
     public function get_title(): string {
         return __( 'Save Content', 'wordforge' );
     }

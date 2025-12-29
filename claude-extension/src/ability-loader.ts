@@ -1,154 +1,114 @@
 import { z } from "zod";
-import { WordPressClient } from "./wordpress-client.js";
-import * as logger from "./logger.js";
-import type { AbilitySchema, AbilitySummary } from "./types.js";
 import type { JSONSchema } from "zod/v4/core";
-
-export interface LoadedAbility {
-  name: string;
-  mcpName: string;
-  label: string;
-  description: string;
-  inputSchema: z.ZodTypeAny;
-  outputSchema?: z.ZodTypeAny;
-  annotations: {
-    readOnlyHint?: boolean;
-    destructiveHint?: boolean;
-    idempotentHint?: boolean;
-  };
-}
+import { AbilitiesApiClient } from "./abilities-client.js";
+import * as logger from "./logger.js";
+import type { Ability, LoadedAbility, HttpMethod } from "./types.js";
 
 export async function loadAbilities(
-  client: WordPressClient,
+  client: AbilitiesApiClient,
   excludeCategories: string[]
 ): Promise<LoadedAbility[]> {
-  const abilities = await client.discoverAbilities();
+  const abilities = await client.listAbilities();
+  
+  // Remove non wordforge abilities (todo: should not be needed in the long run)
+  let filtered = abilities.filter((a) => a.name.startsWith("wordforge/"));
 
-  const filtered = filterByCategory(abilities, excludeCategories);
+  filtered = filterByCategory(filtered, excludeCategories);
   logger.info(
     `Filtered to ${filtered.length} abilities (excluded: ${excludeCategories.join(", ") || "none"})`
   );
 
-  const schemas = await fetchSchemas(client, filtered);
-
-  console.log("Schemas", schemas)
-
-  return schemas.map(convertToLoadedAbility);
+  return filtered.map(convertToLoadedAbility);
 }
 
 function filterByCategory(
-  abilities: AbilitySummary[],
+  abilities: Ability[],
   excludeCategories: string[]
-): AbilitySummary[] {
+): Ability[] {
   if (excludeCategories.length === 0) {
     return abilities;
   }
 
-  const excludedNames = new Set<string>();
-
-  for (const category of excludeCategories) {
-    const categoryKey = category.toLowerCase().trim();
-    const abilityNames = getCategoryAbilities(categoryKey);
-    for (const name of abilityNames) {
-      excludedNames.add(name);
-    }
-  }
-
-  return abilities.filter((ability) => !excludedNames.has(ability.name));
-}
-
-function getCategoryAbilities(category: string): string[] {
-  const map: Record<string, string[]> = {
-    content: [
-      "wordforge/list-content",
-      "wordforge/get-content",
-      "wordforge/save-content",
-      "wordforge/delete-content",
-    ],
-    blocks: ["wordforge/get-page-blocks", "wordforge/update-page-blocks"],
-    styles: [
-      "wordforge/get-global-styles",
-      "wordforge/update-global-styles",
-      "wordforge/get-block-styles",
-    ],
-    media: [
-      "wordforge/list-media",
-      "wordforge/get-media",
-      "wordforge/upload-media",
-      "wordforge/update-media",
-      "wordforge/delete-media",
-    ],
-    taxonomy: [
-      "wordforge/list-terms",
-      "wordforge/save-term",
-      "wordforge/delete-term",
-    ],
-    templates: [
-      "wordforge/list-templates",
-      "wordforge/get-template",
-      "wordforge/update-template",
-    ],
-    woocommerce: [
-      "wordforge/list-products",
-      "wordforge/get-product",
-      "wordforge/create-product",
-      "wordforge/update-product",
-      "wordforge/delete-product",
-    ],
-    prompts: [
-      "wordforge/generate-content",
-      "wordforge/review-content",
-      "wordforge/seo-optimization",
-    ],
-  };
-
-  return map[category] ?? [];
-}
-
-async function fetchSchemas(
-  client: WordPressClient,
-  abilities: AbilitySummary[]
-): Promise<AbilitySchema[]> {
-  logger.debug(`Fetching schemas for ${abilities.length} abilities`);
-
-  const results = await Promise.all(
-    abilities.map(async (ability) => {
-      try {
-        return await client.getAbilityInfo(ability.name);
-      } catch (err) {
-        logger.error(`Failed to fetch schema for ${ability.name}`, err);
-        return null;
-      }
+  const excluded = new Set(
+    excludeCategories.flatMap((c) => {
+      const normalized = c.toLowerCase().trim();
+      return [
+        normalized,
+        `wordforge-${normalized}`,
+        normalized.replace("wordforge-", ""),
+      ];
     })
   );
 
-  return results.filter((r): r is AbilitySchema => r !== null);
+  return abilities.filter((ability) => {
+    const category = ability.category?.toLowerCase() ?? "";
+    return !excluded.has(category);
+  });
 }
 
-function convertToLoadedAbility(schema: AbilitySchema): LoadedAbility {
-  const mcpName = schema.name.replace("wordforge/", "wordpress/");
+function getMcpType(ability: Ability): "tool" | "prompt" | "resource" {
+  return ability.meta?.mcp?.type ?? "tool";
+}
 
-  let inputSchema: z.ZodTypeAny;
-  let outputSchema: z.ZodTypeAny | undefined = undefined;
-  try {
-    inputSchema = z.fromJSONSchema(schema.input_schema as JSONSchema.JSONSchema);
-    outputSchema = schema.output_schema ? z.fromJSONSchema(schema.output_schema as JSONSchema.JSONSchema) : undefined;
-  } catch (err) {
-    logger.debug(`Failed to convert schema for ${schema.name}, using passthrough`, err);
-    inputSchema = z.any();
+function getHttpMethod(ability: Ability): HttpMethod {
+  const annotations = ability.meta?.annotations;
+
+  if (annotations?.destructive) {
+    return "DELETE";
   }
 
+  if (annotations?.readonly) {
+    return "GET";
+  }
+
+  const hasInput =
+    ability.input_schema &&
+    ability.input_schema.type === "object" &&
+    ability.input_schema.properties &&
+    Object.keys(ability.input_schema.properties).length > 0;
+
+  return hasInput ? "POST" : "GET";
+}
+
+function jsonSchemaToZod(schema: unknown): z.ZodTypeAny {
+  try {
+    return z.fromJSONSchema(schema as JSONSchema.JSONSchema);
+  } catch (err) {
+    logger.debug("Failed to convert JSON schema to Zod, using passthrough", err);
+    return z.any();
+  }
+}
+
+function convertToLoadedAbility(ability: Ability): LoadedAbility {
+  const mcpName = ability.name.replace("wordforge/", "wordpress_");
+  const mcpType = getMcpType(ability);
+  const httpMethod = getHttpMethod(ability);
+
+  const inputSchema = ability.input_schema
+    ? jsonSchemaToZod(ability.input_schema)
+    : z.object({});
+
+  const outputSchema = ability.output_schema
+    ? jsonSchemaToZod(ability.output_schema)
+    : undefined;
+
   return {
-    name: schema.name,
+    name: ability.name,
     mcpName,
-    label: schema.label,
-    description: schema.description,
+    label: ability.label,
+    description: ability.description,
+    category: ability.category,
     inputSchema,
     outputSchema,
+    mcpType,
+    httpMethod,
     annotations: {
-      readOnlyHint: schema.meta?.annotations?.readonly,
-      destructiveHint: schema.meta?.annotations?.destructive,
-      idempotentHint: schema.meta?.annotations?.idempotent,
+      title: ability.label,
+      readOnlyHint: ability.meta?.annotations?.readonly,
+      destructiveHint: ability.meta?.annotations?.destructive,
+      idempotentHint: ability.meta?.annotations?.idempotent,
     },
   };
 }
+
+export type { LoadedAbility };

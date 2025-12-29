@@ -1,4 +1,7 @@
+import type { ZodTypeAny } from "zod";
+
 export interface Config {
+  /** WordPress Abilities REST API base URL (e.g., https://example.com/wp-json/wp-abilities/v1) */
   url: string;
   username: string;
   password: string;
@@ -6,40 +9,14 @@ export interface Config {
   debug: boolean;
 }
 
-export interface AbilitySummary {
-  name: string;
-  label: string;
-  description: string;
-}
-
-export interface AbilitySchema {
-  name: string;
-  label: string;
-  description: string;
-  input_schema: JsonSchema;
-  output_schema: JsonSchema;
-  meta: {
-    annotations: {
-      readonly?: boolean;
-      destructive?: boolean;
-      idempotent?: boolean;
-    };
-    mcp: {
-      public: boolean;
-      type: string;
-    };
-  };
-}
-
+/**
+ * JSON Schema type definitions.
+ */
 export interface JsonSchema {
-  type: string;
-  properties?: Record<string, JsonSchemaProperty>;
+  type?: string | string[];
+  properties?: Record<string, JsonSchema>;
   required?: string[];
   additionalProperties?: boolean;
-}
-
-export interface JsonSchemaProperty {
-  type: string | string[];
   description?: string;
   default?: unknown;
   enum?: string[];
@@ -48,51 +25,80 @@ export interface JsonSchemaProperty {
   minLength?: number;
   maxLength?: number;
   pattern?: string;
-  items?: JsonSchemaProperty;
-  properties?: Record<string, JsonSchemaProperty>;
+  items?: JsonSchema;
+  format?: string;
 }
 
-export interface McpRequest {
-  jsonrpc: "2.0";
-  id: number;
-  method: string;
-  params: Record<string, unknown>;
-}
-
-export interface McpResponse<T = unknown> {
-  jsonrpc: "2.0";
-  id: number;
-  result?: T;
-  error?: {
-    code: number;
-    message: string;
+/**
+ * Ability from the WordPress Abilities REST API.
+ * GET /wp-abilities/v1/abilities
+ */
+export interface Ability {
+  name: string;
+  label: string;
+  description: string;
+  category: string;
+  input_schema?: JsonSchema;
+  output_schema: JsonSchema;
+  meta: {
+    show_in_rest?: boolean;
+    mcp?: {
+      public: boolean;
+      type: "tool" | "prompt" | "resource";
+    };
+    annotations?: {
+      instructions?: string;
+      readonly?: boolean;
+      destructive?: boolean;
+      idempotent?: boolean;
+      audience?: string[];
+      priority?: number;
+    };
   };
 }
 
-export interface ToolCallResult {
-  content: Array<{ type: string; text: string }>;
-  isError?: boolean;
+/**
+ * Category from the WordPress Abilities REST API.
+ * GET /wp-abilities/v1/categories
+ */
+export interface Category {
+  slug: string;
+  label: string;
+  description: string;
+  meta?: Record<string, unknown>;
 }
 
-export interface InitializeResult {
-  protocolVersion: string;
-  serverInfo: {
-    name: string;
-    version: string;
+/**
+ * WordPress REST API error response.
+ */
+export interface WPError {
+  code: string;
+  message: string;
+  data?: {
+    status?: number;
   };
-  capabilities: Record<string, unknown>;
 }
 
-export interface DiscoverAbilitiesResult {
-  abilities: AbilitySummary[];
-}
+/**
+ * HTTP method to use for ability execution based on annotations.
+ */
+export type HttpMethod = "GET" | "POST" | "DELETE";
 
-export interface AbilityExecutionResult {
-  success: boolean;
-  data?: unknown;
-  message?: string;
-  error?: {
-    code: string;
-    message: string;
+export interface LoadedAbility {
+  name: string;
+  mcpName: string;
+  label: string;
+  description: string;
+  category: string;
+  inputSchema: ZodTypeAny;
+  outputSchema?: ZodTypeAny;
+  mcpType: "tool" | "prompt" | "resource";
+  httpMethod: HttpMethod;
+  annotations: {
+    title?: string;
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
   };
 }

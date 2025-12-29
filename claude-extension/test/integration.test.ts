@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { WordPressClient } from "../src/wordpress-client.js";
+import { AbilitiesApiClient } from "../src/abilities-client.js";
 import { loadAbilities } from "../src/ability-loader.js";
 import * as logger from "../src/logger.js";
 
@@ -8,54 +8,71 @@ const TEST_USER = process.env.TEST_WORDPRESS_USER;
 const TEST_PASS = process.env.TEST_WORDPRESS_PASS;
 
 if (!TEST_URL || !TEST_USER || !TEST_PASS) {
-  console.log(TEST_URL, TEST_USER)
+  console.log(TEST_URL, TEST_USER);
   throw new Error("Undefined integration test config");
 }
 
-describe("WordPressClient", () => {
-  let client: WordPressClient;
+describe("AbilitiesApiClient", () => {
+  let client: AbilitiesApiClient;
 
   beforeAll(() => {
     logger.setDebug(process.env.DEBUG === "true");
-    client = new WordPressClient(TEST_URL, TEST_USER, TEST_PASS);
+    client = new AbilitiesApiClient(TEST_URL, TEST_USER, TEST_PASS);
   });
 
-  it("should initialize session", async () => {
-    const result = await client.initialize();
-    expect(result.serverInfo.name).toBe("WordForge MCP Server");
-    expect(result.protocolVersion).toBeDefined();
-  });
-
-  it("should discover abilities", async () => {
-    const abilities = await client.discoverAbilities();
+  it("should list abilities", async () => {
+    const abilities = await client.listAbilities();
     expect(abilities.length).toBeGreaterThan(20);
     expect(abilities.some((a) => a.name === "wordforge/list-content")).toBe(true);
   });
 
-  it("should get ability info", async () => {
-    const schema = await client.getAbilityInfo("wordforge/list-content");
-    expect(schema.name).toBe("wordforge/list-content");
-    expect(schema.input_schema).toBeDefined();
-    expect(schema.input_schema.properties).toBeDefined();
+  it("should return abilities with category field", async () => {
+    const abilities = await client.listAbilities();
+    const listContent = abilities.find((a) => a.name === "wordforge/list-content");
+    expect(listContent).toBeDefined();
+    expect(listContent?.category).toBeDefined();
   });
 
-  it("should execute list-content ability", async () => {
-    const result = await client.executeAbility("wordforge/list-content", {
-      post_type: "post",
-      per_page: 5,
-    });
-    expect(result.success).toBe(true);
-    expect(result.data).toBeDefined();
+  it("should return abilities with input_schema", async () => {
+    const abilities = await client.listAbilities();
+    const listContent = abilities.find((a) => a.name === "wordforge/list-content");
+    expect(listContent?.input_schema).toBeDefined();
+    expect(listContent?.input_schema?.properties).toBeDefined();
+  });
+
+  it("should list categories", async () => {
+    const categories = await client.listCategories();
+    expect(categories.length).toBeGreaterThan(0);
+    expect(categories.some((c) => c.slug.includes("content"))).toBe(true);
+  });
+
+  it("should execute list-content ability with GET", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-content",
+      "GET",
+      { post_type: "post", per_page: 5 }
+    );
+    expect(result).toBeDefined();
+    expect((result as { success: boolean }).success).toBe(true);
+  });
+
+  it("should execute seo-optimization prompt with POST", async () => {
+    const result = await client.executeAbility(
+      "wordforge/seo-optimization",
+      "POST",
+      { content: "Test content for SEO analysis", target_keyword: "SEO test" }
+    );
+    expect(result).toBeDefined();
+    expect((result as { messages: unknown[] }).messages).toBeDefined();
   });
 });
 
 describe("AbilityLoader", () => {
-  let client: WordPressClient;
+  let client: AbilitiesApiClient;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     logger.setDebug(process.env.DEBUG === "true");
-    client = new WordPressClient(TEST_URL, TEST_USER, TEST_PASS);
-    await client.initialize();
+    client = new AbilitiesApiClient(TEST_URL, TEST_USER, TEST_PASS);
   });
 
   it("should load all abilities", async () => {
@@ -63,6 +80,16 @@ describe("AbilityLoader", () => {
     expect(abilities.length).toBeGreaterThan(20);
     expect(abilities[0].mcpName).toMatch(/^wordpress\//);
     expect(abilities[0].inputSchema).toBeDefined();
+  });
+
+  it("should include mcpType for each ability", async () => {
+    const abilities = await loadAbilities(client, []);
+    expect(abilities.every((a) => ["tool", "prompt", "resource"].includes(a.mcpType))).toBe(true);
+  });
+
+  it("should include httpMethod for each ability", async () => {
+    const abilities = await loadAbilities(client, []);
+    expect(abilities.every((a) => ["GET", "POST", "DELETE"].includes(a.httpMethod))).toBe(true);
   });
 
   it("should filter abilities by category", async () => {
@@ -76,5 +103,11 @@ describe("AbilityLoader", () => {
     expect(abilities.some((a) => a.name.includes("product"))).toBe(false);
     expect(abilities.some((a) => a.name.includes("generate"))).toBe(false);
     expect(abilities.some((a) => a.name.includes("content"))).toBe(true);
+  });
+
+  it("should support short category names", async () => {
+    const abilities = await loadAbilities(client, ["content"]);
+    expect(abilities.some((a) => a.name === "wordforge/list-content")).toBe(false);
+    expect(abilities.some((a) => a.name === "wordforge/get-global-styles")).toBe(true);
   });
 });

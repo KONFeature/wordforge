@@ -16,6 +16,10 @@ use WordForge\Abilities\AbstractAbility;
  */
 class ListContent extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-content';
+    }
+
     protected function is_read_only(): bool {
         return true;
     }

@@ -114,11 +114,12 @@ abstract class AbstractPrompt {
                 'permission_callback' => [ $this, 'check_permission' ],
                 'execute_callback'    => [ $this, 'execute' ],
                 'meta'                => [
-                    'mcp'         => [
+                    'show_in_rest' => true,
+                    'mcp'          => [
                         'public' => true,
                         'type'   => 'prompt',
                     ],
-                    'annotations' => [
+                    'annotations'  => [
                         'audience' => $this->get_audience(),
                         'priority' => $this->get_priority(),
                     ],

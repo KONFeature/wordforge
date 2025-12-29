@@ -132,17 +132,18 @@ abstract class AbstractAbility {
 
         // All abilities register as tools for uniform discoverability and execution.
         // The readOnlyHint annotation indicates safe/idempotent operations.
-        $meta = [
-            'mcp'         => [
-                'public' => true,
-                'type'   => 'tool',
-            ],
-            'annotations' => [
-                'readonly'    => $this->is_read_only(),
-                'destructive' => $this->is_destructive(),
-                'idempotent'  => $this->is_idempotent(),
-            ],
-        ];
+		$meta = [
+			'show_in_rest' => true,
+			'mcp'          => [
+				'public' => true,
+				'type'   => 'tool',
+			],
+			'annotations'  => [
+				'readonly'    => $this->is_read_only(),
+				'destructive' => $this->is_destructive(),
+				'idempotent'  => $this->is_idempotent(),
+			],
+		];
 
         wp_register_ability(
             $name,

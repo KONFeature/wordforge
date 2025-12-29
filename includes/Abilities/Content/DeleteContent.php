@@ -16,6 +16,10 @@ use WordForge\Abilities\AbstractAbility;
  */
 class DeleteContent extends AbstractAbility {
 
+    public function get_category(): string {
+        return 'wordforge-content';
+    }
+
     protected function is_destructive(): bool {
         return true;
     }
