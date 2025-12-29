@@ -62,6 +62,26 @@ composer require flavor-studio/wordforge
 3. Activate the plugin in WordPress admin
 4. Ensure the MCP Adapter plugin is also active
 
+### Claude Desktop Extension
+
+Download `wordforge.mcpb` from the latest release and double-click to install in Claude Desktop.
+
+### Standalone MCP Server (Other LLM Agents)
+
+For non-Claude MCP clients, download `wordforge-server.js` from the latest release:
+
+```bash
+# Run with Node.js 18+
+WORDPRESS_URL="https://yoursite.com/wp-json/wp-abilities/v1" \
+WORDPRESS_USERNAME="your-username" \
+WORDPRESS_APP_PASSWORD="your-app-password" \
+node wordforge-server.js
+```
+
+Optional environment variables:
+- `WORDFORGE_EXCLUDE_CATEGORIES` - Comma-separated categories to exclude (e.g., `woocommerce,prompts`)
+- `WORDFORGE_DEBUG` - Set to `true` for verbose logging
+
 ## Available MCP Tools
 
 ### Content

@@ -210,7 +210,8 @@ async function main(): Promise<void> {
 
   const server = new McpServer({
     name: "wordforge",
-    version: "1.0.0",
+    version: "1.1.0",
+    websiteUrl: "https://github.com/KONFeature/wordforge",
   });
 
   let toolCount = 0;

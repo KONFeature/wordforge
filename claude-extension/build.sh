@@ -15,7 +15,7 @@ rm -f wordforge.mcpb
 
 zip -r wordforge.mcpb \
   manifest.json \
-  dist/index.js
+  dist/index.cjs
 
 echo "Created: $SCRIPT_DIR/wordforge.mcpb"
 echo ""
