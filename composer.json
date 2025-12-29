@@ -1,5 +1,5 @@
 {
-    "name": "flavor-studio/wordforge",
+    "name": "konfeature/wordforge",
     "description": "Forge your WordPress site through conversation - MCP-powered content, commerce, and design management",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",

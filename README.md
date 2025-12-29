@@ -49,38 +49,106 @@ WordForge extends the [WordPress MCP Adapter](https://github.com/WordPress/mcp-a
 
 ## Installation
 
-### Via Composer (Recommended)
+### 1. WordPress Plugin
 
-```bash
-composer require flavor-studio/wordforge
+1. Download `wordforge.zip` from the [latest release](https://github.com/KONFeature/wordforge/releases)
+2. Go to **Plugins → Add New → Upload Plugin** in WordPress admin
+3. Upload the zip file and activate is also active
+
+### 2. MCP Client Setup
+
+#### Claude Desktop
+
+1. Download `wordforge.mcpb` from the [latest release](https://github.com/KONFeature/wordforge/releases)
+2. Double-click the file or drag it into Claude Desktop
+3. Configure your WordPress credentials when prompted (see [Configuration](#configuration) below)
+
+#### OpenCode
+
+Add the MCP configuration to your project (`.opencode.json`) or globally (`~/.config/opencode/config.json` on macOS).
+
+**Option A: Remote MCP (direct connection)**
+```json
+{
+  "mcp": {
+    "wordpress": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://yoursite.com/wp-json/wordforge/mcp",
+      "headers": {
+        "Authorization": "Basic <base64-encoded-credentials>"
+      }
+    }
+  }
+}
 ```
 
-### Manual Installation
+To generate the base64 credentials:
+```bash
+echo -n "username:application-password" | base64
+```
 
-1. Download the latest release zip
-2. Upload to `/wp-content/plugins/wordforge/`
-3. Activate the plugin in WordPress admin
-4. Ensure the MCP Adapter plugin is also active
+**Option B: Local Server (recommended)**
 
-### Claude Desktop Extension
+Download `wordforge-server.js` from the [latest release](https://github.com/KONFeature/wordforge/releases), then:
 
-Download `wordforge.mcpb` from the latest release and double-click to install in Claude Desktop.
+```json
+{
+  "mcp": {
+    "wordpress": {
+      "enabled": true,
+      "type": "local",
+      "command": ["node", "./path/to/wordforge-server.js"],
+      "environment": {
+        "WORDPRESS_URL": "https://yoursite.com/wp-json/wp-abilities/v1",
+        "WORDPRESS_USERNAME": "your-username",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx"
+      }
+    }
+  }
+}
+```
 
-### Standalone MCP Server (Other LLM Agents)
+The local server is recommended as it prefetches abilities and provides better error handling.
 
-For non-Claude MCP clients, download `wordforge-server.js` from the latest release:
+#### Other MCP Clients
+
+Run the standalone server directly:
 
 ```bash
-# Run with Node.js 18+
 WORDPRESS_URL="https://yoursite.com/wp-json/wp-abilities/v1" \
 WORDPRESS_USERNAME="your-username" \
-WORDPRESS_APP_PASSWORD="your-app-password" \
+WORDPRESS_APP_PASSWORD="xxxx xxxx xxxx xxxx xxxx xxxx" \
 node wordforge-server.js
 ```
 
-Optional environment variables:
-- `WORDFORGE_EXCLUDE_CATEGORIES` - Comma-separated categories to exclude (e.g., `woocommerce,prompts`)
-- `WORDFORGE_DEBUG` - Set to `true` for verbose logging
+### 3. Configuration
+
+#### Getting Your WordPress Credentials
+
+**Abilities API URL**
+- Format: `https://yoursite.com/wp-json/wp-abilities/v1`
+- This is your WordPress site URL + `/wp-json/wp-abilities/v1`
+
+**MCP URL (for remote connections)**
+- Format: `https://yoursite.com/wp-json/wordforge/mcp`
+- This is your WordPress site URL + `/wp-json/wordforge/mcp`
+
+**Username**
+- Your WordPress admin username
+
+**Application Password**
+1. Go to **Users → Profile** in WordPress admin
+2. Scroll to **Application Passwords**
+3. Enter a name (e.g., "WordForge MCP") and click **Add New Application Password**
+4. Copy the generated password (spaces are fine)
+
+#### Optional Settings
+
+| Variable | Description |
+|----------|-------------|
+| `WORDFORGE_EXCLUDE_CATEGORIES` | Comma-separated list of ability categories to exclude. Available: `content`, `blocks`, `styles`, `media`, `taxonomy`, `templates`, `woocommerce`, `prompts` |
+| `WORDFORGE_DEBUG` | Set to `true` for verbose logging to stderr |
 
 ## Available MCP Tools
 
@@ -237,7 +305,7 @@ This creates `wordforge.zip` ready for upload to any WordPress site.
 npm run lint:php
 ```
 
-## Configuration
+## WordPress Admin
 
 Visit **Settings → WordForge** in WordPress admin to:
 - View registered abilities
