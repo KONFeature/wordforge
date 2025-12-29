@@ -42,6 +42,38 @@ class GetMedia extends AbstractAbility {
 		return 'upload_files';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [ 'type' => 'boolean' ],
+				'data'    => [
+					'type'       => 'object',
+					'properties' => [
+						'id'          => [ 'type' => 'integer' ],
+						'title'       => [ 'type' => 'string' ],
+						'filename'    => [ 'type' => 'string' ],
+						'url'         => [ 'type' => 'string' ],
+						'alt'         => [ 'type' => 'string' ],
+						'caption'     => [ 'type' => 'string' ],
+						'description' => [ 'type' => 'string' ],
+						'mime_type'   => [ 'type' => 'string' ],
+						'date'        => [ 'type' => 'string' ],
+						'modified'    => [ 'type' => 'string' ],
+						'author'      => [ 'type' => 'integer' ],
+						'parent'      => [ 'type' => 'integer' ],
+						'width'       => [ 'type' => [ 'integer', 'null' ] ],
+						'height'      => [ 'type' => [ 'integer', 'null' ] ],
+						'filesize'    => [ 'type' => [ 'integer', 'null' ] ],
+						'sizes'       => [ 'type' => 'object', 'additionalProperties' => true ],
+						'metadata'    => [ 'type' => 'object', 'additionalProperties' => true ],
+					],
+				],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

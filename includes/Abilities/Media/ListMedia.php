@@ -41,6 +41,65 @@ class ListMedia extends AbstractAbility {
 		return 'upload_files';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [
+					'type'        => 'boolean',
+					'description' => 'Whether the query executed successfully.',
+				],
+				'data' => [
+					'type'       => 'object',
+					'properties' => [
+						'items' => [
+							'type'        => 'array',
+							'description' => 'Array of media items.',
+							'items'       => [
+								'type'       => 'object',
+								'properties' => [
+									'id'          => [ 'type' => 'integer' ],
+									'title'       => [ 'type' => 'string' ],
+									'filename'    => [ 'type' => 'string' ],
+									'url'         => [ 'type' => 'string' ],
+									'alt'         => [ 'type' => 'string' ],
+									'caption'     => [ 'type' => 'string' ],
+									'description' => [ 'type' => 'string' ],
+									'mime_type'   => [ 'type' => 'string' ],
+									'date'        => [ 'type' => 'string' ],
+									'modified'    => [ 'type' => 'string' ],
+									'author'      => [ 'type' => 'integer' ],
+									'parent'      => [ 'type' => 'integer' ],
+									'width'       => [ 'type' => [ 'integer', 'null' ] ],
+									'height'      => [ 'type' => [ 'integer', 'null' ] ],
+									'filesize'    => [ 'type' => [ 'integer', 'null' ] ],
+								],
+							],
+						],
+						'total' => [
+							'type'        => 'integer',
+							'description' => 'Total number of media items.',
+						],
+						'total_pages' => [
+							'type'        => 'integer',
+							'description' => 'Total number of pages.',
+						],
+						'page' => [
+							'type'        => 'integer',
+							'description' => 'Current page number.',
+						],
+						'per_page' => [
+							'type'        => 'integer',
+							'description' => 'Items per page.',
+						],
+					],
+					'required' => [ 'items', 'total', 'total_pages', 'page', 'per_page' ],
+				],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

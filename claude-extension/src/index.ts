@@ -6,6 +6,7 @@ import { AbilitiesApiClient } from "./abilities-client.js";
 import { loadAbilities, type LoadedAbility } from "./ability-loader.js";
 import * as logger from "./logger.js";
 import type { Config } from "./types.js";
+import type { ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 
 function getConfig(): Config {
   const url = process.env.WORDPRESS_URL;
@@ -51,6 +52,17 @@ function registerTool(
           ability.httpMethod,
           args
         );
+
+        // When outputSchema is defined, MCP requires structuredContent
+        if (ability.outputSchema) {
+          return {
+            content: [
+              { type: "text" as const, text: JSON.stringify(result, null, 2) },
+            ],
+            structuredContent: result as any,
+          };
+        }
+
         return {
           content: [
             { type: "text" as const, text: JSON.stringify(result, null, 2) },
@@ -80,7 +92,7 @@ function registerPrompt(
     {
       title: ability.label,
       description: ability.description,
-      argsSchema: ability.inputSchema,
+      argsSchema: ability.inputSchema as unknown as ZodRawShapeCompat,
     },
     async (args) => {
       try {

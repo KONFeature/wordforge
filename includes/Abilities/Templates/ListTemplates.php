@@ -33,6 +33,51 @@ class ListTemplates extends AbstractAbility {
 		return 'edit_theme_options';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [
+					'type'        => 'boolean',
+					'description' => 'Whether the query executed successfully.',
+				],
+				'data' => [
+					'type'       => 'object',
+					'properties' => [
+						'type' => [
+							'type'        => 'string',
+							'description' => 'Template type (wp_template or wp_template_part).',
+						],
+						'items' => [
+							'type'        => 'array',
+							'description' => 'Array of templates.',
+							'items'       => [
+								'type'       => 'object',
+								'properties' => [
+									'id'          => [ 'type' => 'integer' ],
+									'slug'        => [ 'type' => 'string' ],
+									'title'       => [ 'type' => 'string' ],
+									'description' => [ 'type' => 'string' ],
+									'status'      => [ 'type' => 'string' ],
+									'type'        => [ 'type' => 'string' ],
+									'modified'    => [ 'type' => 'string' ],
+									'source'      => [ 'type' => 'string' ],
+									'area'        => [ 'type' => 'string' ],
+								],
+							],
+						],
+						'total' => [
+							'type'        => 'integer',
+							'description' => 'Total number of templates.',
+						],
+					],
+					'required' => [ 'type', 'items', 'total' ],
+				],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

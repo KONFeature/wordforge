@@ -33,6 +33,21 @@ class GetGlobalStyles extends AbstractAbility {
         return 'edit_theme_options';
     }
 
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [ 'type' => 'boolean' ],
+                'data'    => [
+                    'type'                 => 'object',
+                    'description'          => 'Global styles configuration (theme.json format)',
+                    'additionalProperties' => true,
+                ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
     public function get_input_schema(): array {
         return [
             'type'       => 'object',

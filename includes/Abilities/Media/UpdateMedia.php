@@ -38,6 +38,29 @@ class UpdateMedia extends AbstractAbility {
 		return 'upload_files';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [ 'type' => 'boolean' ],
+				'data'    => [
+					'type'       => 'object',
+					'properties' => [
+						'id'             => [ 'type' => 'integer' ],
+						'title'          => [ 'type' => 'string' ],
+						'alt'            => [ 'type' => 'string' ],
+						'caption'        => [ 'type' => 'string' ],
+						'description'    => [ 'type' => 'string' ],
+						'parent'         => [ 'type' => 'integer' ],
+						'updated_fields' => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+					],
+				],
+				'message' => [ 'type' => 'string' ],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

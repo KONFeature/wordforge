@@ -34,6 +34,49 @@ class ListTerms extends AbstractAbility {
 		return 'manage_categories';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [
+					'type'        => 'boolean',
+					'description' => 'Whether the query executed successfully.',
+				],
+				'data' => [
+					'type'       => 'object',
+					'properties' => [
+						'taxonomy' => [
+							'type'        => 'string',
+							'description' => 'Taxonomy name.',
+						],
+						'items' => [
+							'type'        => 'array',
+							'description' => 'Array of terms.',
+							'items'       => [
+								'type'       => 'object',
+								'properties' => [
+									'id'          => [ 'type' => 'integer' ],
+									'name'        => [ 'type' => 'string' ],
+									'slug'        => [ 'type' => 'string' ],
+									'description' => [ 'type' => 'string' ],
+									'parent'      => [ 'type' => 'integer' ],
+									'count'       => [ 'type' => 'integer' ],
+									'taxonomy'    => [ 'type' => 'string' ],
+								],
+							],
+						],
+						'total' => [
+							'type'        => 'integer',
+							'description' => 'Total number of terms.',
+						],
+					],
+					'required' => [ 'taxonomy', 'items', 'total' ],
+				],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

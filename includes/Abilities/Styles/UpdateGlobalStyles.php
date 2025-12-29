@@ -29,6 +29,22 @@ class UpdateGlobalStyles extends AbstractAbility {
         return 'edit_theme_options';
     }
 
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [ 'type' => 'boolean' ],
+                'data'    => [
+                    'type'                 => 'object',
+                    'description'          => 'Updated global styles configuration',
+                    'additionalProperties' => true,
+                ],
+                'message' => [ 'type' => 'string' ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
     public function get_input_schema(): array {
         return [
             'type'       => 'object',

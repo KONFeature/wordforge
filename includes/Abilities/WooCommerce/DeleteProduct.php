@@ -34,6 +34,25 @@ class DeleteProduct extends AbstractAbility {
         return 'delete_products';
     }
 
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [ 'type' => 'boolean' ],
+                'data'    => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'id'      => [ 'type' => 'integer' ],
+                        'deleted' => [ 'type' => 'boolean' ],
+                        'force'   => [ 'type' => 'boolean' ],
+                    ],
+                ],
+                'message' => [ 'type' => 'string' ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
     public function get_input_schema(): array {
         return [
             'type'       => 'object',

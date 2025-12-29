@@ -47,6 +47,38 @@ class GetContent extends AbstractAbility {
     /**
      * {@inheritDoc}
      */
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [ 'type' => 'boolean' ],
+                'data'    => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'id'             => [ 'type' => 'integer' ],
+                        'title'          => [ 'type' => 'string' ],
+                        'slug'           => [ 'type' => 'string' ],
+                        'status'         => [ 'type' => 'string' ],
+                        'type'           => [ 'type' => 'string' ],
+                        'content'        => [ 'type' => 'string' ],
+                        'excerpt'        => [ 'type' => 'string' ],
+                        'author'         => [ 'type' => 'integer' ],
+                        'date'           => [ 'type' => 'string' ],
+                        'modified'       => [ 'type' => 'string' ],
+                        'permalink'      => [ 'type' => 'string' ],
+                        'featured_image' => [ 'type' => [ 'integer', 'null' ] ],
+                        'meta'           => [ 'type' => 'object', 'additionalProperties' => true ],
+                        'taxonomies'     => [ 'type' => 'object', 'additionalProperties' => true ],
+                    ],
+                ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function get_input_schema(): array {
         return [
             'type'       => 'object',

@@ -34,6 +34,68 @@ class ListProducts extends AbstractAbility {
         return 'edit_products';
     }
 
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [
+                    'type'        => 'boolean',
+                    'description' => 'Whether the query executed successfully.',
+                ],
+                'data' => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'items' => [
+                            'type'        => 'array',
+                            'description' => 'Array of products.',
+                            'items'       => [
+                                'type'       => 'object',
+                                'properties' => [
+                                    'id'           => [ 'type' => 'integer' ],
+                                    'name'         => [ 'type' => 'string' ],
+                                    'slug'         => [ 'type' => 'string' ],
+                                    'type'         => [ 'type' => 'string' ],
+                                    'status'       => [ 'type' => 'string' ],
+                                    'sku'          => [ 'type' => 'string' ],
+                                    'price'        => [ 'type' => 'string' ],
+                                    'regular_price' => [ 'type' => 'string' ],
+                                    'sale_price'   => [ 'type' => 'string' ],
+                                    'on_sale'      => [ 'type' => 'boolean' ],
+                                    'stock_status' => [ 'type' => 'string' ],
+                                    'stock_quantity' => [ 'type' => [ 'integer', 'null' ] ],
+                                    'featured'     => [ 'type' => 'boolean' ],
+                                    'short_description' => [ 'type' => 'string' ],
+                                    'categories'   => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+                                    'tags'         => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+                                    'image'        => [ 'type' => [ 'string', 'null' ] ],
+                                    'permalink'    => [ 'type' => 'string' ],
+                                ],
+                            ],
+                        ],
+                        'total' => [
+                            'type'        => 'integer',
+                            'description' => 'Total number of products.',
+                        ],
+                        'total_pages' => [
+                            'type'        => 'integer',
+                            'description' => 'Total number of pages.',
+                        ],
+                        'page' => [
+                            'type'        => 'integer',
+                            'description' => 'Current page number.',
+                        ],
+                        'per_page' => [
+                            'type'        => 'integer',
+                            'description' => 'Items per page.',
+                        ],
+                    ],
+                    'required' => [ 'items', 'total', 'total_pages', 'page', 'per_page' ],
+                ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
     public function get_input_schema(): array {
         return [
             'type'       => 'object',

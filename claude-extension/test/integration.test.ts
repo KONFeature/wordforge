@@ -78,7 +78,7 @@ describe("AbilityLoader", () => {
   it("should load all abilities", async () => {
     const abilities = await loadAbilities(client, []);
     expect(abilities.length).toBeGreaterThan(20);
-    expect(abilities[0].mcpName).toMatch(/^wordpress\//);
+    expect(abilities[0].mcpName).toMatch(/^wordpress_/);
     expect(abilities[0].inputSchema).toBeDefined();
   });
 
@@ -109,5 +109,78 @@ describe("AbilityLoader", () => {
     const abilities = await loadAbilities(client, ["content"]);
     expect(abilities.some((a) => a.name === "wordforge/list-content")).toBe(false);
     expect(abilities.some((a) => a.name === "wordforge/get-global-styles")).toBe(true);
+  });
+});
+
+interface ListResponse {
+  success: boolean;
+  data: {
+    items: unknown[];
+    total: number;
+    [key: string]: unknown;
+  };
+}
+
+describe("Tool Execution", () => {
+  let client: AbilitiesApiClient;
+
+  beforeAll(() => {
+    logger.setDebug(process.env.DEBUG === "true");
+    client = new AbilitiesApiClient(TEST_URL, TEST_USER, TEST_PASS);
+  });
+
+  it("should execute list-content and return structured response", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-content",
+      "GET",
+      { post_type: "page", per_page: 5 }
+    ) as ListResponse;
+    expect(result.success).toBe(true);
+    expect(result.data.items).toBeInstanceOf(Array);
+    expect(typeof result.data.total).toBe("number");
+  });
+
+  it("should execute list-templates and return structured response", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-templates",
+      "GET",
+      { type: "wp_template" }
+    ) as ListResponse;
+    expect(result.success).toBe(true);
+    expect(result.data.items).toBeInstanceOf(Array);
+    expect(typeof result.data.total).toBe("number");
+  });
+
+  it("should execute list-products and return structured response", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-products",
+      "GET",
+      { per_page: 5 }
+    ) as ListResponse;
+    expect(result.success).toBe(true);
+    expect(result.data.items).toBeInstanceOf(Array);
+    expect(typeof result.data.total).toBe("number");
+  });
+
+  it("should execute list-terms and return structured response", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-terms",
+      "GET",
+      { taxonomy: "category", per_page: 5 }
+    ) as ListResponse;
+    expect(result.success).toBe(true);
+    expect(result.data.items).toBeInstanceOf(Array);
+    expect(typeof result.data.total).toBe("number");
+  });
+
+  it("should execute list-media and return structured response", async () => {
+    const result = await client.executeAbility(
+      "wordforge/list-media",
+      "GET",
+      { per_page: 5 }
+    ) as ListResponse;
+    expect(result.success).toBe(true);
+    expect(result.data.items).toBeInstanceOf(Array);
+    expect(typeof result.data.total).toBe("number");
   });
 });

@@ -39,6 +39,37 @@ abstract class AbstractPrompt {
     abstract public function get_input_schema(): array;
 
     /**
+     * Get the output schema for the prompt response.
+     *
+     * @return array<string, mixed>
+     */
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'messages' => [
+                    'type'        => 'array',
+                    'description' => 'Array of messages for the AI conversation.',
+                    'items'       => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'role'    => [ 'type' => 'string', 'enum' => [ 'user', 'assistant' ] ],
+                            'content' => [
+                                'type'       => 'object',
+                                'properties' => [
+                                    'type' => [ 'type' => 'string' ],
+                                    'text' => [ 'type' => 'string' ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'required' => [ 'messages' ],
+        ];
+    }
+
+    /**
      * Execute the prompt and return messages.
      *
      * @param array<string, mixed> $args The input arguments.
@@ -111,6 +142,7 @@ abstract class AbstractPrompt {
                 'description'         => $this->get_description(),
                 'category'            => $this->get_category(),
                 'input_schema'        => $this->get_input_schema(),
+                'output_schema'       => $this->get_output_schema(),
                 'permission_callback' => [ $this, 'check_permission' ],
                 'execute_callback'    => [ $this, 'execute' ],
                 'meta'                => [

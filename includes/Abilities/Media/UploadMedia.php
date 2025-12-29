@@ -39,6 +39,29 @@ class UploadMedia extends AbstractAbility {
 		return 'upload_files';
 	}
 
+	public function get_output_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'success' => [ 'type' => 'boolean' ],
+				'data'    => [
+					'type'       => 'object',
+					'properties' => [
+						'id'        => [ 'type' => 'integer' ],
+						'title'     => [ 'type' => 'string' ],
+						'filename'  => [ 'type' => 'string' ],
+						'url'       => [ 'type' => 'string' ],
+						'mime_type' => [ 'type' => 'string' ],
+						'alt'       => [ 'type' => 'string' ],
+						'parent'    => [ 'type' => 'integer' ],
+					],
+				],
+				'message' => [ 'type' => 'string' ],
+			],
+			'required' => [ 'success', 'data' ],
+		];
+	}
+
 	public function get_input_schema(): array {
 		return [
 			'type'       => 'object',

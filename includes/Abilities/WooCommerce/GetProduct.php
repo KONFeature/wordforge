@@ -34,6 +34,45 @@ class GetProduct extends AbstractAbility {
         return 'edit_products';
     }
 
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [ 'type' => 'boolean' ],
+                'data'    => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'id'                => [ 'type' => 'integer' ],
+                        'name'              => [ 'type' => 'string' ],
+                        'slug'              => [ 'type' => 'string' ],
+                        'type'              => [ 'type' => 'string' ],
+                        'status'            => [ 'type' => 'string' ],
+                        'description'       => [ 'type' => 'string' ],
+                        'short_description' => [ 'type' => 'string' ],
+                        'sku'               => [ 'type' => 'string' ],
+                        'price'             => [ 'type' => 'string' ],
+                        'regular_price'     => [ 'type' => 'string' ],
+                        'sale_price'        => [ 'type' => 'string' ],
+                        'on_sale'           => [ 'type' => 'boolean' ],
+                        'stock_status'      => [ 'type' => 'string' ],
+                        'stock_quantity'    => [ 'type' => [ 'integer', 'null' ] ],
+                        'manage_stock'      => [ 'type' => 'boolean' ],
+                        'featured'          => [ 'type' => 'boolean' ],
+                        'virtual'           => [ 'type' => 'boolean' ],
+                        'downloadable'      => [ 'type' => 'boolean' ],
+                        'categories'        => [ 'type' => 'array' ],
+                        'tags'              => [ 'type' => 'array' ],
+                        'images'            => [ 'type' => 'array' ],
+                        'attributes'        => [ 'type' => 'array' ],
+                        'variations'        => [ 'type' => 'array' ],
+                        'permalink'         => [ 'type' => 'string' ],
+                    ],
+                ],
+            ],
+            'required' => [ 'success', 'data' ],
+        ];
+    }
+
     public function get_input_schema(): array {
         return [
             'type'       => 'object',
