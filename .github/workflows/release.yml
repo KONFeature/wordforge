@@ -34,10 +34,8 @@ jobs:
           php-version: '8.2'
           tools: composer:v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Build WordPress plugin
         run: |

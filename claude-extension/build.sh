@@ -5,18 +5,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "Installing dependencies..."
-cd server
-npm install --omit=dev
-cd ..
+bun install
+
+echo "Building TypeScript bundle..."
+bun run build
 
 echo "Creating .mcpb package..."
 rm -f wordforge.mcpb
 
 zip -r wordforge.mcpb \
   manifest.json \
-  server/index.js \
-  server/package.json \
-  server/node_modules
+  dist/index.js
 
 echo "Created: $SCRIPT_DIR/wordforge.mcpb"
 echo ""

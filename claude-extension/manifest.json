@@ -1,5 +1,5 @@
 {
-  "manifest_version": "0.1",
+  "manifest_version": "0.2",
   "name": "wordforge",
   "display_name": "WordForge - WordPress MCP",
   "version": "1.0.0",
@@ -18,10 +18,10 @@
   "keywords": ["wordpress", "cms", "content", "woocommerce", "gutenberg"],
   "server": {
     "type": "node",
-    "entry_point": "server/index.js",
+    "entry_point": "dist/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": ["${__dirname}/dist/index.js"],
       "env": {
         "WORDPRESS_MCP_URL": "${user_config.wordpress_url}",
         "WORDPRESS_USERNAME": "${user_config.username}",
