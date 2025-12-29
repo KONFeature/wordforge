@@ -17,7 +17,13 @@ class CreateTerm extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Create a new taxonomy term (category, tag, or custom taxonomy term).', 'wordforge' );
+		return __(
+			'Create a new taxonomy term for organizing content. Supports categories (hierarchical), tags (non-hierarchical), ' .
+			'and custom taxonomies like WooCommerce product categories. Terms are used to classify and organize posts, pages, and ' .
+			'custom post types. Can create hierarchical terms with parents. Slug is auto-generated from name if not provided. ' .
+			'Use this to build your site\'s content organization structure.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {
@@ -31,23 +37,29 @@ class CreateTerm extends AbstractAbility {
 			'properties' => [
 				'taxonomy' => [
 					'type'        => 'string',
-					'description' => 'Taxonomy name (category, post_tag, product_cat, or custom taxonomy).',
+					'description' => 'Taxonomy name: "category" for post categories, "post_tag" for tags, "product_cat" for WooCommerce categories, or any registered custom taxonomy slug.',
 				],
 				'name' => [
 					'type'        => 'string',
-					'description' => 'Term name.',
+					'description' => 'Term name (e.g., "Technology", "News"). This is the human-readable label displayed in the admin and frontend.',
+					'minLength'   => 1,
+					'maxLength'   => 200,
 				],
 				'slug' => [
 					'type'        => 'string',
-					'description' => 'Term slug (auto-generated from name if not provided).',
+					'description' => 'URL-friendly slug (e.g., "technology", "breaking-news"). Auto-generated from name if not provided. Used in URLs and queries.',
+					'pattern'     => '^[a-z0-9-]+$',
+					'maxLength'   => 200,
 				],
 				'description' => [
 					'type'        => 'string',
-					'description' => 'Term description.',
+					'description' => 'Optional description of the term. May be displayed by themes on category/tag archive pages.',
+					'maxLength'   => 1000,
 				],
 				'parent' => [
 					'type'        => 'integer',
-					'description' => 'Parent term ID for hierarchical taxonomies.',
+					'description' => 'Parent term ID for hierarchical taxonomies (categories, product categories). Creates nested organization (e.g., "Technology" > "Mobile"). Only works with hierarchical taxonomies.',
+					'minimum'     => 0,
 				],
 			],
 		];

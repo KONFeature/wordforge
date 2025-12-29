@@ -21,7 +21,13 @@ class ListProducts extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'List WooCommerce products with filtering and pagination.', 'wordforge' );
+        return __(
+            'Retrieve a list of WooCommerce products with powerful filtering options. Filter by product type (simple, variable, etc.), ' .
+            'publication status, category/tag, SKU, featured status, or sale status. Sort by date, title, price, popularity, or rating. ' .
+            'Supports pagination for large product catalogs. Use this to browse your store inventory, find specific products, or generate ' .
+            'product reports. Returns up to 100 products per page.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

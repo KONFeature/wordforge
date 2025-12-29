@@ -25,7 +25,14 @@ class UploadMedia extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Upload media to the library from a URL or base64 encoded data.', 'wordforge' );
+		$max_upload_mb = wp_max_upload_size() / 1048576;
+		return __(
+			sprintf(
+				'Upload media (images, documents, videos, audio) by URL or base64. Auto-generates thumbnails and metadata. Max size: %.0fMB.',
+				$max_upload_mb
+			),
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {
@@ -39,35 +46,45 @@ class UploadMedia extends AbstractAbility {
 			'properties' => [
 				'url' => [
 					'type'        => 'string',
-					'description' => 'URL to download the media from.',
+					'format'      => 'uri',
+					'description' => 'URL to download file from. Must be publicly accessible. Provide "url" OR "base64", not both.',
+					'pattern'     => '^https?://',
 				],
 				'base64' => [
 					'type'        => 'string',
-					'description' => 'Base64 encoded file content (without data URI prefix).',
+					'description' => 'Base64-encoded file content WITHOUT data URI prefix. Provide "url" OR "base64", not both.',
 				],
 				'filename' => [
 					'type'        => 'string',
-					'description' => 'Desired filename for the uploaded media.',
+					'description' => 'Filename with extension, e.g., "photo.jpg". WordPress sanitizes and adds numbers if duplicate.',
+					'pattern'     => '^[^/\\\\?%*:|"<>]+\\.[a-zA-Z0-9]+$',
+					'minLength'   => 5,
+					'maxLength'   => 255,
 				],
 				'title' => [
 					'type'        => 'string',
-					'description' => 'Media title.',
+					'description' => 'Media title shown in library. Auto-generated from filename if omitted.',
+					'maxLength'   => 200,
 				],
 				'alt' => [
 					'type'        => 'string',
-					'description' => 'Alt text for images (important for SEO and accessibility).',
+					'description' => 'CRITICAL: Alt text for images (SEO/accessibility). Describe content, not filename.',
+					'maxLength'   => 500,
 				],
 				'caption' => [
 					'type'        => 'string',
-					'description' => 'Media caption.',
+					'description' => 'Caption displayed below image when inserted. Used for credits or context.',
+					'maxLength'   => 500,
 				],
 				'description' => [
 					'type'        => 'string',
-					'description' => 'Media description.',
+					'description' => 'Longer description visible in media library.',
+					'maxLength'   => 2000,
 				],
 				'parent_id' => [
 					'type'        => 'integer',
-					'description' => 'Post ID to attach the media to.',
+					'description' => 'Post/page ID to attach media to. Creates parent-child relationship.',
+					'minimum'     => 1,
 				],
 			],
 		];

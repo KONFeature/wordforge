@@ -17,7 +17,12 @@ class UpdateProduct extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Update an existing WooCommerce product.', 'wordforge' );
+        return __(
+            'Modify an existing WooCommerce product. Supports partial updates - only provide fields to change. Can update pricing, inventory, ' .
+            'status, descriptions, images, categories, dimensions, and more. Use this to adjust product details, update prices, manage stock ' .
+            'levels, or change product visibility. Categories and tags are replaced entirely (not merged).',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

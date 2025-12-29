@@ -27,7 +27,14 @@ class UpdateContent extends AbstractAbility {
      * {@inheritDoc}
      */
     public function get_description(): string {
-        return __( 'Update an existing post, page, or custom post type.', 'wordforge' );
+        return __(
+            'Modify an existing WordPress content item (post, page, or custom post type). Supports partial updates - ' .
+            'only provide the fields you want to change, and other fields remain unchanged. Can update title, content, ' .
+            'status, taxonomies, featured image, and custom fields. Set featured_image to 0 to remove it. Set meta values ' .
+            'to null to delete them. Categories and tags are replaced entirely (not merged). Use this to edit existing ' .
+            'content, change publication status, or update metadata.',
+            'wordforge'
+        );
     }
 
     /**
@@ -40,63 +47,86 @@ class UpdateContent extends AbstractAbility {
             'properties' => [
                 'id' => [
                     'type'        => 'integer',
-                    'description' => 'The post ID to update.',
+                    'description' => 'Post ID of the content to update. Required to identify which content to modify.',
+                    'minimum'     => 1,
                 ],
                 'title' => [
                     'type'        => 'string',
-                    'description' => 'The new title.',
+                    'description' => 'New title. Leave unset to keep existing title unchanged.',
+                    'minLength'   => 1,
+                    'maxLength'   => 255,
                 ],
                 'content' => [
                     'type'        => 'string',
-                    'description' => 'The new content body.',
+                    'description' => 'New content body. Supports HTML and Gutenberg block syntax. Leave unset to keep existing content unchanged.',
                 ],
                 'excerpt' => [
                     'type'        => 'string',
-                    'description' => 'The new excerpt.',
+                    'description' => 'New excerpt/summary. Leave unset to keep existing excerpt unchanged.',
+                    'maxLength'   => 500,
                 ],
                 'status' => [
                     'type'        => 'string',
-                    'description' => 'The new status.',
+                    'description' => 'New publication status: "publish" (make live), "draft" (unpublish), "pending" (submit for review), "private" (restricted access), "trash" (soft delete). Leave unset to keep current status.',
                     'enum'        => [ 'publish', 'draft', 'pending', 'private', 'trash' ],
                 ],
                 'slug' => [
                     'type'        => 'string',
-                    'description' => 'The new slug.',
+                    'description' => 'New URL slug. Warning: changing the slug changes the permalink/URL, which may break external links. Leave unset to keep existing slug.',
+                    'pattern'     => '^[a-z0-9-]+$',
+                    'maxLength'   => 200,
                 ],
                 'author' => [
                     'type'        => 'integer',
-                    'description' => 'The new author user ID.',
+                    'description' => 'New author user ID to reassign content. User must have appropriate permissions. Leave unset to keep current author.',
+                    'minimum'     => 1,
                 ],
                 'parent' => [
                     'type'        => 'integer',
-                    'description' => 'New parent post ID.',
+                    'description' => 'New parent post ID for hierarchical content types (pages). Changes the hierarchy. Leave unset to keep current parent.',
+                    'minimum'     => 0,
                 ],
                 'menu_order' => [
                     'type'        => 'integer',
-                    'description' => 'New menu order.',
+                    'description' => 'New menu order position. Used for custom sorting of pages. Leave unset to keep current order.',
                 ],
                 'featured_image' => [
                     'type'        => 'integer',
-                    'description' => 'New featured image attachment ID (0 to remove).',
+                    'description' => 'New featured image attachment ID. Set to 0 (zero) to remove the featured image. Leave unset to keep current featured image. Set to null to remove.',
+                    'minimum'     => 0,
                 ],
                 'categories' => [
                     'type'        => 'array',
-                    'description' => 'New category IDs or slugs (replaces existing).',
+                    'description' => 'New category assignments (completely replaces existing categories, does not merge). Provide category IDs or slugs. Leave unset to keep current categories. Applies only to posts.',
                     'items'       => [
                         'oneOf' => [
-                            [ 'type' => 'integer' ],
-                            [ 'type' => 'string' ],
+                            [
+                                'type'        => 'integer',
+                                'description' => 'Category term ID',
+                                'minimum'     => 1,
+                            ],
+                            [
+                                'type'        => 'string',
+                                'description' => 'Category slug',
+                                'pattern'     => '^[a-z0-9-]+$',
+                            ],
                         ],
                     ],
                 ],
                 'tags' => [
                     'type'        => 'array',
-                    'description' => 'New tag names (replaces existing).',
-                    'items'       => [ 'type' => 'string' ],
+                    'description' => 'New tag assignments (completely replaces existing tags, does not merge). Provide tag names or slugs. Leave unset to keep current tags. Applies only to posts.',
+                    'items'       => [
+                        'type'        => 'string',
+                        'description' => 'Tag name or slug',
+                        'minLength'   => 1,
+                        'maxLength'   => 200,
+                    ],
                 ],
                 'meta' => [
-                    'type'        => 'object',
-                    'description' => 'Post meta to update.',
+                    'type'                 => 'object',
+                    'description'          => 'Custom field updates. Provide key-value pairs to update. Set a value to null to delete that meta key. Only updates provided keys, other meta remains unchanged.',
+                    'additionalProperties' => true,
                 ],
             ],
         ];

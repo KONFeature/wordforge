@@ -17,7 +17,10 @@ class CreateProduct extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Create a new WooCommerce product.', 'wordforge' );
+        return __(
+            'Create WooCommerce products (simple, variable, grouped, external) with pricing, inventory, images, and taxonomies. Defaults to draft status.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {
@@ -30,82 +33,144 @@ class CreateProduct extends AbstractAbility {
             'required'   => [ 'name' ],
             'properties' => [
                 'name' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Product name displayed in store.',
+                    'minLength'   => 1,
+                    'maxLength'   => 200,
                 ],
                 'type' => [
-                    'type'    => 'string',
-                    'enum'    => [ 'simple', 'variable', 'grouped', 'external' ],
-                    'default' => 'simple',
+                    'type'        => 'string',
+                    'description' => 'Product type: "simple" (single SKU), "variable" (variations), "grouped" (collection), "external" (offsite).',
+                    'enum'        => [ 'simple', 'variable', 'grouped', 'external' ],
+                    'default'     => 'simple',
                 ],
                 'status' => [
-                    'type'    => 'string',
-                    'enum'    => [ 'publish', 'draft', 'pending', 'private' ],
-                    'default' => 'draft',
+                    'type'        => 'string',
+                    'description' => 'Publication status: "publish" (live), "draft" (not visible), "pending" (review), "private" (hidden).',
+                    'enum'        => [ 'publish', 'draft', 'pending', 'private' ],
+                    'default'     => 'draft',
                 ],
                 'description' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Full product description with details and features. Supports HTML.',
                 ],
                 'short_description' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Brief summary above add-to-cart button. Supports HTML.',
+                    'maxLength'   => 1000,
                 ],
                 'sku' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Stock Keeping Unit for inventory tracking, e.g., "WOO-SHIRT-BLUE-M".',
+                    'maxLength'   => 100,
                 ],
                 'regular_price' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Regular price, e.g., "19.99". Decimal format without currency symbols.',
+                    'pattern'     => '^\\d+(\\.\\d{1,2})?$',
                 ],
                 'sale_price' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Sale price, e.g., "14.99". Must be less than regular_price.',
+                    'pattern'     => '^\\d+(\\.\\d{1,2})?$',
                 ],
                 'stock_status' => [
-                    'type' => 'string',
-                    'enum' => [ 'instock', 'outofstock', 'onbackorder' ],
+                    'type'        => 'string',
+                    'description' => 'Stock availability: "instock" (available), "outofstock" (unavailable), "onbackorder" (orderable but out).',
+                    'enum'        => [ 'instock', 'outofstock', 'onbackorder' ],
                 ],
                 'stock_quantity' => [
-                    'type' => 'integer',
+                    'type'        => 'integer',
+                    'description' => 'Number of items in stock. Only used if manage_stock is true.',
+                    'minimum'     => 0,
                 ],
                 'manage_stock' => [
-                    'type' => 'boolean',
+                    'type'        => 'boolean',
+                    'description' => 'Enable automatic stock tracking and overselling prevention.',
+                    'default'     => false,
                 ],
                 'weight' => [
-                    'type' => 'string',
+                    'type'        => 'string',
+                    'description' => 'Product weight in default unit for shipping, e.g., "2.5".',
+                    'pattern'     => '^\\d+(\\.\\d+)?$',
                 ],
                 'dimensions' => [
-                    'type'       => 'object',
-                    'properties' => [
-                        'length' => [ 'type' => 'string' ],
-                        'width'  => [ 'type' => 'string' ],
-                        'height' => [ 'type' => 'string' ],
+                    'type'        => 'object',
+                    'description' => 'Product dimensions for shipping in default unit.',
+                    'properties'  => [
+                        'length' => [
+                            'type'        => 'string',
+                            'description' => 'Product length, e.g., "30".',
+                            'pattern'     => '^\\d+(\\.\\d+)?$',
+                        ],
+                        'width' => [
+                            'type'        => 'string',
+                            'description' => 'Product width, e.g., "20".',
+                            'pattern'     => '^\\d+(\\.\\d+)?$',
+                        ],
+                        'height' => [
+                            'type'        => 'string',
+                            'description' => 'Product height, e.g., "10".',
+                            'pattern'     => '^\\d+(\\.\\d+)?$',
+                        ],
                     ],
                 ],
                 'categories' => [
-                    'type'  => 'array',
-                    'items' => [
+                    'type'        => 'array',
+                    'description' => 'Product category assignments. Provide category IDs or slugs.',
+                    'items'       => [
                         'oneOf' => [
-                            [ 'type' => 'integer' ],
-                            [ 'type' => 'string' ],
+                            [
+                                'type'        => 'integer',
+                                'description' => 'Category term ID',
+                                'minimum'     => 1,
+                            ],
+                            [
+                                'type'        => 'string',
+                                'description' => 'Category slug',
+                                'pattern'     => '^[a-z0-9-]+$',
+                            ],
                         ],
                     ],
                 ],
                 'tags' => [
-                    'type'  => 'array',
-                    'items' => [ 'type' => 'string' ],
+                    'type'        => 'array',
+                    'description' => 'Product tag assignments. Provide tag names or slugs.',
+                    'items'       => [
+                        'type'        => 'string',
+                        'description' => 'Tag name or slug',
+                        'minLength'   => 1,
+                        'maxLength'   => 200,
+                    ],
                 ],
                 'featured' => [
-                    'type' => 'boolean',
+                    'type'        => 'boolean',
+                    'description' => 'Mark as featured product for special sections/widgets.',
+                    'default'     => false,
                 ],
                 'virtual' => [
-                    'type' => 'boolean',
+                    'type'        => 'boolean',
+                    'description' => 'Virtual product (no shipping). True for services/digital goods.',
+                    'default'     => false,
                 ],
                 'downloadable' => [
-                    'type' => 'boolean',
+                    'type'        => 'boolean',
+                    'description' => 'Downloadable product. True for software/ebooks/music.',
+                    'default'     => false,
                 ],
                 'image_id' => [
-                    'type' => 'integer',
+                    'type'        => 'integer',
+                    'description' => 'Main product image attachment ID. Upload media first.',
+                    'minimum'     => 1,
                 ],
                 'gallery_image_ids' => [
-                    'type'  => 'array',
-                    'items' => [ 'type' => 'integer' ],
+                    'type'        => 'array',
+                    'description' => 'Additional gallery images. Provide attachment IDs.',
+                    'items'       => [
+                        'type'        => 'integer',
+                        'description' => 'Media attachment ID',
+                        'minimum'     => 1,
+                    ],
                 ],
             ],
         ];

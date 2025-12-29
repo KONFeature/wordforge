@@ -21,7 +21,13 @@ class ListTerms extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'List taxonomy terms (categories, tags, or custom taxonomies) with filtering.', 'wordforge' );
+		return __(
+			'Retrieve a list of taxonomy terms (categories, tags, product categories, or custom taxonomies) with powerful filtering. ' .
+			'Filter by parent term, search by name, hide/show empty terms, and control sorting. Returns up to 500 terms. ' .
+			'Use this to browse available terms, find specific categories/tags, or build navigation menus from taxonomy hierarchies. ' .
+			'Each term includes post count, parent info, and full details.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

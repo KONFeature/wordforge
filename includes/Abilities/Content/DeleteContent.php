@@ -31,7 +31,13 @@ class DeleteContent extends AbstractAbility {
      * {@inheritDoc}
      */
     public function get_description(): string {
-        return __( 'Delete (trash or permanently remove) a post, page, or custom post type.', 'wordforge' );
+        return __(
+            'Delete WordPress content (post, page, or custom post type). By default, content is moved to trash (soft delete) ' .
+            'where it can be restored later. Use force=true for permanent deletion (cannot be undone). Permanently deleting ' .
+            'content also removes all associated metadata, comments, and revisions. Use with caution, especially with force=true. ' .
+            'This is a destructive operation that requires delete_posts capability.',
+            'wordforge'
+        );
     }
 
     /**
@@ -51,14 +57,53 @@ class DeleteContent extends AbstractAbility {
             'properties' => [
                 'id' => [
                     'type'        => 'integer',
-                    'description' => 'The post ID to delete.',
+                    'description' => 'Post ID of the content to delete. Required to identify which content to remove.',
+                    'minimum'     => 1,
                 ],
                 'force' => [
                     'type'        => 'boolean',
-                    'description' => 'Permanently delete instead of moving to trash.',
+                    'description' => 'Permanent deletion flag. false (default) = move to trash (recoverable), true = permanently delete (cannot be undone, removes all metadata, comments, and revisions). Use true with extreme caution.',
                     'default'     => false,
                 ],
             ],
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get_output_schema(): array {
+        return [
+            'type'       => 'object',
+            'properties' => [
+                'success' => [
+                    'type'        => 'boolean',
+                    'description' => 'Whether the deletion was successful.',
+                ],
+                'data' => [
+                    'type'        => 'object',
+                    'description' => 'Deletion confirmation details.',
+                    'properties'  => [
+                        'id' => [
+                            'type'        => 'integer',
+                            'description' => 'ID of the deleted content.',
+                        ],
+                        'deleted' => [
+                            'type'        => 'boolean',
+                            'description' => 'Confirmation that content was deleted (always true on success).',
+                        ],
+                        'force' => [
+                            'type'        => 'boolean',
+                            'description' => 'Whether permanent deletion was used (true) or content was trashed (false).',
+                        ],
+                    ],
+                ],
+                'message' => [
+                    'type'        => 'string',
+                    'description' => 'Human-readable message indicating the deletion action taken.',
+                ],
+            ],
+            'required'   => [ 'success', 'data' ],
         ];
     }
 

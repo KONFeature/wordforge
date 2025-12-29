@@ -21,7 +21,13 @@ class GetProduct extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Get a single WooCommerce product by ID or SKU.', 'wordforge' );
+        return __(
+            'Retrieve complete details about a specific WooCommerce product. Can fetch by product ID or SKU. Returns full product data ' .
+            'including pricing, inventory, dimensions, images, categories, attributes, and metadata. For variable products, optionally ' .
+            'includes all variations with their specific attributes and pricing. Use this to view product details before updates or to ' .
+            'extract product information for external systems.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {

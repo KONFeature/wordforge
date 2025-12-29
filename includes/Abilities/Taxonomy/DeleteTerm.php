@@ -21,7 +21,13 @@ class DeleteTerm extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Delete a taxonomy term. Posts using this term will have it removed.', 'wordforge' );
+		return __(
+			'Permanently delete a taxonomy term (category, tag, or custom taxonomy). This action removes the term from the database ' .
+			'and from all posts/products using it. Posts will simply have this term removed (not deleted). If deleting a hierarchical ' .
+			'term with children, child terms become top-level. Cannot be undone. Use with caution - consider reassigning posts to ' .
+			'another term first if needed.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

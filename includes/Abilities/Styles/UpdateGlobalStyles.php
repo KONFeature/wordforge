@@ -17,7 +17,12 @@ class UpdateGlobalStyles extends AbstractAbility {
     }
 
     public function get_description(): string {
-        return __( 'Update global styles (theme.json) settings - colors, typography, spacing, etc.', 'wordforge' );
+        return __(
+            'Update global styles configuration (theme.json) to modify site-wide design including color palettes, typography, spacing, and element ' .
+            'styles. Supports merging with existing styles (default) or complete replacement. Changes affect entire site immediately. Use this to ' .
+            'customize FSE theme appearance, update color schemes, modify typography scales, or adjust spacing presets. Requires Full Site Editing support.',
+            'wordforge'
+        );
     }
 
     public function get_capability(): string {
