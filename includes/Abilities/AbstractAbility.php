@@ -89,21 +89,34 @@ abstract class AbstractAbility {
     }
 
     /**
-     * Get the capability required to use this ability.
+     * Get the capabilities required to use this ability.
+     * Returns a single capability or an array (user must have at least one).
      *
-     * @return string
+     * @return string|array<string>
      */
-    public function get_capability(): string {
+    public function get_capability(): string|array {
         return 'edit_posts';
     }
 
     /**
      * Check if the current user has permission to use this ability.
+     * For array capabilities, user must have at least one.
      *
      * @return bool
      */
     public function check_permission(): bool {
-        return current_user_can( $this->get_capability() );
+        $capabilities = $this->get_capability();
+
+        if ( is_array( $capabilities ) ) {
+            foreach ( $capabilities as $cap ) {
+                if ( current_user_can( $cap ) ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return current_user_can( $capabilities );
     }
 
     /**

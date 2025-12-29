@@ -6,8 +6,7 @@ namespace WordForge;
 
 use WordForge\Abilities\Content\ListContent;
 use WordForge\Abilities\Content\GetContent;
-use WordForge\Abilities\Content\CreateContent;
-use WordForge\Abilities\Content\UpdateContent;
+use WordForge\Abilities\Content\SaveContent;
 use WordForge\Abilities\Content\DeleteContent;
 use WordForge\Abilities\Blocks\GetPageBlocks;
 use WordForge\Abilities\Blocks\UpdatePageBlocks;
@@ -20,8 +19,7 @@ use WordForge\Abilities\Media\UploadMedia;
 use WordForge\Abilities\Media\UpdateMedia;
 use WordForge\Abilities\Media\DeleteMedia;
 use WordForge\Abilities\Taxonomy\ListTerms;
-use WordForge\Abilities\Taxonomy\CreateTerm;
-use WordForge\Abilities\Taxonomy\UpdateTerm;
+use WordForge\Abilities\Taxonomy\SaveTerm;
 use WordForge\Abilities\Taxonomy\DeleteTerm;
 use WordForge\Abilities\Templates\ListTemplates;
 use WordForge\Abilities\Templates\GetTemplate;
@@ -31,23 +29,21 @@ use WordForge\Abilities\Prompts\ContentReviewPrompt;
 use WordForge\Abilities\Prompts\SEOOptimizationPrompt;
 use WordForge\Abilities\WooCommerce\ListProducts;
 use WordForge\Abilities\WooCommerce\GetProduct;
-use WordForge\Abilities\WooCommerce\CreateProduct;
-use WordForge\Abilities\WooCommerce\UpdateProduct;
+use WordForge\Abilities\WooCommerce\SaveProduct;
 use WordForge\Abilities\WooCommerce\DeleteProduct;
 
 class AbilityRegistry {
 
 	private const CORE_ABILITIES = [
-		'wordforge/list-content'       => ListContent::class,
-		'wordforge/get-content'        => GetContent::class,
-		'wordforge/create-content'     => CreateContent::class,
-		'wordforge/update-content'     => UpdateContent::class,
-		'wordforge/delete-content'     => DeleteContent::class,
-		'wordforge/get-page-blocks'    => GetPageBlocks::class,
-		'wordforge/update-page-blocks' => UpdatePageBlocks::class,
-		'wordforge/get-global-styles'  => GetGlobalStyles::class,
+		'wordforge/list-content'         => ListContent::class,
+		'wordforge/get-content'          => GetContent::class,
+		'wordforge/save-content'         => SaveContent::class,
+		'wordforge/delete-content'       => DeleteContent::class,
+		'wordforge/get-page-blocks'      => GetPageBlocks::class,
+		'wordforge/update-page-blocks'   => UpdatePageBlocks::class,
+		'wordforge/get-global-styles'    => GetGlobalStyles::class,
 		'wordforge/update-global-styles' => UpdateGlobalStyles::class,
-		'wordforge/get-block-styles'   => GetBlockStyles::class,
+		'wordforge/get-block-styles'     => GetBlockStyles::class,
 	];
 
 	private const MEDIA_ABILITIES = [
@@ -59,10 +55,9 @@ class AbilityRegistry {
 	];
 
 	private const TAXONOMY_ABILITIES = [
-		'wordforge/list-terms'   => ListTerms::class,
-		'wordforge/create-term'  => CreateTerm::class,
-		'wordforge/update-term'  => UpdateTerm::class,
-		'wordforge/delete-term'  => DeleteTerm::class,
+		'wordforge/list-terms'  => ListTerms::class,
+		'wordforge/save-term'   => SaveTerm::class,
+		'wordforge/delete-term' => DeleteTerm::class,
 	];
 
 	private const TEMPLATE_ABILITIES = [
@@ -80,8 +75,7 @@ class AbilityRegistry {
 	private const WOOCOMMERCE_ABILITIES = [
 		'wordforge/list-products'  => ListProducts::class,
 		'wordforge/get-product'    => GetProduct::class,
-		'wordforge/create-product' => CreateProduct::class,
-		'wordforge/update-product' => UpdateProduct::class,
+		'wordforge/save-product'   => SaveProduct::class,
 		'wordforge/delete-product' => DeleteProduct::class,
 	];
 

@@ -428,8 +428,7 @@ class SettingsPage {
             'Content' => [
                 [ 'name' => 'wordforge/list-content', 'description' => 'List posts, pages, CPTs' ],
                 [ 'name' => 'wordforge/get-content', 'description' => 'Get single content item' ],
-                [ 'name' => 'wordforge/create-content', 'description' => 'Create new content' ],
-                [ 'name' => 'wordforge/update-content', 'description' => 'Update existing content' ],
+                [ 'name' => 'wordforge/save-content', 'description' => 'Create or update content' ],
                 [ 'name' => 'wordforge/delete-content', 'description' => 'Delete content' ],
             ],
             'Media' => [
@@ -441,8 +440,7 @@ class SettingsPage {
             ],
             'Taxonomy' => [
                 [ 'name' => 'wordforge/list-terms', 'description' => 'List categories, tags, etc.' ],
-                [ 'name' => 'wordforge/create-term', 'description' => 'Create new term' ],
-                [ 'name' => 'wordforge/update-term', 'description' => 'Update existing term' ],
+                [ 'name' => 'wordforge/save-term', 'description' => 'Create or update term' ],
                 [ 'name' => 'wordforge/delete-term', 'description' => 'Delete term' ],
             ],
             'Blocks' => [
@@ -467,8 +465,7 @@ class SettingsPage {
             'WooCommerce' => [
                 [ 'name' => 'wordforge/list-products', 'description' => 'List products' ],
                 [ 'name' => 'wordforge/get-product', 'description' => 'Get product details' ],
-                [ 'name' => 'wordforge/create-product', 'description' => 'Create product' ],
-                [ 'name' => 'wordforge/update-product', 'description' => 'Update product' ],
+                [ 'name' => 'wordforge/save-product', 'description' => 'Create or update product' ],
                 [ 'name' => 'wordforge/delete-product', 'description' => 'Delete product' ],
             ],
         ];

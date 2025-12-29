@@ -69,8 +69,7 @@ composer require flavor-studio/wordforge
 |------|-------------|
 | `wordforge/list-content` | List posts, pages, or custom post types |
 | `wordforge/get-content` | Get a single content item by ID or slug |
-| `wordforge/create-content` | Create new content |
-| `wordforge/update-content` | Update existing content |
+| `wordforge/save-content` | Create or update content |
 | `wordforge/delete-content` | Delete or trash content |
 
 ### Media
@@ -86,8 +85,7 @@ composer require flavor-studio/wordforge
 | Tool | Description |
 |------|-------------|
 | `wordforge/list-terms` | List terms for any taxonomy |
-| `wordforge/create-term` | Create a new term |
-| `wordforge/update-term` | Update an existing term |
+| `wordforge/save-term` | Create or update a term |
 | `wordforge/delete-term` | Delete a term |
 
 ### Blocks & Templates
@@ -111,8 +109,7 @@ composer require flavor-studio/wordforge
 |------|-------------|
 | `wordforge/list-products` | List products |
 | `wordforge/get-product` | Get product details |
-| `wordforge/create-product` | Create a product |
-| `wordforge/update-product` | Update a product |
+| `wordforge/save-product` | Create or update a product |
 | `wordforge/delete-product` | Delete a product |
 
 *WooCommerce tools only available when WooCommerce is active.
@@ -140,10 +137,10 @@ composer require flavor-studio/wordforge
 }
 ```
 
-### Create a New Page
+### Save a Page
 ```json
 {
-  "tool": "wordforge/create-content",
+  "tool": "wordforge/save-content",
   "arguments": {
     "title": "About Us",
     "content": "<!-- wp:paragraph --><p>Welcome to our site!</p><!-- /wp:paragraph -->",
@@ -172,18 +169,17 @@ composer require flavor-studio/wordforge
 }
 ```
 
-### Create a WooCommerce Product
+### Save a WooCommerce Product
 ```json
 {
-  "tool": "wordforge/create-product",
+  "tool": "wordforge/save-product",
   "arguments": {
     "name": "Awesome T-Shirt",
     "type": "simple",
     "regular_price": "29.99",
     "description": "A comfortable cotton t-shirt",
     "categories": ["clothing", "t-shirts"],
-    "stock_status": "instock",
-    "stock_quantity": 100
+    "stock_status": "instock"
   }
 }
 ```
