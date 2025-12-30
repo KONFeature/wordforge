@@ -43,7 +43,16 @@ class ServerProcess {
 			return count( $output ) > 1;
 		}
 
-		return file_exists( "/proc/{$pid}" ) || posix_kill( $pid, 0 );
+		if ( file_exists( "/proc/{$pid}" ) ) {
+			return true;
+		}
+
+		if ( function_exists( 'posix_kill' ) ) {
+			return posix_kill( $pid, 0 );
+		}
+
+		exec( "kill -0 {$pid} 2>/dev/null", $output, $result );
+		return 0 === $result;
 	}
 
 	public static function get_pid(): ?int {
@@ -169,12 +178,19 @@ class ServerProcess {
 
 		if ( self::is_windows() ) {
 			exec( "taskkill /F /PID {$pid} 2>NUL" );
-		} else {
+		} elseif ( function_exists( 'posix_kill' ) ) {
 			posix_kill( $pid, SIGTERM );
 			usleep( 500000 );
 
 			if ( self::is_running() ) {
 				posix_kill( $pid, SIGKILL );
+			}
+		} else {
+			exec( "kill -15 {$pid} 2>/dev/null" );
+			usleep( 500000 );
+
+			if ( self::is_running() ) {
+				exec( "kill -9 {$pid} 2>/dev/null" );
 			}
 		}
 

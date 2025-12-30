@@ -9,16 +9,23 @@ console.log('[WordForge] Script loaded');
         constructor(container) {
             console.log('[WordForge] Constructor called');
             this.container = container;
-            this.restUrl = container.dataset.restUrl;
-            this.nonce = container.dataset.nonce;
+            
+            // Use admin-ajax.php instead of REST API
+            if (typeof wordforgeOpenCode === 'undefined') {
+                this.showError('Missing configuration. wordforgeOpenCode not defined.');
+                return;
+            }
+            
+            this.ajaxUrl = wordforgeOpenCode.ajaxUrl;
+            this.nonce = wordforgeOpenCode.nonce;
             this.serverUrl = null;
             this.serverPort = null;
 
-            console.log('[WordForge] REST URL:', this.restUrl);
+            console.log('[WordForge] AJAX URL:', this.ajaxUrl);
             console.log('[WordForge] Nonce:', this.nonce ? 'present' : 'MISSING');
 
-            if (!this.restUrl || !this.nonce) {
-                this.showError('Missing configuration. REST URL or nonce not set.');
+            if (!this.ajaxUrl || !this.nonce) {
+                this.showError('Missing configuration. AJAX URL or nonce not set.');
                 return;
             }
 
@@ -38,11 +45,16 @@ console.log('[WordForge] Script loaded');
         }
 
         async fetchStatus() {
-            const url = `${this.restUrl}/opencode/status`;
-            console.log('[WordForge] Fetching:', url);
+            console.log('[WordForge] Fetching status via AJAX...');
 
-            const response = await fetch(url, {
-                headers: { 'X-WP-Nonce': this.nonce }
+            const formData = new FormData();
+            formData.append('action', 'wordforge_opencode_status');
+            formData.append('nonce', this.nonce);
+
+            const response = await fetch(this.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
             });
 
             console.log('[WordForge] Response status:', response.status);
@@ -50,22 +62,42 @@ console.log('[WordForge] Script loaded');
             if (!response.ok) {
                 const text = await response.text();
                 console.error('[WordForge] Error response:', text);
-                throw new Error(`API error: ${response.status} - ${text.substring(0, 100)}`);
+                throw new Error(`AJAX error: ${response.status} - ${text.substring(0, 100)}`);
             }
 
-            return response.json();
+            const result = await response.json();
+            
+            // WordPress AJAX returns { success: true, data: {...} }
+            if (!result.success) {
+                throw new Error(result.data?.error || 'Unknown error');
+            }
+            
+            return result.data;
         }
 
-        async apiCall(endpoint, method = 'POST') {
-            const response = await fetch(`${this.restUrl}${endpoint}`, {
-                method,
-                headers: { 'X-WP-Nonce': this.nonce }
+        async apiCall(action) {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('nonce', this.nonce);
+
+            const response = await fetch(this.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
             });
+
             if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.error || data.message || `HTTP ${response.status}`);
+                const text = await response.text();
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
             }
-            return response.json();
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.data?.error || 'Unknown error');
+            }
+            
+            return result.data;
         }
 
         render(status) {
@@ -164,7 +196,7 @@ console.log('[WordForge] Script loaded');
                     <span class="dashicons dashicons-warning"></span>
                     <p><strong>Error:</strong> ${this.escapeHtml(message)}</p>
                     <p style="font-size:12px;color:#666;">
-                        REST URL: <code>${this.escapeHtml(this.restUrl || 'not set')}</code><br>
+                        AJAX URL: <code>${this.escapeHtml(this.ajaxUrl || 'not set')}</code><br>
                         Check browser console for details.
                     </p>
                     <button type="button" class="button" id="wf-retry-btn">Retry</button>
@@ -183,7 +215,7 @@ console.log('[WordForge] Script loaded');
 
             try {
                 console.log('[WordForge] Starting download...');
-                await this.apiCall('/opencode/download');
+                await this.apiCall('wordforge_opencode_download');
                 console.log('[WordForge] Download complete, refreshing status...');
                 const status = await this.fetchStatus();
                 this.render(status);
@@ -204,7 +236,7 @@ console.log('[WordForge] Script loaded');
 
             try {
                 console.log('[WordForge] Starting server...');
-                const result = await this.apiCall('/opencode/start');
+                const result = await this.apiCall('wordforge_opencode_start');
                 console.log('[WordForge] Server started:', result);
                 this.serverUrl = result.url;
                 this.serverPort = result.port;
@@ -221,7 +253,7 @@ console.log('[WordForge] Script loaded');
         async doStop() {
             try {
                 console.log('[WordForge] Stopping server...');
-                await this.apiCall('/opencode/stop');
+                await this.apiCall('wordforge_opencode_stop');
                 console.log('[WordForge] Server stopped');
                 const status = await this.fetchStatus();
                 this.render(status);

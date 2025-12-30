@@ -11,6 +11,11 @@ class SettingsPage {
         add_action( 'admin_init', [ $this, 'register_settings' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_styles' ] );
         add_action( 'wp_ajax_wordforge_test_mcp', [ $this, 'ajax_test_mcp' ] );
+        add_action( 'wp_ajax_wordforge_opencode_status', [ $this, 'ajax_opencode_status' ] );
+        add_action( 'wp_ajax_wordforge_opencode_download', [ $this, 'ajax_opencode_download' ] );
+        add_action( 'wp_ajax_wordforge_opencode_start', [ $this, 'ajax_opencode_start' ] );
+        add_action( 'wp_ajax_wordforge_opencode_stop', [ $this, 'ajax_opencode_stop' ] );
+        add_action( 'wp_ajax_wordforge_opencode_cleanup', [ $this, 'ajax_opencode_cleanup' ] );
     }
 
     public function add_menu_page(): void {
@@ -55,6 +60,10 @@ class SettingsPage {
             WORDFORGE_VERSION,
             true
         );
+        wp_localize_script( 'wordforge-opencode', 'wordforgeOpenCode', [
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'wordforge_opencode' ),
+        ] );
     }
 
     public function render_page(): void {
@@ -269,8 +278,8 @@ class SettingsPage {
 
             <script>
             (function() {
-                const restUrl = <?php echo wp_json_encode( rest_url( 'wordforge/v1' ) ); ?>;
-                const nonce = <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>;
+                const ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+                const nonce = <?php echo wp_json_encode( wp_create_nonce( 'wordforge_opencode' ) ); ?>;
                 const result = document.getElementById('wf-dbg-result');
 
                 const log = (msg, type = 'info') => {
@@ -279,20 +288,20 @@ class SettingsPage {
                     console.log('[WordForge Debug]', msg);
                 };
 
-                const apiCall = async (endpoint, method = 'GET') => {
-                    const response = await fetch(restUrl + endpoint, {
-                        method,
-                        headers: { 'X-WP-Nonce': nonce }
-                    });
+                const ajaxCall = async (action) => {
+                    const formData = new FormData();
+                    formData.append('action', action);
+                    formData.append('nonce', nonce);
+                    const response = await fetch(ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
-                    return data;
+                    if (!data.success) throw new Error(data.data?.error || 'Unknown error');
+                    return data.data;
                 };
 
                 document.getElementById('wf-dbg-test-api')?.addEventListener('click', async () => {
-                    log('Testing REST API...');
+                    log('Testing AJAX API...');
                     try {
-                        const data = await apiCall('/opencode/status');
+                        const data = await ajaxCall('wordforge_opencode_status');
                         log('✓ API Working - Binary: ' + (data.binary?.is_installed ? 'Yes' : 'No') + ', Server: ' + (data.server?.running ? 'Running' : 'Stopped'), 'success');
                         console.log('Full status:', data);
                     } catch (e) {
@@ -314,7 +323,7 @@ class SettingsPage {
                 document.getElementById('wf-dbg-download')?.addEventListener('click', async () => {
                     log('Downloading binary... (this may take a minute)');
                     try {
-                        const data = await apiCall('/opencode/download', 'POST');
+                        const data = await ajaxCall('wordforge_opencode_download');
                         log('✓ Downloaded! Version: ' + data.version, 'success');
                         setTimeout(() => location.reload(), 1500);
                     } catch (e) {
@@ -325,7 +334,7 @@ class SettingsPage {
                 document.getElementById('wf-dbg-start')?.addEventListener('click', async () => {
                     log('Starting server...');
                     try {
-                        const data = await apiCall('/opencode/start', 'POST');
+                        const data = await ajaxCall('wordforge_opencode_start');
                         log('✓ Server started on port ' + data.port + ' - URL: ' + data.url, 'success');
                         setTimeout(() => location.reload(), 1500);
                     } catch (e) {
@@ -336,7 +345,7 @@ class SettingsPage {
                 document.getElementById('wf-dbg-stop')?.addEventListener('click', async () => {
                     log('Stopping server...');
                     try {
-                        await apiCall('/opencode/stop', 'POST');
+                        await ajaxCall('wordforge_opencode_stop');
                         log('✓ Server stopped', 'success');
                         setTimeout(() => location.reload(), 1500);
                     } catch (e) {
@@ -348,7 +357,7 @@ class SettingsPage {
                     if (!confirm('This will stop the server and delete the binary. Continue?')) return;
                     log('Cleaning up...');
                     try {
-                        await apiCall('/opencode/cleanup', 'POST');
+                        await ajaxCall('wordforge_opencode_cleanup');
                         log('✓ Cleanup complete', 'success');
                         setTimeout(() => location.reload(), 1500);
                     } catch (e) {
@@ -705,6 +714,99 @@ class SettingsPage {
         }
 
         wp_send_json_success( [ 'message' => 'Use the browser-based test instead' ] );
+    }
+
+    public function ajax_opencode_status(): void {
+        check_ajax_referer( 'wordforge_opencode', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'error' => 'Unauthorized' ], 403 );
+        }
+
+        $binary_info   = \WordForge\OpenCode\BinaryManager::get_platform_info();
+        $server_status = \WordForge\OpenCode\ServerProcess::get_status();
+
+        wp_send_json_success( [
+            'binary' => $binary_info,
+            'server' => $server_status,
+        ] );
+    }
+
+    public function ajax_opencode_download(): void {
+        check_ajax_referer( 'wordforge_opencode', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'error' => 'Unauthorized' ], 403 );
+        }
+
+        $result = \WordForge\OpenCode\BinaryManager::download_latest();
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'error' => $result->get_error_message() ], 500 );
+        }
+
+        wp_send_json_success( $result );
+    }
+
+    public function ajax_opencode_start(): void {
+        check_ajax_referer( 'wordforge_opencode', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'error' => 'Unauthorized' ], 403 );
+        }
+
+        // Gather provider keys for environment.
+        $env = [];
+        foreach ( \WordForge\OpenCode\ProviderKeyStorage::get_supported_providers() as $id => $info ) {
+            $key = \WordForge\OpenCode\ProviderKeyStorage::get_key( $id );
+            if ( $key ) {
+                $env[ $info['env'] ] = $key;
+            }
+        }
+
+        $result = \WordForge\OpenCode\ServerProcess::start( $env );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'error' => $result->get_error_message() ], 500 );
+        }
+
+        wp_send_json_success( $result );
+    }
+
+    public function ajax_opencode_stop(): void {
+        check_ajax_referer( 'wordforge_opencode', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'error' => 'Unauthorized' ], 403 );
+        }
+
+        $result = \WordForge\OpenCode\ServerProcess::stop();
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'error' => $result->get_error_message() ], 500 );
+        }
+
+        wp_send_json_success( [ 'stopped' => true ] );
+    }
+
+    public function ajax_opencode_cleanup(): void {
+        check_ajax_referer( 'wordforge_opencode', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'error' => 'Unauthorized' ], 403 );
+        }
+
+        // Stop server first.
+        \WordForge\OpenCode\ServerProcess::stop();
+
+        // Delete binary.
+        $result = \WordForge\OpenCode\BinaryManager::cleanup();
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'error' => $result->get_error_message() ], 500 );
+        }
+
+        wp_send_json_success( [ 'cleaned' => true ] );
     }
 
     private function get_registered_abilities(): array {
