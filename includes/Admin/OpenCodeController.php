@@ -135,9 +135,9 @@ class OpenCodeController {
 			self::NAMESPACE,
 			'/opencode/proxy/(?P<path>.*)',
 			[
-				'methods'             => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ],
+				'methods'             => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS' ],
 				'callback'            => [ $this, 'proxy_to_opencode' ],
-				'permission_callback' => [ $this, 'check_permission' ],
+				'permission_callback' => [ $this, 'check_proxy_permission' ],
 				'args'                => [
 					'path' => [
 						'required' => false,
@@ -150,6 +150,25 @@ class OpenCodeController {
 
 	public function check_permission(): bool {
 		return current_user_can( 'manage_options' );
+	}
+
+	public function check_proxy_permission( WP_REST_Request $request ): bool {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$token = $request->get_param( '_wf_token' );
+		if ( $token ) {
+			$user_id = self::verify_mcp_auth_token( $token );
+			if ( $user_id ) {
+				$user = get_user_by( 'id', $user_id );
+				if ( $user && user_can( $user, 'manage_options' ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	public function get_status(): WP_REST_Response {
@@ -342,64 +361,158 @@ class OpenCodeController {
 		return (int) $data['user_id'];
 	}
 
-	public function proxy_to_opencode( WP_REST_Request $request ): WP_REST_Response {
+	public function proxy_to_opencode( WP_REST_Request $request ): void {
+		$this->send_cors_headers();
+
+		$method = $request->get_method();
+		if ( 'OPTIONS' === $method ) {
+			status_header( 204 );
+			exit;
+		}
+
 		$server_url = ServerProcess::get_server_url();
 
 		if ( ! $server_url ) {
-			return new WP_REST_Response(
-				[ 'error' => 'OpenCode server is not running' ],
-				503
-			);
+			status_header( 503 );
+			header( 'Content-Type: application/json' );
+			echo wp_json_encode( [ 'error' => 'OpenCode server is not running' ] );
+			exit;
 		}
 
-		$path   = $request->get_param( 'path' ) ?: '';
-		$method = $request->get_method();
-		$body   = $request->get_body();
-
+		$path       = $request->get_param( 'path' ) ?: '';
 		$target_url = rtrim( $server_url, '/' ) . '/' . ltrim( $path, '/' );
+
+		$query_params = $request->get_query_params();
+		unset( $query_params['_wf_token'], $query_params['path'], $query_params['rest_route'] );
+		if ( ! empty( $query_params ) ) {
+			$target_url .= '?' . http_build_query( $query_params );
+		}
+
+		$headers = [
+			'Accept' => $request->get_header( 'accept' ) ?: '*/*',
+		];
+
+		$content_type = $request->get_header( 'content-type' );
+		if ( $content_type ) {
+			$headers['Content-Type'] = $content_type;
+		}
+
+		$opencode_dir = $request->get_header( 'x-opencode-directory' );
+		if ( $opencode_dir ) {
+			$headers['X-Opencode-Directory'] = $opencode_dir;
+		}
 
 		$args = [
 			'method'  => $method,
-			'timeout' => 60,
-			'headers' => [
-				'Content-Type' => 'application/json',
-				'Accept'       => 'text/html, application/json, */*',
-			],
+			'timeout' => 120,
+			'headers' => $headers,
 		];
 
+		$body = $request->get_body();
 		if ( in_array( $method, [ 'POST', 'PUT', 'PATCH' ], true ) && $body ) {
 			$args['body'] = $body;
 		}
 
+		$is_sse = str_contains( $request->get_header( 'accept' ) ?? '', 'text/event-stream' );
+
+		if ( $is_sse ) {
+			$this->proxy_sse_request( $target_url, $args );
+		} else {
+			$this->proxy_standard_request( $target_url, $args );
+		}
+	}
+
+	private function send_cors_headers(): void {
+		$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+		$allowed_origins = [
+			'https://app.opencode.ai',
+			'http://localhost:3000',
+		];
+
+		if ( in_array( $origin, $allowed_origins, true ) ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+		} else {
+			header( 'Access-Control-Allow-Origin: https://app.opencode.ai' );
+		}
+
+		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Accept, X-Opencode-Directory' );
+		header( 'Access-Control-Max-Age: 86400' );
+	}
+
+	private function proxy_standard_request( string $target_url, array $args ): void {
 		$response = wp_remote_request( $target_url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			return new WP_REST_Response(
-				[ 'error' => 'Proxy error: ' . $response->get_error_message() ],
-				502
-			);
+			status_header( 502 );
+			header( 'Content-Type: application/json' );
+			echo wp_json_encode( [ 'error' => 'Proxy error: ' . $response->get_error_message() ] );
+			exit;
 		}
 
 		$status_code  = wp_remote_retrieve_response_code( $response );
 		$content_type = wp_remote_retrieve_header( $response, 'content-type' );
 		$body         = wp_remote_retrieve_body( $response );
 
-		$wp_response = new WP_REST_Response();
-		$wp_response->set_status( $status_code );
+		status_header( $status_code );
 
-		if ( str_contains( $content_type, 'text/html' ) ) {
-			$wp_response->set_data( [ 'html' => $body ] );
-			$wp_response->header( 'X-WordForge-Content-Type', 'text/html' );
-		} elseif ( str_contains( $content_type, 'application/json' ) ) {
-			$wp_response->set_data( json_decode( $body, true ) );
-		} else {
-			$wp_response->set_data( [ 'raw' => $body ] );
+		if ( $content_type ) {
+			header( 'Content-Type: ' . $content_type );
 		}
 
-		return $wp_response;
+		echo $body;
+		exit;
+	}
+
+	private function proxy_sse_request( string $target_url, array $args ): void {
+		header( 'Content-Type: text/event-stream' );
+		header( 'Cache-Control: no-cache' );
+		header( 'Connection: keep-alive' );
+		header( 'X-Accel-Buffering: no' );
+
+		if ( ob_get_level() ) {
+			ob_end_flush();
+		}
+
+		$ch = curl_init( $target_url );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, [
+			'Accept: text/event-stream',
+			'Cache-Control: no-cache',
+		] );
+		curl_setopt( $ch, CURLOPT_WRITEFUNCTION, function ( $ch, $data ) {
+			echo $data;
+			if ( ob_get_level() ) {
+				ob_flush();
+			}
+			flush();
+			return strlen( $data );
+		} );
+		curl_setopt( $ch, CURLOPT_TIMEOUT, 0 );
+		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+
+		curl_exec( $ch );
+		curl_close( $ch );
+		exit;
 	}
 
 	public static function get_opencode_admin_url(): string {
 		return admin_url( 'admin.php?page=wordforge-opencode' );
+	}
+
+	public static function get_proxy_url_with_token(): string {
+		$user = wp_get_current_user();
+		$time = time();
+		$data = [
+			'user_id' => $user->ID,
+			'exp'     => $time + 3600,
+			'iat'     => $time,
+		];
+
+		$payload   = base64_encode( wp_json_encode( $data ) );
+		$signature = hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) );
+		$token     = $payload . '.' . $signature;
+
+		return rest_url( 'wordforge/v1/opencode/proxy' ) . '?_wf_token=' . urlencode( $token );
 	}
 }
