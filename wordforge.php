@@ -222,9 +222,8 @@ function cleanup_opencode_on_deactivate(): void {
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\cleanup_opencode_on_deactivate' );
 
 function cleanup_opencode_on_uninstall(): void {
-    OpenCode\ServerProcess::stop();
-    OpenCode\BinaryManager::cleanup();
-    OpenCode\ProviderKeyStorage::delete_all();
+	OpenCode\ServerProcess::stop();
+	OpenCode\BinaryManager::cleanup();
 }
 
 if ( ! function_exists( 'wordforge_uninstall' ) ) {

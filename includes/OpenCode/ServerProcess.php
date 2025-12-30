@@ -88,7 +88,7 @@ class ServerProcess {
 	}
 
 	/**
-	 * @param array{providers?: array, mcp_auth_token?: string} $options
+	 * @param array{mcp_auth_token?: string} $options
 	 * @return array{success: bool, url?: string, port?: int, error?: string}
 	 */
 	public static function start( array $options = [] ): array {
@@ -270,15 +270,9 @@ class ServerProcess {
 	}
 
 	private static function generate_config( array $options, int $port ): array {
-		$config = [
+		return [
 			'$schema' => 'https://opencode.ai/config.json',
 		];
-
-		if ( ! empty( $options['providers'] ) ) {
-			$config['provider'] = $options['providers'];
-		}
-
-		return $config;
 	}
 
 	private static function register_wordforge_mcp( int $port, string $auth_token ): void {

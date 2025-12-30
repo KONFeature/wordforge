@@ -6,7 +6,6 @@ namespace WordForge\Admin;
 
 use WordForge\OpenCode\BinaryManager;
 use WordForge\OpenCode\ServerProcess;
-use WordForge\OpenCode\ProviderKeyStorage;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -72,57 +71,6 @@ class OpenCodeController {
 
 		register_rest_route(
 			self::NAMESPACE,
-			'/opencode/providers',
-			[
-				'methods'             => 'GET',
-				'callback'            => [ $this, 'get_providers' ],
-				'permission_callback' => [ $this, 'check_permission' ],
-			]
-		);
-
-		register_rest_route(
-			self::NAMESPACE,
-			'/opencode/providers/(?P<provider>[a-z]+)',
-			[
-				[
-					'methods'             => 'PUT',
-					'callback'            => [ $this, 'save_provider' ],
-					'permission_callback' => [ $this, 'check_permission' ],
-					'args'                => [
-						'provider' => [
-							'required'          => true,
-							'validate_callback' => function ( $param ) {
-								return array_key_exists( $param, ProviderKeyStorage::get_supported_providers() );
-							},
-						],
-						'key'      => [
-							'required' => true,
-							'type'     => 'string',
-						],
-						'model'    => [
-							'required' => false,
-							'type'     => 'string',
-						],
-					],
-				],
-				[
-					'methods'             => 'DELETE',
-					'callback'            => [ $this, 'delete_provider' ],
-					'permission_callback' => [ $this, 'check_permission' ],
-					'args'                => [
-						'provider' => [
-							'required'          => true,
-							'validate_callback' => function ( $param ) {
-								return array_key_exists( $param, ProviderKeyStorage::get_supported_providers() );
-							},
-						],
-					],
-				],
-			]
-		);
-
-		register_rest_route(
-			self::NAMESPACE,
 			'/opencode/session-token',
 			[
 				'methods'             => 'POST',
@@ -177,10 +125,9 @@ class OpenCodeController {
 		$update_info   = BinaryManager::check_for_update();
 
 		return new WP_REST_Response( [
-			'binary'  => $binary_status,
-			'server'  => $server_status,
-			'update'  => is_wp_error( $update_info ) ? null : $update_info,
-			'hasKeys' => ProviderKeyStorage::has_any_key(),
+			'binary' => $binary_status,
+			'server' => $server_status,
+			'update' => is_wp_error( $update_info ) ? null : $update_info,
 		] );
 	}
 
@@ -213,7 +160,6 @@ class OpenCodeController {
 
 		$token  = $this->generate_mcp_auth_token();
 		$result = ServerProcess::start( [
-			'providers'      => ProviderKeyStorage::build_opencode_provider_config(),
 			'mcp_auth_token' => $token,
 		] );
 
@@ -250,62 +196,6 @@ class OpenCodeController {
 			'success' => true,
 			'binary'  => BinaryManager::get_platform_info(),
 			'server'  => ServerProcess::get_status(),
-		] );
-	}
-
-	public function get_providers(): WP_REST_Response {
-		$supported = ProviderKeyStorage::get_supported_providers();
-		$configured = [];
-
-		foreach ( $supported as $id => $info ) {
-			$key   = ProviderKeyStorage::get_key( $id );
-			$model = ProviderKeyStorage::get_model( $id );
-
-			$configured[ $id ] = [
-				'id'         => $id,
-				'name'       => $info['name'],
-				'models'     => $info['models'],
-				'configured' => ! empty( $key ),
-				'maskedKey'  => $key ? ProviderKeyStorage::mask_key( $key ) : null,
-				'model'      => $model,
-			];
-		}
-
-		return new WP_REST_Response( [
-			'providers'   => $configured,
-			'hasAnyKey'   => ProviderKeyStorage::has_any_key(),
-			'useOpenCode' => ! ProviderKeyStorage::has_any_key(),
-		] );
-	}
-
-	public function save_provider( WP_REST_Request $request ): WP_REST_Response {
-		$provider = $request->get_param( 'provider' );
-		$key      = $request->get_param( 'key' );
-		$model    = $request->get_param( 'model' );
-
-		$success = ProviderKeyStorage::set_key( $provider, $key, $model );
-
-		if ( ! $success ) {
-			return new WP_REST_Response(
-				[ 'error' => 'Failed to save provider key' ],
-				500
-			);
-		}
-
-		return new WP_REST_Response( [
-			'success'  => true,
-			'provider' => $provider,
-		] );
-	}
-
-	public function delete_provider( WP_REST_Request $request ): WP_REST_Response {
-		$provider = $request->get_param( 'provider' );
-
-		ProviderKeyStorage::delete_key( $provider );
-
-		return new WP_REST_Response( [
-			'success'  => true,
-			'provider' => $provider,
 		] );
 	}
 
