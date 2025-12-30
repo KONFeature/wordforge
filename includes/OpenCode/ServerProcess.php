@@ -47,8 +47,8 @@ class ServerProcess {
 			return true;
 		}
 
-		if ( function_exists( 'posix_kill' ) ) {
-			return posix_kill( $pid, 0 );
+		if ( \function_exists( 'posix_kill' ) ) {
+			return \posix_kill( $pid, 0 );
 		}
 
 		exec( "kill -0 {$pid} 2>/dev/null", $output, $result );
@@ -117,9 +117,12 @@ class ServerProcess {
 		$binary   = BinaryManager::get_binary_path();
 		$log_file = self::get_log_file();
 
+		$state_dir = self::get_state_dir();
+
 		if ( self::is_windows() ) {
 			$cmd = sprintf(
-				'start /B "" "%s" serve --port=%d --hostname=127.0.0.1 > "%s" 2>&1',
+				'set HOME=%s && start /B "" "%s" serve --port=%d --hostname=127.0.0.1 > "%s" 2>&1',
+				$state_dir,
 				$binary,
 				$port,
 				$log_file
@@ -128,8 +131,9 @@ class ServerProcess {
 			$pid = self::find_process_by_port( $port );
 		} else {
 			$cmd = sprintf(
-				'cd %s && %s serve --port=%d --hostname=127.0.0.1 > %s 2>&1 & echo $!',
-				escapeshellarg( self::get_state_dir() ),
+				'cd %s && HOME=%s %s serve --port=%d --hostname=127.0.0.1 > %s 2>&1 & echo $!',
+				escapeshellarg( $state_dir ),
+				escapeshellarg( $state_dir ),
 				escapeshellarg( $binary ),
 				$port,
 				escapeshellarg( $log_file )
@@ -178,12 +182,12 @@ class ServerProcess {
 
 		if ( self::is_windows() ) {
 			exec( "taskkill /F /PID {$pid} 2>NUL" );
-		} elseif ( function_exists( 'posix_kill' ) ) {
-			posix_kill( $pid, SIGTERM );
+		} elseif ( \function_exists( 'posix_kill' ) ) {
+			\posix_kill( $pid, 15 );
 			usleep( 500000 );
 
 			if ( self::is_running() ) {
-				posix_kill( $pid, SIGKILL );
+				\posix_kill( $pid, 9 );
 			}
 		} else {
 			exec( "kill -15 {$pid} 2>/dev/null" );

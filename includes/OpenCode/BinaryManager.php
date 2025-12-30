@@ -158,11 +158,11 @@ class BinaryManager {
 			$progress_callback( 'downloading', 'Downloading archive...' );
 		}
 
-		if ( ! function_exists( 'download_url' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
+		if ( ! \function_exists( 'download_url' ) ) {
+			require_once \ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		$temp_archive = download_url( $release['download_url'], 300 );
+		$temp_archive = \download_url( $release['download_url'], 300 );
 
 		if ( is_wp_error( $temp_archive ) ) {
 			return $temp_archive;

@@ -86,9 +86,9 @@ function get_endpoint_url(): string {
 }
 
 function init(): void {
+    new Admin\MenuManager();
     new Admin\SettingsPage();
     new Admin\OpenCodeController();
-    new Admin\OpenCodePage();
 
     if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
         add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
@@ -208,7 +208,7 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
 function add_settings_link( array $links ): array {
     $settings_link = sprintf(
         '<a href="%s">%s</a>',
-        esc_url( admin_url( 'options-general.php?page=wordforge' ) ),
+        esc_url( admin_url( 'admin.php?page=' . Admin\MenuManager::MENU_SLUG ) ),
         esc_html__( 'Settings', 'wordforge' )
     );
     array_unshift( $links, $settings_link );
