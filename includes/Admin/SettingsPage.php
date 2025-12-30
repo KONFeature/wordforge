@@ -48,6 +48,13 @@ class SettingsPage {
             return;
         }
         wp_add_inline_style( 'common', $this->get_inline_styles() );
+        wp_enqueue_script(
+            'wordforge-opencode',
+            WORDFORGE_PLUGIN_URL . 'assets/js/opencode-chat.js',
+            [],
+            WORDFORGE_VERSION,
+            true
+        );
     }
 
     public function render_page(): void {
@@ -67,6 +74,7 @@ class SettingsPage {
             </p>
 
             <div class="wordforge-cards">
+                <?php $this->render_opencode_card(); ?>
                 <?php $this->render_status_card( $mcp_active, $woo_active ); ?>
                 <?php $this->render_endpoint_settings_card( $settings ); ?>
                 <?php $this->render_abilities_card( $abilities, $woo_active ); ?>
@@ -74,6 +82,282 @@ class SettingsPage {
                 <?php $this->render_debug_card( $settings, $mcp_active ); ?>
             </div>
         </div>
+        <?php
+    }
+
+    private function render_opencode_card(): void {
+        ?>
+        <div class="wordforge-card wordforge-card-wide wordforge-opencode-card">
+            <h2>
+                <span class="dashicons dashicons-format-chat"></span>
+                <?php esc_html_e( 'AI Assistant', 'wordforge' ); ?>
+            </h2>
+
+            <div id="wordforge-opencode-app" data-rest-url="<?php echo esc_attr( rest_url( 'wordforge/v1' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>">
+                <div class="wordforge-opencode-loading">
+                    <span class="spinner is-active"></span>
+                    <?php esc_html_e( 'Loading AI Assistant...', 'wordforge' ); ?>
+                    <p style="font-size: 11px; color: #666; margin-top: 10px;">
+                        If this stays stuck, check:<br>
+                        1. Browser console (F12) for errors<br>
+                        2. Debug section below<br>
+                        3. REST API endpoint: <code style="font-size: 10px;"><?php echo esc_html( rest_url( 'wordforge/v1/opencode/status' ) ); ?></code>
+                    </p>
+                </div>
+            </div>
+
+            <?php $this->render_opencode_debug(); ?>
+        </div>
+        <?php
+    }
+
+    private function render_opencode_debug(): void {
+        $binary_info   = \WordForge\OpenCode\BinaryManager::get_platform_info();
+        $server_status = \WordForge\OpenCode\ServerProcess::get_status();
+        $has_keys      = \WordForge\OpenCode\ProviderKeyStorage::has_any_key();
+        $providers     = \WordForge\OpenCode\ProviderKeyStorage::get_supported_providers();
+        $configured    = [];
+
+        foreach ( $providers as $id => $info ) {
+            $key = \WordForge\OpenCode\ProviderKeyStorage::get_key( $id );
+            $configured[ $id ] = ! empty( $key );
+        }
+
+        ?>
+        <details class="wordforge-opencode-debug" style="margin-top: 20px; padding: 16px; background: #f6f7f7; border-radius: 4px;">
+            <summary style="cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+                <span class="dashicons dashicons-admin-tools" style="margin-right: 6px;"></span>
+                Debug Information
+            </summary>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px;">
+                <div>
+                    <h4 style="margin: 0 0 8px; font-size: 13px;">Binary Status</h4>
+                    <table class="wordforge-status-table" style="font-size: 12px;">
+                        <tr>
+                            <td>Installed</td>
+                            <td>
+                                <?php if ( $binary_info['is_installed'] ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Yes</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-error">No</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Version</td>
+                            <td><code><?php echo esc_html( $binary_info['version'] ?? 'N/A' ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>Platform</td>
+                            <td><code><?php echo esc_html( $binary_info['os'] . '-' . $binary_info['arch'] ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>Binary Name</td>
+                            <td><code style="font-size: 10px;"><?php echo esc_html( $binary_info['binary_name'] ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>Binary Path</td>
+                            <td><code style="font-size: 10px; word-break: break-all;"><?php echo esc_html( $binary_info['binary_path'] ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>Path Exists</td>
+                            <td>
+                                <?php if ( file_exists( $binary_info['binary_path'] ) ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Yes</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-neutral">No</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Is Executable</td>
+                            <td>
+                                <?php if ( is_executable( $binary_info['binary_path'] ) ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Yes</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-neutral">No</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div>
+                    <h4 style="margin: 0 0 8px; font-size: 13px;">Server Status</h4>
+                    <table class="wordforge-status-table" style="font-size: 12px;">
+                        <tr>
+                            <td>Running</td>
+                            <td>
+                                <?php if ( $server_status['running'] ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Yes</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-neutral">No</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>PID</td>
+                            <td><code><?php echo esc_html( $server_status['pid'] ?? 'N/A' ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>Port</td>
+                            <td><code><?php echo esc_html( $server_status['port'] ?? 'N/A' ); ?></code></td>
+                        </tr>
+                        <tr>
+                            <td>URL</td>
+                            <td><code><?php echo esc_html( $server_status['url'] ?? 'N/A' ); ?></code></td>
+                        </tr>
+                    </table>
+
+                    <h4 style="margin: 16px 0 8px; font-size: 13px;">Provider Keys</h4>
+                    <table class="wordforge-status-table" style="font-size: 12px;">
+                        <tr>
+                            <td>Has Any Key</td>
+                            <td>
+                                <?php if ( $has_keys ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Yes</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-neutral">No (using Zen)</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php foreach ( $configured as $provider => $is_set ) : ?>
+                        <tr>
+                            <td><?php echo esc_html( ucfirst( $provider ) ); ?></td>
+                            <td>
+                                <?php if ( $is_set ) : ?>
+                                    <span class="wordforge-badge wordforge-badge-success">Configured</span>
+                                <?php else : ?>
+                                    <span class="wordforge-badge wordforge-badge-neutral">Not Set</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <h4 style="margin: 0 0 8px; font-size: 13px;">REST API</h4>
+                <table class="wordforge-status-table" style="font-size: 12px;">
+                    <tr>
+                        <td>Endpoint</td>
+                        <td><code style="font-size: 10px;"><?php echo esc_html( rest_url( 'wordforge/v1/opencode/status' ) ); ?></code></td>
+                    </tr>
+                    <tr>
+                        <td>Nonce</td>
+                        <td><code style="font-size: 10px;"><?php echo esc_html( wp_create_nonce( 'wp_rest' ) ); ?></code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <h4 style="margin: 0 0 8px; font-size: 13px;">Quick Actions</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                    <button type="button" class="button button-small" id="wf-dbg-test-api">Test REST API</button>
+                    <button type="button" class="button button-small" id="wf-dbg-check-update">Check GitHub</button>
+                    <button type="button" class="button button-small button-primary" id="wf-dbg-download">Download Binary</button>
+                    <button type="button" class="button button-small" id="wf-dbg-start" style="background:#28a745;border-color:#28a745;color:#fff;">Start Server</button>
+                    <button type="button" class="button button-small" id="wf-dbg-stop" style="background:#dc3545;border-color:#dc3545;color:#fff;">Stop Server</button>
+                    <button type="button" class="button button-small" id="wf-dbg-cleanup">Cleanup All</button>
+                </div>
+                <div id="wf-dbg-result" style="font-size: 12px; padding: 8px; background: #f6f7f7; border-radius: 4px; min-height: 20px;">
+                    Click a button to test...
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                const restUrl = <?php echo wp_json_encode( rest_url( 'wordforge/v1' ) ); ?>;
+                const nonce = <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>;
+                const result = document.getElementById('wf-dbg-result');
+
+                const log = (msg, type = 'info') => {
+                    const color = type === 'error' ? 'red' : type === 'success' ? 'green' : '#333';
+                    result.innerHTML = `<span style="color:${color}">${msg}</span>`;
+                    console.log('[WordForge Debug]', msg);
+                };
+
+                const apiCall = async (endpoint, method = 'GET') => {
+                    const response = await fetch(restUrl + endpoint, {
+                        method,
+                        headers: { 'X-WP-Nonce': nonce }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
+                    return data;
+                };
+
+                document.getElementById('wf-dbg-test-api')?.addEventListener('click', async () => {
+                    log('Testing REST API...');
+                    try {
+                        const data = await apiCall('/opencode/status');
+                        log('✓ API Working - Binary: ' + (data.binary?.is_installed ? 'Yes' : 'No') + ', Server: ' + (data.server?.running ? 'Running' : 'Stopped'), 'success');
+                        console.log('Full status:', data);
+                    } catch (e) {
+                        log('✗ ' + e.message, 'error');
+                    }
+                });
+
+                document.getElementById('wf-dbg-check-update')?.addEventListener('click', async () => {
+                    log('Checking GitHub...');
+                    try {
+                        const response = await fetch('https://api.github.com/repos/sst/opencode/releases/latest');
+                        const data = await response.json();
+                        log('✓ Latest version: ' + data.tag_name, 'success');
+                    } catch (e) {
+                        log('✗ ' + e.message, 'error');
+                    }
+                });
+
+                document.getElementById('wf-dbg-download')?.addEventListener('click', async () => {
+                    log('Downloading binary... (this may take a minute)');
+                    try {
+                        const data = await apiCall('/opencode/download', 'POST');
+                        log('✓ Downloaded! Version: ' + data.version, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (e) {
+                        log('✗ Download failed: ' + e.message, 'error');
+                    }
+                });
+
+                document.getElementById('wf-dbg-start')?.addEventListener('click', async () => {
+                    log('Starting server...');
+                    try {
+                        const data = await apiCall('/opencode/start', 'POST');
+                        log('✓ Server started on port ' + data.port + ' - URL: ' + data.url, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (e) {
+                        log('✗ Start failed: ' + e.message, 'error');
+                    }
+                });
+
+                document.getElementById('wf-dbg-stop')?.addEventListener('click', async () => {
+                    log('Stopping server...');
+                    try {
+                        await apiCall('/opencode/stop', 'POST');
+                        log('✓ Server stopped', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (e) {
+                        log('✗ Stop failed: ' + e.message, 'error');
+                    }
+                });
+
+                document.getElementById('wf-dbg-cleanup')?.addEventListener('click', async () => {
+                    if (!confirm('This will stop the server and delete the binary. Continue?')) return;
+                    log('Cleaning up...');
+                    try {
+                        await apiCall('/opencode/cleanup', 'POST');
+                        log('✓ Cleanup complete', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (e) {
+                        log('✗ Cleanup failed: ' + e.message, 'error');
+                    }
+                });
+            })();
+            </script>
+        </details>
         <?php
     }
 
@@ -513,6 +797,100 @@ class SettingsPage {
             .wordforge-doc-links li { margin: 4px 0; }
             .wordforge-doc-links a { text-decoration: none; color: #2271b1; }
             .wordforge-doc-links a:hover { color: #135e96; text-decoration: underline; }
+
+            /* OpenCode Chat Styles */
+            .wordforge-opencode-card { order: -1; }
+            .wordforge-opencode-card h2 { display: flex; align-items: center; gap: 8px; }
+            .wordforge-opencode-card h2 .dashicons { color: #2271b1; }
+            
+            .wordforge-opencode-loading { text-align: center; padding: 40px; color: #646970; }
+            .wordforge-opencode-loading .spinner { margin-right: 8px; }
+            
+            .wordforge-opencode-setup { padding: 20px 0; }
+            .wordforge-opencode-steps { display: flex; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f1; }
+            .wordforge-step { display: flex; align-items: center; gap: 8px; color: #646970; }
+            .wordforge-step.active { color: #2271b1; font-weight: 500; }
+            .wordforge-step.complete { color: #00a32a; }
+            .wordforge-step .step-number { width: 24px; height: 24px; border-radius: 50%; background: #f0f0f1; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+            .wordforge-step.active .step-number { background: #2271b1; color: #fff; }
+            .wordforge-step.complete .step-number { background: #00a32a; color: #fff; }
+            .wordforge-step .dashicons-yes-alt { color: #00a32a; }
+            
+            .wordforge-setup-content { max-width: 600px; }
+            .wordforge-download-section, .wordforge-provider-section { }
+            .wordforge-download-section p, .wordforge-provider-section p { margin: 0 0 16px; }
+            
+            .wordforge-provider-options { display: flex; flex-direction: column; gap: 12px; }
+            .wordforge-provider-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #c3c4c7; border-radius: 4px; cursor: pointer; transition: border-color 0.2s; }
+            .wordforge-provider-option:hover { border-color: #2271b1; }
+            .wordforge-provider-option input { margin-top: 4px; }
+            .wordforge-provider-option .option-content { flex: 1; }
+            .wordforge-provider-option .option-content strong { display: block; margin-bottom: 4px; }
+            .wordforge-provider-option .option-content .description { font-size: 13px; color: #646970; }
+            
+            .wordforge-provider-inputs { display: flex; flex-direction: column; gap: 16px; }
+            .provider-input-group label { display: block; margin-bottom: 6px; font-weight: 500; }
+            .provider-input-group input { width: 100%; }
+            
+            .button-hero { padding: 12px 24px !important; height: auto !important; font-size: 14px !important; }
+            .button-hero .dashicons { margin-right: 6px; line-height: 1.4; }
+            
+            .wordforge-chat-container { display: flex; flex-direction: column; height: 500px; border: 1px solid #c3c4c7; border-radius: 4px; overflow: hidden; }
+            .wordforge-chat-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f6f7f7; border-bottom: 1px solid #c3c4c7; }
+            .wordforge-chat-status { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+            .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #646970; }
+            .status-dot.online { background: #00a32a; }
+            
+            .wordforge-chat-messages { flex: 1; overflow-y: auto; padding: 16px; background: #fff; }
+            .wordforge-welcome-message { background: #f0f6fc; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+            .wordforge-welcome-message p { margin: 0 0 8px; }
+            .wordforge-welcome-message ul { margin: 8px 0 0; padding-left: 20px; }
+            .wordforge-welcome-message li { margin: 4px 0; color: #646970; }
+            .wordforge-welcome-message .suggestions { font-weight: 500; margin-top: 12px; }
+            
+            .wordforge-message { margin-bottom: 16px; display: flex; }
+            .wordforge-message.user { justify-content: flex-end; }
+            .wordforge-message .message-content { max-width: 80%; padding: 12px 16px; border-radius: 12px; }
+            .wordforge-message.user .message-content { background: #2271b1; color: #fff; border-bottom-right-radius: 4px; }
+            .wordforge-message.assistant .message-content { background: #f6f7f7; border-bottom-left-radius: 4px; }
+            .wordforge-message.error .message-content { background: #f8d7da; color: #721c24; }
+            .wordforge-message .message-content code { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+            .wordforge-message .message-content pre { background: #1d2327; color: #50c878; padding: 12px; border-radius: 4px; overflow-x: auto; margin: 8px 0; }
+            .wordforge-message .tool-call { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin: 8px 0; font-size: 12px; }
+            .wordforge-message .tool-result { margin: 8px 0; }
+            .wordforge-message .tool-result pre { font-size: 11px; max-height: 200px; overflow: auto; }
+            
+            .wordforge-message.thinking .message-content { background: #f6f7f7; }
+            .thinking-dots span { animation: thinking 1.4s infinite; opacity: 0.3; }
+            .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+            .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+            @keyframes thinking { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+            
+            .wordforge-chat-input-container { display: flex; gap: 8px; padding: 12px 16px; background: #f6f7f7; border-top: 1px solid #c3c4c7; }
+            .wordforge-chat-input-container textarea { flex: 1; resize: none; padding: 10px 12px; border: 1px solid #c3c4c7; border-radius: 4px; font-size: 14px; }
+            .wordforge-chat-input-container textarea:focus { border-color: #2271b1; outline: none; box-shadow: 0 0 0 1px #2271b1; }
+            .wordforge-chat-input-container button { padding: 10px 16px; }
+            .wordforge-chat-input-container button .dashicons { line-height: 1.4; }
+            
+            .wordforge-opencode-error { text-align: center; padding: 40px; }
+            .wordforge-opencode-error .dashicons { font-size: 48px; width: 48px; height: 48px; color: #dc3232; margin-bottom: 16px; }
+            .wordforge-opencode-error p { margin: 0 0 16px; }
+
+            /* Simplified OpenCode UI */
+            .wordforge-opencode-setup h3 { margin: 0 0 12px; }
+            .wordforge-opencode-setup p { margin: 0 0 16px; color: #50575e; }
+            
+            .wordforge-opencode-header { display: flex; align-items: center; gap: 12px; padding: 16px; background: #d4edda; border-radius: 4px; margin-bottom: 16px; }
+            .wordforge-opencode-header .status-indicator { width: 10px; height: 10px; border-radius: 50%; background: #28a745; animation: pulse 2s infinite; }
+            .wordforge-opencode-header .status-indicator.online { background: #28a745; }
+            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+            
+            .wordforge-opencode-frame-container { margin-top: 16px; }
+            .wordforge-opencode-frame-notice { background: #f0f6fc; padding: 20px; border-radius: 4px; border: 1px solid #c3c4c7; }
+            .wordforge-opencode-frame-notice code { background: #fff; padding: 8px 12px; display: inline-block; margin: 8px 0; border-radius: 4px; font-size: 14px; }
+            .wordforge-opencode-frame-notice .description { color: #646970; font-size: 13px; }
+            
+            .wordforge-opencode-running { }
         ';
     }
 }

@@ -87,6 +87,8 @@ function get_endpoint_url(): string {
 
 function init(): void {
     new Admin\SettingsPage();
+    new Admin\OpenCodeController();
+    new Admin\OpenCodePage();
 
     if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
         add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
@@ -213,3 +215,21 @@ function add_settings_link( array $links ): array {
     return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), __NAMESPACE__ . '\\add_settings_link' );
+
+function cleanup_opencode_on_deactivate(): void {
+    OpenCode\ServerProcess::stop();
+}
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\cleanup_opencode_on_deactivate' );
+
+function cleanup_opencode_on_uninstall(): void {
+    OpenCode\ServerProcess::stop();
+    OpenCode\BinaryManager::cleanup();
+    OpenCode\ProviderKeyStorage::delete_all();
+}
+
+if ( ! function_exists( 'wordforge_uninstall' ) ) {
+    function wordforge_uninstall(): void {
+        \WordForge\cleanup_opencode_on_uninstall();
+    }
+}
+register_uninstall_hook( __FILE__, 'wordforge_uninstall' );

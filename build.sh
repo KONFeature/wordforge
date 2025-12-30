@@ -26,6 +26,10 @@ cp wordforge.php "$BUILD_DIR/$PLUGIN_SLUG/"
 cp composer.json "$BUILD_DIR/$PLUGIN_SLUG/"
 cp README.md "$BUILD_DIR/$PLUGIN_SLUG/"
 
+if [ -d "assets" ]; then
+    cp -r assets "$BUILD_DIR/$PLUGIN_SLUG/"
+fi
+
 if [ -d "languages" ]; then
     cp -r languages "$BUILD_DIR/$PLUGIN_SLUG/"
 fi
