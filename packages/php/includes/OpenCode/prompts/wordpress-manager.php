@@ -74,9 +74,8 @@ You have access to the `wordforge` MCP server which provides tools for:
 <?php endif; ?>
 - **AI Prompts**: Content generation, review, and SEO optimization
 
-All MCP tools are prefixed with `wordforge/` (e.g., `wordforge/list-content`, `wordforge/save-product`).
-
 ### Command Line Tools
+
 <?php if ( $context['cli_tools']['wp_cli'] ) : ?>
 - **WP-CLI**: Available - Use `wp` commands for WordPress operations
 <?php else : ?>

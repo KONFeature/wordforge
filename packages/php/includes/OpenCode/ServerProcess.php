@@ -319,11 +319,12 @@ class ServerProcess {
 
 		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
 		$abilities_url   = rest_url( 'wp-abilities/v1' );
+		$runtime         = self::get_js_runtime();
 
-		if ( file_exists( $mcp_server_path ) && self::has_node() ) {
+		if ( file_exists( $mcp_server_path ) && $runtime ) {
 			return [
 				'type'        => 'local',
-				'command'     => [ 'node', $mcp_server_path ],
+				'command'     => [ $runtime, $mcp_server_path ],
 				'environment' => [
 					'WORDPRESS_URL'          => $abilities_url,
 					'WORDPRESS_USERNAME'     => $app_password_data['username'],
@@ -342,9 +343,18 @@ class ServerProcess {
 		];
 	}
 
-	private static function has_node(): bool {
-		exec( 'which node 2>/dev/null', $output, $code );
-		return 0 === $code;
+	private static function get_js_runtime(): ?string {
+		exec( 'which node 2>/dev/null', $node_output, $node_code );
+		if ( 0 === $node_code ) {
+			return 'node';
+		}
+
+		exec( 'which bun 2>/dev/null', $bun_output, $bun_code );
+		if ( 0 === $bun_code ) {
+			return 'bun';
+		}
+
+		return null;
 	}
 
 	private static function get_bash_permissions(): array {
