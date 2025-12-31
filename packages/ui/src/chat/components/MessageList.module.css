@@ -40,12 +40,21 @@
   font-size: var(--wf-font-size-lg);
 }
 
-.message {
+.turn {
   margin-bottom: var(--wf-spacing-lg);
+}
+
+.message {
   padding: var(--wf-spacing-md) var(--wf-spacing-lg);
   background: var(--wf-color-white);
   border-radius: var(--wf-radius-lg);
   border: 1px solid var(--wf-color-border-light);
+}
+
+.message + .message {
+  margin-top: var(--wf-spacing-sm);
+  border-top-left-radius: var(--wf-radius-sm);
+  border-top-right-radius: var(--wf-radius-sm);
 }
 
 .message.user {
@@ -101,13 +110,14 @@
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--wf-color-error);
+  margin-top: var(--wf-spacing-sm);
 }
 
-.toolCalls {
-  margin-top: var(--wf-spacing-md);
+.stepsContainer {
+  margin-bottom: var(--wf-spacing-md);
 }
 
-.toolCall {
+.step {
   background: var(--wf-color-bg-alt);
   border: 1px solid var(--wf-color-border-light);
   border-radius: var(--wf-radius-md);
@@ -115,28 +125,45 @@
   overflow: hidden;
 }
 
-.toolHeader {
+.step:last-child {
+  margin-bottom: 0;
+}
+
+.stepHeader {
   width: 100%;
   text-align: left;
   padding: var(--wf-spacing-sm) var(--wf-spacing-md);
   background: var(--wf-color-white);
   border: none;
-  border-bottom: 1px solid var(--wf-color-border-light);
+  border-bottom: 1px solid transparent;
   display: flex;
   align-items: center;
   gap: var(--wf-spacing-sm);
   cursor: pointer;
   font-size: var(--wf-font-size-md);
   font-family: inherit;
+  transition: background-color 0.15s ease;
 }
 
-.toolName {
+.stepHeader:hover {
+  background: var(--wf-color-bg);
+}
+
+.stepTitle {
   font-family: monospace;
   font-weight: 500;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
 }
 
-.toolStatus {
+.stepSubtitle {
+  font-weight: 400;
+  color: var(--wf-color-text-muted);
+}
+
+.stepStatus {
   padding: 2px 6px;
   border-radius: var(--wf-radius-sm);
   font-size: var(--wf-font-size-xs);
@@ -144,46 +171,56 @@
   font-weight: 500;
 }
 
-.toolStatus.pending {
+.stepStatus.pending {
   background: var(--wf-color-bg-code);
   color: var(--wf-color-text-muted);
 }
 
-.toolStatus.running {
+.stepStatus.running {
   background: var(--wf-color-warning-bg);
   color: var(--wf-color-warning-text);
 }
 
-.toolStatus.completed {
+.stepStatus.completed {
   background: var(--wf-color-success-bg);
   color: var(--wf-color-success-text);
 }
 
-.toolStatus.error {
+.stepStatus.error {
   background: var(--wf-color-error-bg);
   color: var(--wf-color-error-text);
 }
 
-.toolExpander {
+.stepExpander {
   color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-lg);
+  font-weight: 300;
+  width: 16px;
+  text-align: center;
 }
 
-.toolBody {
+.stepBody {
   padding: var(--wf-spacing-md);
   font-size: var(--wf-font-size-md);
+  border-top: 1px solid var(--wf-color-border-light);
 }
 
-.toolSection {
+.stepSection {
   margin-bottom: var(--wf-spacing-sm);
 }
 
-.toolSectionLabel {
+.stepSection:last-child {
+  margin-bottom: 0;
+}
+
+.stepSectionLabel {
   font-weight: 500;
   margin-bottom: var(--wf-spacing-xs);
   color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-sm);
 }
 
-.toolSectionContent {
+.stepSectionContent {
   font-family: monospace;
   font-size: var(--wf-font-size-sm);
   background: var(--wf-color-white);
@@ -194,9 +231,11 @@
   word-break: break-all;
   max-height: 200px;
   overflow-y: auto;
+  margin: 0;
+  border: 1px solid var(--wf-color-border-light);
 }
 
-.toolSectionContent.error {
+.stepSectionContent.error {
   color: var(--wf-color-error);
 }
 
