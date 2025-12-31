@@ -1,0 +1,8 @@
+# PHP vendor
+vendor/
+
+# Output directory
+dist/
+
+# built JS from the frontend
+assets/js/*.js

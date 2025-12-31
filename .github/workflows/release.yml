@@ -21,16 +21,16 @@ jobs:
 
       - name: Update version in PHP
         run: |
-          sed -i "s/Version: .*/Version: ${{ steps.version.outputs.VERSION }}/" wordforge.php
-          sed -i "s/define( 'WORDFORGE_VERSION', '.*' );/define( 'WORDFORGE_VERSION', '${{ steps.version.outputs.VERSION }}' );/" wordforge.php
+          sed -i "s/Version: .*/Version: ${{ steps.version.outputs.VERSION }}/" packages/php/wordforge.php
+          sed -i "s/define( 'WORDFORGE_VERSION', '.*' );/define( 'WORDFORGE_VERSION', '${{ steps.version.outputs.VERSION }}' );/" packages/php/wordforge.php
 
-      - name: Update version in Claude extension manifest
+      - name: Update version in MCP manifest
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' claude-extension/manifest.json
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/mcp/manifest.json
 
-      - name: Update version in Claude extension source
+      - name: Update version in MCP source
         run: |
-          sed -i 's/version: ".*",/version: "${{ steps.version.outputs.VERSION }}",/' claude-extension/src/index.ts
+          sed -i 's/version: ".*",/version: "${{ steps.version.outputs.VERSION }}",/' packages/mcp/src/index.ts
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -41,20 +41,28 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Build WordPress plugin
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build UI
+        run: bun run --filter @wordforge/ui build
+
+      - name: Build MCP extension
+        working-directory: packages/mcp
         run: |
+          bun run build
           chmod +x build.sh
           ./build.sh
 
-      - name: Build Claude extension
-        working-directory: claude-extension
+      - name: Build PHP plugin
+        working-directory: packages/php
         run: |
           chmod +x build.sh
           ./build.sh
 
       - name: Prepare standalone server
         run: |
-          cp claude-extension/dist/index.cjs wordforge-server.js
+          cp packages/mcp/dist/index.cjs wordforge-server.js
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -62,6 +70,6 @@ jobs:
           name: WordForge ${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
           files: |
-            dist/wordforge.zip
-            claude-extension/wordforge.mcpb
+            packages/php/dist/wordforge.zip
+            packages/mcp/wordforge.mcpb
             wordforge-server.js

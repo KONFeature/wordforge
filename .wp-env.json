@@ -1,21 +1,21 @@
 {
-    "core": "WordPress/WordPress#6.7",
-    "phpVersion": "8.2",
-    "plugins": [
-        ".",
-        "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip"
-    ],
-    "mappings": {
-        "wp-content/plugins/wordforge": "."
-    },
-    "config": {
-        "WP_DEBUG": true,
-        "WP_DEBUG_LOG": true,
-        "SCRIPT_DEBUG": true
-    },
-    "env": {
-        "tests": {
-            "phpVersion": "8.2"
-        }
+  "core": "WordPress/WordPress#6.7",
+  "phpVersion": "8.2",
+  "plugins": [
+    "./packages/php",
+    "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip"
+  ],
+  "mappings": {
+    "wp-content/plugins/wordforge": "./packages/php"
+  },
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "SCRIPT_DEBUG": true
+  },
+  "env": {
+    "tests": {
+      "phpVersion": "8.2"
     }
+  }
 }

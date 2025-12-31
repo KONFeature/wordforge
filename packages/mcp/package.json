@@ -1,7 +1,7 @@
 {
-  "name": "wordforge-claude-extension",
+  "name": "@wordforge/mcp",
   "version": "1.1.0",
-  "description": "Claude Desktop Extension for WordForge WordPress MCP",
+  "description": "MCP server for WordForge WordPress integration",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

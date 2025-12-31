@@ -1,0 +1,26 @@
+{
+  "name": "@wordforge/ui",
+  "version": "1.0.0",
+  "description": "WordPress admin UI components for WordForge",
+  "private": true,
+  "scripts": {
+    "build": "wp-scripts build --output-path=../php/assets/js",
+    "start": "wp-scripts start --output-path=../php/assets/js",
+    "typecheck": "tsc --noEmit",
+    "lint:js": "wp-scripts lint-js",
+    "lint:css": "wp-scripts lint-style"
+  },
+  "dependencies": {
+    "@wordpress/api-fetch": "^7.0.0",
+    "@wordpress/components": "^28.0.0",
+    "@wordpress/element": "^6.0.0",
+    "@wordpress/i18n": "^5.0.0",
+    "@wordpress/icons": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/wordpress__components": "^23.0.0",
+    "@wordpress/browserslist-config": "^6.37.0",
+    "@wordpress/scripts": "^30.0.0",
+    "typescript": "^5.7.0"
+  }
+}
