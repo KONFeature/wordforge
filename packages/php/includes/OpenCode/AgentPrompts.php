@@ -11,14 +11,35 @@ namespace WordForge\OpenCode;
 
 class AgentPrompts {
 
-	/**
-	 * @return string The wordpress-manager agent prompt with injected context.
-	 */
 	public static function get_wordpress_manager_prompt(): string {
 		$context = ContextProvider::get_global_context();
 
 		ob_start();
 		include __DIR__ . '/prompts/wordpress-manager.php';
+		return ob_get_clean();
+	}
+
+	public static function get_content_creator_prompt(): string {
+		$context = ContextProvider::get_global_context();
+
+		ob_start();
+		include __DIR__ . '/prompts/wordpress-content-creator.php';
+		return ob_get_clean();
+	}
+
+	public static function get_commerce_manager_prompt(): string {
+		$context = ContextProvider::get_global_context();
+
+		ob_start();
+		include __DIR__ . '/prompts/wordpress-commerce-manager.php';
+		return ob_get_clean();
+	}
+
+	public static function get_auditor_prompt(): string {
+		$context = ContextProvider::get_global_context();
+
+		ob_start();
+		include __DIR__ . '/prompts/wordpress-auditor.php';
 		return ob_get_clean();
 	}
 }

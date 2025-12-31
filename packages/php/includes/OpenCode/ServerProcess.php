@@ -283,17 +283,40 @@ class ServerProcess {
 	private static function generate_config( array $options, int $port ): array {
 		$bash_permissions = self::get_bash_permissions();
 
+		$agents = [
+			'wordpress-manager'         => [
+				'mode'        => 'primary',
+				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
+				'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
+				'color'       => '#3858E9',
+			],
+			'wordpress-content-creator' => [
+				'mode'        => 'subagent',
+				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
+				'prompt'      => AgentPrompts::get_content_creator_prompt(),
+				'color'       => '#10B981',
+			],
+			'wordpress-auditor'         => [
+				'mode'        => 'subagent',
+				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
+				'prompt'      => AgentPrompts::get_auditor_prompt(),
+				'color'       => '#F59E0B',
+			],
+		];
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			$agents['wordpress-commerce-manager'] = [
+				'mode'        => 'subagent',
+				'description' => 'WooCommerce specialist - product management, inventory, pricing',
+				'prompt'      => AgentPrompts::get_commerce_manager_prompt(),
+				'color'       => '#8B5CF6',
+			];
+		}
+
 		$config = [
 			'$schema'       => 'https://opencode.ai/config.json',
 			'default_agent' => 'wordpress-manager',
-			'agent'         => [
-				'wordpress-manager' => [
-					'mode'        => 'primary',
-					'description' => 'WordPress site manager with MCP tools and WP-CLI access (read-only file system)',
-					'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
-					'color'       => '#3858E9',
-				],
-			],
+			'agent'         => $agents,
 			'permission'    => [
 				'edit'               => 'deny',
 				'external_directory' => 'deny',
