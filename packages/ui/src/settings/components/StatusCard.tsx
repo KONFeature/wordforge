@@ -1,4 +1,10 @@
-import { Button, Card, CardBody, CardHeader } from '@wordpress/components';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Icon,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useServerAction } from '../hooks/useServerActions';
 import styles from './StatusCard.module.css';
@@ -51,164 +57,201 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
 
   const message = getStatusMessage();
 
+  const renderHeaderActions = () => {
+    if (!status.binary.is_installed) {
+      return (
+        <Button
+          variant="primary"
+          onClick={() => serverAction.mutate('download')}
+          isBusy={serverAction.isPending}
+          disabled={serverAction.isPending}
+          icon="download"
+          size="compact"
+        >
+          {__('Download OpenCode', 'wordforge')}
+        </Button>
+      );
+    }
+
+    if (status.server.running) {
+      return (
+        <>
+          <Button
+            variant="primary"
+            href="admin.php?page=wordforge-chat"
+            icon="format-chat"
+            size="compact"
+          >
+            {__('Open Chat', 'wordforge')}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => serverAction.mutate('refresh')}
+            isBusy={
+              serverAction.isPending && serverAction.variables === 'refresh'
+            }
+            disabled={serverAction.isPending}
+            icon="update"
+            size="compact"
+          >
+            {__('Refresh', 'wordforge')}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => serverAction.mutate('stop')}
+            isBusy={serverAction.isPending && serverAction.variables === 'stop'}
+            disabled={serverAction.isPending}
+            icon="controls-pause"
+            size="compact"
+          >
+            {__('Stop', 'wordforge')}
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <Button
+        variant="primary"
+        onClick={() => serverAction.mutate('start')}
+        isBusy={serverAction.isPending}
+        disabled={serverAction.isPending}
+        icon="controls-play"
+        size="compact"
+      >
+        {__('Start Server', 'wordforge')}
+      </Button>
+    );
+  };
+
   return (
     <Card className="wordforge-card">
-      <CardHeader>
-        <h2>{__('Status', 'wordforge')}</h2>
+      <CardHeader className={styles.header}>
+        <h2>{__('WordForge Status', 'wordforge')}</h2>
+        <div className={styles.headerActions}>
+          {renderHeaderActions()}
+          {message && <span className={styles.message}>{message}</span>}
+        </div>
       </CardHeader>
       <CardBody>
-        <table className={`wordforge-status-table ${styles.table}`}>
-          <tbody>
-            <tr>
-              <td className={styles.tableCell}>
-                {__('MCP Adapter', 'wordforge')}
-              </td>
-              <td>
-                {status.mcpAdapter ? (
-                  <span className={`${styles.badge} ${styles.success}`}>
-                    {__('Active', 'wordforge')}
-                  </span>
-                ) : (
-                  <span className={`${styles.badge} ${styles.error}`}>
-                    {__('Not Found', 'wordforge')}
-                  </span>
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.tableCell}>
-                {__('WooCommerce', 'wordforge')}
-              </td>
-              <td>
-                {status.woocommerce ? (
-                  <span className={`${styles.badge} ${styles.success}`}>
-                    {__('Active', 'wordforge')}
-                  </span>
-                ) : (
-                  <span className={`${styles.badge} ${styles.muted}`}>
-                    {__('Not Installed', 'wordforge')}
-                  </span>
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.tableCell}>
-                {__('Plugin Version', 'wordforge')}
-              </td>
-              <td>
-                <code>{status.pluginVersion}</code>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div className={styles.dashboard}>
+          <div className={styles.statGroup}>
+            <h3 className={styles.groupTitle}>
+              {__('Integrations', 'wordforge')}
+            </h3>
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <Icon
+                  icon={status.mcpAdapter ? 'yes-alt' : 'warning'}
+                  className={
+                    status.mcpAdapter ? styles.iconSuccess : styles.iconError
+                  }
+                />
+                <span className={styles.statLabel}>
+                  {__('MCP Adapter', 'wordforge')}
+                </span>
+                <span
+                  className={`${styles.badge} ${status.mcpAdapter ? styles.success : styles.error}`}
+                >
+                  {status.mcpAdapter
+                    ? __('Active', 'wordforge')
+                    : __('Not Found', 'wordforge')}
+                </span>
+              </div>
+              <div className={styles.stat}>
+                <Icon
+                  icon={status.woocommerce ? 'yes-alt' : 'minus'}
+                  className={
+                    status.woocommerce ? styles.iconSuccess : styles.iconMuted
+                  }
+                />
+                <span className={styles.statLabel}>
+                  {__('WooCommerce', 'wordforge')}
+                </span>
+                <span
+                  className={`${styles.badge} ${status.woocommerce ? styles.success : styles.muted}`}
+                >
+                  {status.woocommerce
+                    ? __('Active', 'wordforge')
+                    : __('Not Installed', 'wordforge')}
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <h3>{__('OpenCode AI', 'wordforge')}</h3>
-        <table className={`wordforge-status-table ${styles.table}`}>
-          <tbody>
-            <tr>
-              <td className={styles.tableCell}>{__('Binary', 'wordforge')}</td>
-              <td>
+          <div className={styles.statGroup}>
+            <h3 className={styles.groupTitle}>
+              {__('OpenCode AI', 'wordforge')}
+            </h3>
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <Icon
+                  icon={status.binary.is_installed ? 'yes-alt' : 'download'}
+                  className={
+                    status.binary.is_installed
+                      ? styles.iconSuccess
+                      : styles.iconMuted
+                  }
+                />
+                <span className={styles.statLabel}>
+                  {__('Binary', 'wordforge')}
+                </span>
                 {status.binary.is_installed ? (
-                  <>
-                    <span className={`${styles.badge} ${styles.success}`}>
-                      {__('Installed', 'wordforge')}
-                    </span>
-                    <code className={styles.version}>
-                      {status.binary.version}
-                    </code>
-                  </>
+                  <code className={styles.version}>
+                    {status.binary.version}
+                  </code>
                 ) : (
                   <span className={`${styles.badge} ${styles.muted}`}>
                     {__('Not Installed', 'wordforge')}
                   </span>
                 )}
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.tableCell}>{__('Server', 'wordforge')}</td>
-              <td>
+              </div>
+              <div className={styles.stat}>
+                <Icon
+                  icon={status.server.running ? 'yes-alt' : 'controls-pause'}
+                  className={
+                    status.server.running
+                      ? styles.iconSuccess
+                      : styles.iconMuted
+                  }
+                />
+                <span className={styles.statLabel}>
+                  {__('Server', 'wordforge')}
+                </span>
                 {status.server.running ? (
-                  <>
-                    <span className={`${styles.badge} ${styles.success}`}>
-                      {__('Running', 'wordforge')}
-                    </span>
-                    <code className={styles.version}>
-                      port {status.server.port}
-                    </code>
-                  </>
+                  <code className={styles.version}>
+                    port {status.server.port}
+                  </code>
                 ) : (
                   <span className={`${styles.badge} ${styles.muted}`}>
                     {__('Stopped', 'wordforge')}
                   </span>
                 )}
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.tableCell}>
-                {__('Platform', 'wordforge')}
-              </td>
-              <td>
-                <code>{`${status.binary.os}-${status.binary.arch}`}</code>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
 
-        <div className={`wordforge-actions ${styles.actions}`}>
-          {!status.binary.is_installed ? (
-            <Button
-              variant="primary"
-              onClick={() => serverAction.mutate('download')}
-              isBusy={serverAction.isPending}
-              disabled={serverAction.isPending}
-              icon="download"
-            >
-              {__('Download OpenCode', 'wordforge')}
-            </Button>
-          ) : status.server.running ? (
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => serverAction.mutate('stop')}
-                isBusy={
-                  serverAction.isPending && serverAction.variables === 'stop'
-                }
-                disabled={serverAction.isPending}
-                icon="controls-pause"
-              >
-                {__('Stop Server', 'wordforge')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => serverAction.mutate('refresh')}
-                isBusy={
-                  serverAction.isPending && serverAction.variables === 'refresh'
-                }
-                disabled={serverAction.isPending}
-                icon="update"
-              >
-                {__('Refresh Context', 'wordforge')}
-              </Button>
-              <Button
-                variant="primary"
-                href="admin.php?page=wordforge-chat"
-                icon="format-chat"
-              >
-                {__('Open Chat', 'wordforge')}
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => serverAction.mutate('start')}
-              isBusy={serverAction.isPending}
-              disabled={serverAction.isPending}
-              icon="controls-play"
-            >
-              {__('Start Server', 'wordforge')}
-            </Button>
-          )}
-          {message && <span className={styles.message}>{message}</span>}
+          <div className={styles.statGroup}>
+            <h3 className={styles.groupTitle}>{__('System', 'wordforge')}</h3>
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <Icon icon="wordpress" className={styles.iconMuted} />
+                <span className={styles.statLabel}>
+                  {__('Plugin', 'wordforge')}
+                </span>
+                <code className={styles.version}>{status.pluginVersion}</code>
+              </div>
+              <div className={styles.stat}>
+                <Icon icon="laptop" className={styles.iconMuted} />
+                <span className={styles.statLabel}>
+                  {__('Platform', 'wordforge')}
+                </span>
+                <code className={styles.version}>
+                  {status.binary.os}-{status.binary.arch}
+                </code>
+              </div>
+            </div>
+          </div>
         </div>
       </CardBody>
     </Card>

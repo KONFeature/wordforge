@@ -1,42 +1,109 @@
-.table {
-  width: 100%;
-  margin-bottom: var(--wf-spacing-xl);
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--wf-spacing-md);
 }
 
-.tableCell {
-  padding: var(--wf-spacing-sm) 0;
-}
-
-.badge {
-  padding: 2px 6px;
-  border-radius: var(--wf-radius-sm);
-  font-size: var(--wf-font-size-sm);
-  color: var(--wf-color-white);
-}
-
-.badge.success {
-  background: var(--wf-color-success);
-}
-
-.badge.error {
-  background: var(--wf-color-error);
-}
-
-.badge.muted {
-  background: var(--wf-color-text-muted);
-}
-
-.version {
-  margin-left: var(--wf-spacing-sm);
-}
-
-.actions {
+.headerActions {
   display: flex;
   gap: var(--wf-spacing-sm);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .message {
-  margin-left: var(--wf-spacing-sm);
   font-size: var(--wf-font-size-base);
+  color: var(--wf-color-text-muted);
+}
+
+.dashboard {
+  display: flex;
+  gap: var(--wf-spacing-xl);
+  flex-wrap: wrap;
+}
+
+.statGroup {
+  flex: 1;
+  min-width: 200px;
+}
+
+.groupTitle {
+  font-size: var(--wf-font-size-base);
+  font-weight: 600;
+  margin: 0 0 var(--wf-spacing-md);
+  color: var(--wf-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wf-spacing-sm);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+}
+
+.statLabel {
+  font-size: var(--wf-font-size-base);
+  color: var(--wf-color-text);
+  min-width: 90px;
+}
+
+.iconSuccess {
+  color: var(--wf-color-success);
+}
+
+.iconError {
+  color: var(--wf-color-error);
+}
+
+.iconMuted {
+  color: var(--wf-color-text-muted);
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-sm);
+  font-weight: 500;
+}
+
+.badge.success {
+  background: var(--wf-color-success-bg);
+  color: var(--wf-color-success-text);
+}
+
+.badge.error {
+  background: var(--wf-color-error-bg);
+  color: var(--wf-color-error-text);
+}
+
+.badge.muted {
+  background: var(--wf-color-bg-alt);
+  color: var(--wf-color-text-muted);
+}
+
+.version {
+  background: var(--wf-color-bg-code);
+  padding: 2px 6px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-md);
+}
+
+@media (max-width: 782px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard {
+    flex-direction: column;
+  }
 }

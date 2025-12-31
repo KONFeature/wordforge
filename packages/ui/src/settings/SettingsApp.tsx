@@ -41,10 +41,17 @@ export const SettingsApp = () => {
     },
   };
 
+  const serverRunning = config.settings.serverRunning;
+
   return (
     <div className="wordforge-settings-container">
       <div className={`wordforge-cards ${styles.cards}`}>
-        <StatusCard status={statusProps} onStatusChange={handleStatusChange} />
+        <div className={styles.fullWidth}>
+          <StatusCard
+            status={statusProps}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
 
         <ProvidersCard
           restUrl={config.restUrl}
@@ -56,7 +63,19 @@ export const SettingsApp = () => {
           restUrl={config.restUrl}
           nonce={config.nonce}
           initialAgents={config.agents}
+          serverRunning={serverRunning}
+          onStartServer={() => handleStatusChange()}
         />
+
+        <div className={styles.fullWidth}>
+          <ConnectionCard
+            settings={{
+              mcpEnabled: config.settings.mcpEnabled,
+              mcpEndpoint: config.settings.mcpEndpoint,
+              serverId: config.settings.serverId,
+            }}
+          />
+        </div>
 
         <SettingsFormCard
           settings={{
@@ -71,14 +90,6 @@ export const SettingsApp = () => {
         <AbilitiesCard
           abilities={config.abilities}
           wooCommerceActive={config.integrations.woocommerce}
-        />
-
-        <ConnectionCard
-          settings={{
-            mcpEnabled: config.settings.mcpEnabled,
-            mcpEndpoint: config.settings.mcpEndpoint,
-            serverId: config.settings.serverId,
-          }}
         />
       </div>
     </div>

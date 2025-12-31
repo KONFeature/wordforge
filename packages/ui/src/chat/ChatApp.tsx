@@ -46,8 +46,8 @@ export const ChatApp = () => {
 
   const createSession = useCreateSession(client);
   const deleteSession = useDeleteSession(client);
-  const sendMessage = useSendMessage(client, currentSessionId);
-  const abortSession = useAbortSession(client, currentSessionId);
+  const sendMessage = useSendMessage(client);
+  const abortSession = useAbortSession(client);
 
   useEffect(() => {
     if (configData?.defaultModel && !selectedModel) {
@@ -88,11 +88,17 @@ export const ChatApp = () => {
   };
 
   const handleSendMessage = (text: string) => {
-    sendMessage.mutate({ text, model: selectedModel ?? undefined });
+    if (!currentSessionId) return;
+    sendMessage.mutate({
+      text,
+      sessionId: currentSessionId,
+      model: selectedModel ?? undefined,
+    });
   };
 
   const handleAbort = () => {
-    abortSession.mutate();
+    if (!currentSessionId) return;
+    abortSession.mutate(currentSessionId);
   };
 
   if (!config) {

@@ -7,8 +7,8 @@
     "build": "wp-scripts build --output-path=../php/assets/js",
     "start": "wp-scripts start --output-path=../php/assets/js",
     "typecheck": "tsc --noEmit",
-    "lint:js": "wp-scripts lint-js",
-    "lint:css": "wp-scripts lint-style"
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix ."
   },
   "dependencies": {
     "@opencode-ai/sdk": "^1.0.218",

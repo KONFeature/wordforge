@@ -51,7 +51,7 @@ export interface ChatCoreState {
   handleSelectSession: (id: string) => void;
   handleCreateSession: () => Promise<Session | null>;
   handleDeleteSession: () => Promise<void>;
-  handleSendMessage: (text: string) => void;
+  handleSendMessage: (text: string, sessionId?: string) => void;
   handleAbort: () => void;
   resetErrors: () => void;
 
@@ -88,8 +88,8 @@ export const useChatCore = (
 
   const createSession = useCreateSession(client);
   const deleteSession = useDeleteSession(client);
-  const sendMessage = useSendMessage(client, currentSessionId);
-  const abortSession = useAbortSession(client, currentSessionId);
+  const sendMessage = useSendMessage(client);
+  const abortSession = useAbortSession(client);
 
   useEffect(() => {
     if (configData?.defaultModel && !selectedModel) {
@@ -129,9 +129,13 @@ export const useChatCore = (
     setCurrentSessionId(null);
   };
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = (text: string, targetSessionId?: string) => {
+    const sessionId = targetSessionId ?? currentSessionId;
+    if (!sessionId) return;
+
     sendMessage.mutate({
       text,
+      sessionId,
       model: selectedModel ?? undefined,
       context,
       messages,
@@ -139,7 +143,8 @@ export const useChatCore = (
   };
 
   const handleAbort = () => {
-    abortSession.mutate();
+    if (!currentSessionId) return;
+    abortSession.mutate(currentSessionId);
   };
 
   const resetErrors = () => {

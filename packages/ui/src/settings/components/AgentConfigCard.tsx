@@ -23,12 +23,16 @@ interface AgentConfigCardProps {
   restUrl: string;
   nonce: string;
   initialAgents: AgentInfo[];
+  serverRunning: boolean;
+  onStartServer: () => void;
 }
 
 export const AgentConfigCard = ({
   restUrl,
   nonce,
   initialAgents,
+  serverRunning,
+  onStartServer,
 }: AgentConfigCardProps) => {
   const { data: agentsData, isLoading: agentsLoading } = useAgents(
     restUrl,
@@ -162,17 +166,35 @@ export const AgentConfigCard = ({
           </Notice>
         )}
 
-        {isLoading ? (
+        {!serverRunning ? (
+          <div className={styles.serverStopped}>
+            <p>
+              {__(
+                'Start the OpenCode server to configure which AI models each agent uses.',
+                'wordforge',
+              )}
+            </p>
+            <Button
+              variant="primary"
+              onClick={onStartServer}
+              icon="controls-play"
+            >
+              {__('Start Server', 'wordforge')}
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div className={styles.loading}>
             <Spinner />
           </div>
         ) : noProviders ? (
-          <Notice status="warning" isDismissible={false}>
-            {__(
-              'No models available. Make sure the OpenCode server is running and you have configured at least one provider.',
-              'wordforge',
-            )}
-          </Notice>
+          <div className={styles.noProviders}>
+            <p>
+              {__(
+                'No models available. Configure at least one AI provider above to see available models.',
+                'wordforge',
+              )}
+            </p>
+          </div>
         ) : (
           <div className={styles.agentsList}>
             {agents.map((agent) => {
@@ -218,28 +240,32 @@ export const AgentConfigCard = ({
           </div>
         )}
 
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={!hasChanges}
-            isBusy={saveAgents.isPending}
-          >
-            {__('Save Changes', 'wordforge')}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleReset}
-            isBusy={resetAgents.isPending}
-          >
-            {__('Reset to Recommended', 'wordforge')}
-          </Button>
-        </div>
+        {serverRunning && !noProviders && (
+          <>
+            <div className={styles.actions}>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                disabled={!hasChanges}
+                isBusy={saveAgents.isPending}
+              >
+                {__('Save Changes', 'wordforge')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleReset}
+                isBusy={resetAgents.isPending}
+              >
+                {__('Reset to Recommended', 'wordforge')}
+              </Button>
+            </div>
 
-        {hasChanges && (
-          <p className={styles.pendingNote}>
-            {__('You have unsaved changes.', 'wordforge')}
-          </p>
+            {hasChanges && (
+              <p className={styles.pendingNote}>
+                {__('You have unsaved changes.', 'wordforge')}
+              </p>
+            )}
+          </>
         )}
       </CardBody>
     </Card>

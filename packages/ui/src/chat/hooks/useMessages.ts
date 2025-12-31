@@ -29,20 +29,19 @@ export const useMessages = (
 
 interface SendMessageParams {
   text: string;
+  sessionId: string;
   model?: SelectedModel;
   context?: ScopedContext | null;
   messages?: ChatMessage[];
 }
 
-export const useSendMessage = (
-  client: OpencodeClient | null,
-  sessionId: string | null,
-) => {
+export const useSendMessage = (client: OpencodeClient | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       text,
+      sessionId,
       model,
       context,
       messages = [],
@@ -64,18 +63,18 @@ export const useSendMessage = (
       } = { parts };
       if (model) body.model = model;
 
-      await client!.session.prompt({ path: { id: sessionId! }, body });
+      await client!.session.prompt({ path: { id: sessionId }, body });
 
       const result = await client!.session.messages({
-        path: { id: sessionId! },
+        path: { id: sessionId },
       });
       return result.data as ChatMessage[];
     },
-    onMutate: async ({ text }) => {
+    onMutate: async ({ text, sessionId }) => {
       const tempUserMsg: ChatMessage = {
         info: {
           id: `temp-user-${Date.now()}`,
-          sessionID: sessionId!,
+          sessionID: sessionId,
           role: 'user',
           time: { created: Date.now() / 1000 },
           agent: 'wordpress-manager',
@@ -87,40 +86,37 @@ export const useSendMessage = (
             type: 'text',
             text,
             messageID: 'temp',
-            sessionID: sessionId!,
+            sessionID: sessionId,
           },
         ],
       };
 
-      await queryClient.cancelQueries({ queryKey: messagesKey(sessionId!) });
+      await queryClient.cancelQueries({ queryKey: messagesKey(sessionId) });
       const previous = queryClient.getQueryData<ChatMessage[]>(
-        messagesKey(sessionId!),
+        messagesKey(sessionId),
       );
-      queryClient.setQueryData<ChatMessage[]>(
-        messagesKey(sessionId!),
-        (old) => [...(old || []), tempUserMsg],
-      );
+      queryClient.setQueryData<ChatMessage[]>(messagesKey(sessionId), (old) => [
+        ...(old || []),
+        tempUserMsg,
+      ]);
 
-      return { previous };
+      return { previous, sessionId };
     },
-    onSuccess: (newMessages) => {
-      queryClient.setQueryData(messagesKey(sessionId!), newMessages);
+    onSuccess: (newMessages, { sessionId }) => {
+      queryClient.setQueryData(messagesKey(sessionId), newMessages);
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(messagesKey(sessionId!), context.previous);
+    onError: (_err, { sessionId }, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(messagesKey(sessionId), ctx.previous);
       }
     },
   });
 };
 
-export const useAbortSession = (
-  client: OpencodeClient | null,
-  sessionId: string | null,
-) => {
+export const useAbortSession = (client: OpencodeClient | null) => {
   return useMutation({
-    mutationFn: async () => {
-      await client!.session.abort({ path: { id: sessionId! } });
+    mutationFn: async (sessionId: string) => {
+      await client!.session.abort({ path: { id: sessionId } });
     },
   });
 };

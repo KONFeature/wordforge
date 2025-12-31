@@ -112,12 +112,18 @@ export const CompactChat = ({
 
   const errorMessage = chat.error?.message ?? null;
   const hasSession = !!chat.currentSessionId;
+  const hasMessages = (chat.messages ?? []).length > 0;
 
   const handleQuickAction = async (prompt: string) => {
     if (!hasSession) {
-      await chat.handleCreateSession();
+      const newSession = await chat.handleCreateSession();
+      if (!newSession) return;
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      chat.handleSendMessage(prompt, newSession.id);
+    } else {
+      chat.handleSendMessage(prompt);
     }
-    chat.handleSendMessage(prompt);
   };
 
   return (
@@ -206,7 +212,7 @@ export const CompactChat = ({
                 </div>
               )}
 
-              {context && (
+              {context && !hasMessages && (
                 <QuickActions
                   context={context}
                   onSelectAction={handleQuickAction}
