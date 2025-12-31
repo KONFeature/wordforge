@@ -1,21 +1,21 @@
-import { z } from "zod";
-import type { JSONSchema } from "zod/v4/core";
-import { AbilitiesApiClient } from "./abilities-client.js";
-import * as logger from "./logger.js";
-import type { Ability, LoadedAbility, HttpMethod } from "./types.js";
+import { z } from 'zod';
+import type { JSONSchema } from 'zod/v4/core';
+import type { AbilitiesApiClient } from './abilities-client.js';
+import * as logger from './logger.js';
+import type { Ability, HttpMethod, LoadedAbility } from './types.js';
 
 export async function loadAbilities(
   client: AbilitiesApiClient,
-  excludeCategories: string[]
+  excludeCategories: string[],
 ): Promise<LoadedAbility[]> {
   const abilities = await client.listAbilities();
-  
+
   // Remove non wordforge abilities (todo: should not be needed in the long run)
-  let filtered = abilities.filter((a) => a.name.startsWith("wordforge/"));
+  let filtered = abilities.filter((a) => a.name.startsWith('wordforge/'));
 
   filtered = filterByCategory(filtered, excludeCategories);
   logger.info(
-    `Filtered to ${filtered.length} abilities (excluded: ${excludeCategories.join(", ") || "none"})`
+    `Filtered to ${filtered.length} abilities (excluded: ${excludeCategories.join(', ') || 'none'})`,
   );
 
   return filtered.map(convertToLoadedAbility);
@@ -23,7 +23,7 @@ export async function loadAbilities(
 
 function filterByCategory(
   abilities: Ability[],
-  excludeCategories: string[]
+  excludeCategories: string[],
 ): Ability[] {
   if (excludeCategories.length === 0) {
     return abilities;
@@ -35,52 +35,55 @@ function filterByCategory(
       return [
         normalized,
         `wordforge-${normalized}`,
-        normalized.replace("wordforge-", ""),
+        normalized.replace('wordforge-', ''),
       ];
-    })
+    }),
   );
 
   return abilities.filter((ability) => {
-    const category = ability.category?.toLowerCase() ?? "";
+    const category = ability.category?.toLowerCase() ?? '';
     return !excluded.has(category);
   });
 }
 
-function getMcpType(ability: Ability): "tool" | "prompt" | "resource" {
-  return ability.meta?.mcp?.type ?? "tool";
+function getMcpType(ability: Ability): 'tool' | 'prompt' | 'resource' {
+  return ability.meta?.mcp?.type ?? 'tool';
 }
 
 function getHttpMethod(ability: Ability): HttpMethod {
   const annotations = ability.meta?.annotations;
 
   if (annotations?.destructive) {
-    return "DELETE";
+    return 'DELETE';
   }
 
   if (annotations?.readonly) {
-    return "GET";
+    return 'GET';
   }
 
   const hasInput =
     ability.input_schema &&
-    ability.input_schema.type === "object" &&
+    ability.input_schema.type === 'object' &&
     ability.input_schema.properties &&
     Object.keys(ability.input_schema.properties).length > 0;
 
-  return hasInput ? "POST" : "GET";
+  return hasInput ? 'POST' : 'GET';
 }
 
 function jsonSchemaToZod(schema: unknown): z.ZodTypeAny {
   try {
     return z.fromJSONSchema(schema as JSONSchema.JSONSchema);
   } catch (err) {
-    logger.debug("Failed to convert JSON schema to Zod, using passthrough", err);
+    logger.debug(
+      'Failed to convert JSON schema to Zod, using passthrough',
+      err,
+    );
     return z.any();
   }
 }
 
 function convertToLoadedAbility(ability: Ability): LoadedAbility {
-  const mcpName = ability.name.replace("wordforge/", "wordpress_");
+  const mcpName = ability.name.replace('wordforge/', 'wordpress_');
   const mcpType = getMcpType(ability);
   const httpMethod = getHttpMethod(ability);
 

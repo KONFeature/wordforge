@@ -83,5 +83,3 @@ declare global {
     wordforgeSettings?: WordForgeSettingsConfig;
   }
 }
-
-export {};

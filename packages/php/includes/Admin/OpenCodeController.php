@@ -388,10 +388,6 @@ class OpenCodeController {
 		exit;
 	}
 
-	public static function get_opencode_admin_url(): string {
-		return admin_url( 'admin.php?page=wordforge-opencode' );
-	}
-
 	public static function get_proxy_url_with_token(): string {
 		$user = wp_get_current_user();
 		$time = time();

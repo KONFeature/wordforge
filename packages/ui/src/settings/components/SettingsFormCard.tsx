@@ -1,6 +1,13 @@
-import { Button, Card, CardBody, CardHeader, CheckboxControl, TextControl } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  CheckboxControl,
+  TextControl,
+} from '@wordpress/components';
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 
 interface SettingsFormCardProps {
   settings: {
@@ -12,7 +19,10 @@ interface SettingsFormCardProps {
   optionsNonce: string;
 }
 
-export const SettingsFormCard = ({ settings, optionsNonce }: SettingsFormCardProps) => {
+export const SettingsFormCard = ({
+  settings,
+  optionsNonce,
+}: SettingsFormCardProps) => {
   const [mcpEnabled, setMcpEnabled] = useState(settings.mcpEnabled);
   const [mcpNamespace, setMcpNamespace] = useState(settings.mcpNamespace);
   const [mcpRoute, setMcpRoute] = useState(settings.mcpRoute);
@@ -27,12 +37,24 @@ export const SettingsFormCard = ({ settings, optionsNonce }: SettingsFormCardPro
           <input type="hidden" name="option_page" value="wordforge_settings" />
           <input type="hidden" name="action" value="update" />
           <input type="hidden" name="_wpnonce" value={optionsNonce} />
-          
-          <table className="form-table wordforge-form-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+          <table
+            className="form-table wordforge-form-table"
+            style={{ width: '100%', borderCollapse: 'collapse' }}
+          >
             <tbody>
               <tr>
-                <th style={{ width: '200px', textAlign: 'left', padding: '15px 10px 15px 0', verticalAlign: 'top' }}>
-                  <label htmlFor="wordforge_mcp_enabled">{__('Enable MCP', 'wordforge')}</label>
+                <th
+                  style={{
+                    width: '200px',
+                    textAlign: 'left',
+                    padding: '15px 10px 15px 0',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  <label htmlFor="wordforge_mcp_enabled">
+                    {__('Enable MCP', 'wordforge')}
+                  </label>
                 </th>
                 <td style={{ padding: '15px 10px' }}>
                   <CheckboxControl
@@ -41,27 +63,59 @@ export const SettingsFormCard = ({ settings, optionsNonce }: SettingsFormCardPro
                     onChange={setMcpEnabled}
                     name="wordforge_settings[mcp_enabled]"
                   />
-                  <p className="description" style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '4px', color: '#646970' }}>
-                    {__('When disabled, no MCP endpoint will be available.', 'wordforge')}
+                  <p
+                    className="description"
+                    style={{
+                      fontSize: '13px',
+                      fontStyle: 'italic',
+                      marginTop: '4px',
+                      color: '#646970',
+                    }}
+                  >
+                    {__(
+                      'When disabled, no MCP endpoint will be available.',
+                      'wordforge',
+                    )}
                   </p>
                 </td>
               </tr>
               <tr>
-                <th style={{ width: '200px', textAlign: 'left', padding: '15px 10px 15px 0', verticalAlign: 'top' }}>
-                  <label htmlFor="wordforge_mcp_namespace">{__('Namespace', 'wordforge')}</label>
+                <th
+                  style={{
+                    width: '200px',
+                    textAlign: 'left',
+                    padding: '15px 10px 15px 0',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  <label htmlFor="wordforge_mcp_namespace">
+                    {__('Namespace', 'wordforge')}
+                  </label>
                 </th>
                 <td style={{ padding: '15px 10px' }}>
                   <TextControl
                     value={mcpNamespace}
                     onChange={setMcpNamespace}
                     name="wordforge_settings[mcp_namespace]"
-                    help={__('REST API namespace (e.g., wordforge)', 'wordforge')}
+                    help={__(
+                      'REST API namespace (e.g., wordforge)',
+                      'wordforge',
+                    )}
                   />
                 </td>
               </tr>
               <tr>
-                <th style={{ width: '200px', textAlign: 'left', padding: '15px 10px 15px 0', verticalAlign: 'top' }}>
-                  <label htmlFor="wordforge_mcp_route">{__('Route', 'wordforge')}</label>
+                <th
+                  style={{
+                    width: '200px',
+                    textAlign: 'left',
+                    padding: '15px 10px 15px 0',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  <label htmlFor="wordforge_mcp_route">
+                    {__('Route', 'wordforge')}
+                  </label>
                 </th>
                 <td style={{ padding: '15px 10px' }}>
                   <TextControl
@@ -73,14 +127,33 @@ export const SettingsFormCard = ({ settings, optionsNonce }: SettingsFormCardPro
                 </td>
               </tr>
               <tr>
-                <th style={{ width: '200px', textAlign: 'left', padding: '15px 10px 15px 0', verticalAlign: 'top' }}>
+                <th
+                  style={{
+                    width: '200px',
+                    textAlign: 'left',
+                    padding: '15px 10px 15px 0',
+                    verticalAlign: 'top',
+                  }}
+                >
                   {__('Endpoint URL', 'wordforge')}
                 </th>
                 <td style={{ padding: '15px 10px' }}>
                   {mcpEnabled ? (
-                    <code style={{ background: '#f0f0f1', padding: '3px 5px' }}>{settings.mcpEndpoint}</code>
+                    <code style={{ background: '#f0f0f1', padding: '3px 5px' }}>
+                      {settings.mcpEndpoint}
+                    </code>
                   ) : (
-                    <span style={{ background: '#646970', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontSize: '11px' }}>{__('Disabled', 'wordforge')}</span>
+                    <span
+                      style={{
+                        background: '#646970',
+                        color: '#fff',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {__('Disabled', 'wordforge')}
+                    </span>
                   )}
                 </td>
               </tr>

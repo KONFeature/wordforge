@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { AbilitiesApiClient } from "./abilities-client.js";
-import { loadAbilities, type LoadedAbility } from "./ability-loader.js";
-import * as logger from "./logger.js";
-import type { Config } from "./types.js";
-import type { ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import {
+  McpServer,
+  ResourceTemplate,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import type { ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat.js';
+import { AbilitiesApiClient } from './abilities-client.js';
+import { type LoadedAbility, loadAbilities } from './ability-loader.js';
+import * as logger from './logger.js';
+import type { Config } from './types.js';
 
 function getConfig(): Config {
   const url = process.env.WORDPRESS_URL;
@@ -14,19 +17,19 @@ function getConfig(): Config {
   const password = process.env.WORDPRESS_APP_PASSWORD;
 
   if (!url || !username || !password) {
-    logger.fatalError("Missing required environment variables", {
-      WORDPRESS_URL: url ? "set" : "MISSING",
-      WORDPRESS_USERNAME: username ? "set" : "MISSING",
-      WORDPRESS_APP_PASSWORD: password ? "set" : "MISSING",
+    logger.fatalError('Missing required environment variables', {
+      WORDPRESS_URL: url ? 'set' : 'MISSING',
+      WORDPRESS_USERNAME: username ? 'set' : 'MISSING',
+      WORDPRESS_APP_PASSWORD: password ? 'set' : 'MISSING',
     });
   }
 
-  const excludeCategories = (process.env.WORDFORGE_EXCLUDE_CATEGORIES ?? "")
-    .split(",")
+  const excludeCategories = (process.env.WORDFORGE_EXCLUDE_CATEGORIES ?? '')
+    .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const debug = process.env.WORDFORGE_DEBUG === "true";
+  const debug = process.env.WORDFORGE_DEBUG === 'true';
 
   return { url, username, password, excludeCategories, debug };
 }
@@ -34,7 +37,7 @@ function getConfig(): Config {
 function registerTool(
   server: McpServer,
   ability: LoadedAbility,
-  client: AbilitiesApiClient
+  client: AbilitiesApiClient,
 ): void {
   server.registerTool(
     ability.mcpName,
@@ -50,14 +53,14 @@ function registerTool(
         const result = await client.executeAbility(
           ability.name,
           ability.httpMethod,
-          args
+          args,
         );
 
         // When outputSchema is defined, MCP requires structuredContent
         if (ability.outputSchema) {
           return {
             content: [
-              { type: "text" as const, text: JSON.stringify(result, null, 2) },
+              { type: 'text' as const, text: JSON.stringify(result, null, 2) },
             ],
             structuredContent: result as any,
           };
@@ -65,7 +68,7 @@ function registerTool(
 
         return {
           content: [
-            { type: "text" as const, text: JSON.stringify(result, null, 2) },
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
           ],
         };
       } catch (err) {
@@ -73,19 +76,19 @@ function registerTool(
         logger.error(`Tool ${ability.mcpName} failed`, err);
         return {
           content: [
-            { type: "text" as const, text: JSON.stringify({ error: message }) },
+            { type: 'text' as const, text: JSON.stringify({ error: message }) },
           ],
           isError: true,
         };
       }
-    }
+    },
   );
 }
 
 function registerPrompt(
   server: McpServer,
   ability: LoadedAbility,
-  client: AbilitiesApiClient
+  client: AbilitiesApiClient,
 ): void {
   server.registerPrompt(
     ability.mcpName,
@@ -99,13 +102,13 @@ function registerPrompt(
         const result = await client.executeAbility(
           ability.name,
           ability.httpMethod,
-          args
+          args,
         );
 
         if (
           result &&
-          typeof result === "object" &&
-          "messages" in result &&
+          typeof result === 'object' &&
+          'messages' in result &&
           Array.isArray(result.messages)
         ) {
           return { messages: result.messages };
@@ -114,9 +117,9 @@ function registerPrompt(
         return {
           messages: [
             {
-              role: "user" as const,
+              role: 'user' as const,
               content: {
-                type: "text" as const,
+                type: 'text' as const,
                 text: JSON.stringify(result, null, 2),
               },
             },
@@ -128,25 +131,25 @@ function registerPrompt(
         return {
           messages: [
             {
-              role: "user" as const,
+              role: 'user' as const,
               content: {
-                type: "text" as const,
+                type: 'text' as const,
                 text: `Error: ${message}`,
               },
             },
           ],
         };
       }
-    }
+    },
   );
 }
 
 function registerResource(
   server: McpServer,
   ability: LoadedAbility,
-  client: AbilitiesApiClient
+  client: AbilitiesApiClient,
 ): void {
-  const resourceUri = `wordpress://${ability.name.replace("wordforge/", "")}`;
+  const resourceUri = `wordpress://${ability.name.replace('wordforge/', '')}`;
 
   server.registerResource(
     ability.mcpName,
@@ -154,20 +157,20 @@ function registerResource(
     {
       title: ability.label,
       description: ability.description,
-      mimeType: "application/json",
+      mimeType: 'application/json',
     },
     async (uri) => {
       try {
         const result = await client.executeAbility(
           ability.name,
           ability.httpMethod,
-          {}
+          {},
         );
         return {
           contents: [
             {
               uri: uri.href,
-              mimeType: "application/json",
+              mimeType: 'application/json',
               text: JSON.stringify(result, null, 2),
             },
           ],
@@ -179,13 +182,13 @@ function registerResource(
           contents: [
             {
               uri: uri.href,
-              mimeType: "application/json",
+              mimeType: 'application/json',
               text: JSON.stringify({ error: message }),
             },
           ],
         };
       }
-    }
+    },
   );
 }
 
@@ -193,8 +196,8 @@ async function main(): Promise<void> {
   const config = getConfig();
   logger.setDebug(config.debug);
 
-  logger.info("Starting WordForge Claude Extension");
-  logger.debug("Configuration", {
+  logger.info('Starting WordForge Claude Extension');
+  logger.debug('Configuration', {
     url: config.url,
     username: config.username,
     excludeCategories: config.excludeCategories,
@@ -203,15 +206,15 @@ async function main(): Promise<void> {
   const client = new AbilitiesApiClient(
     config.url,
     config.username,
-    config.password
+    config.password,
   );
 
   const abilities = await loadAbilities(client, config.excludeCategories);
 
   const server = new McpServer({
-    name: "wordforge",
-    version: "1.1.0",
-    websiteUrl: "https://github.com/KONFeature/wordforge",
+    name: 'wordforge',
+    version: '1.1.0',
+    websiteUrl: 'https://github.com/KONFeature/wordforge',
   });
 
   let toolCount = 0;
@@ -220,17 +223,17 @@ async function main(): Promise<void> {
 
   for (const ability of abilities) {
     switch (ability.mcpType) {
-      case "tool":
+      case 'tool':
         registerTool(server, ability, client);
         toolCount++;
         logger.debug(`Registered tool: ${ability.mcpName}`);
         break;
-      case "prompt":
+      case 'prompt':
         registerPrompt(server, ability, client);
         promptCount++;
         logger.debug(`Registered prompt: ${ability.mcpName}`);
         break;
-      case "resource":
+      case 'resource':
         registerResource(server, ability, client);
         resourceCount++;
         logger.debug(`Registered resource: ${ability.mcpName}`);
@@ -239,16 +242,16 @@ async function main(): Promise<void> {
   }
 
   logger.info(
-    `Registered ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`
+    `Registered ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`,
   );
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  logger.info("WordForge MCP server running");
+  logger.info('WordForge MCP server running');
 }
 
 main().catch((err) => {
-  logger.error("Fatal error during startup", err);
+  logger.error('Fatal error during startup', err);
   process.exit(1);
 });

@@ -8,7 +8,10 @@ export function debug(message: string, data?: unknown): void {
   if (!debugEnabled) return;
   const timestamp = new Date().toISOString();
   if (data !== undefined) {
-    console.error(`[WordForge ${timestamp}] DEBUG: ${message}`, JSON.stringify(data, null, 2));
+    console.error(
+      `[WordForge ${timestamp}] DEBUG: ${message}`,
+      JSON.stringify(data, null, 2),
+    );
   } else {
     console.error(`[WordForge ${timestamp}] DEBUG: ${message}`);
   }
@@ -17,7 +20,10 @@ export function debug(message: string, data?: unknown): void {
 export function info(message: string, data?: unknown): void {
   const timestamp = new Date().toISOString();
   if (data !== undefined) {
-    console.error(`[WordForge ${timestamp}] INFO: ${message}`, JSON.stringify(data, null, 2));
+    console.error(
+      `[WordForge ${timestamp}] INFO: ${message}`,
+      JSON.stringify(data, null, 2),
+    );
   } else {
     console.error(`[WordForge ${timestamp}] INFO: ${message}`);
   }
@@ -41,12 +47,14 @@ function formatError(err: unknown): string | null {
       lines.push(`  Cause: ${String(err.cause)}`);
     }
     if (err.stack) {
-      lines.push(`  Stack: ${err.stack.split("\n").slice(1, 4).join("\n        ")}`);
+      lines.push(
+        `  Stack: ${err.stack.split('\n').slice(1, 4).join('\n        ')}`,
+      );
     }
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
-  if (typeof err === "object") {
+  if (typeof err === 'object') {
     return `  Details: ${JSON.stringify(err, null, 2)}`;
   }
 
@@ -58,10 +66,12 @@ export function connectionError(
   attempt: number,
   maxAttempts: number,
   err: unknown,
-  nextRetryMs?: number
+  nextRetryMs?: number,
 ): void {
   const timestamp = new Date().toISOString();
-  console.error(`[WordForge ${timestamp}] CONNECTION ERROR (attempt ${attempt}/${maxAttempts})`);
+  console.error(
+    `[WordForge ${timestamp}] CONNECTION ERROR (attempt ${attempt}/${maxAttempts})`,
+  );
   console.error(`  URL: ${url}`);
   console.error(`  ${formatError(err)}`);
   if (nextRetryMs !== undefined) {
@@ -69,11 +79,16 @@ export function connectionError(
   }
 }
 
-export function fatalError(message: string, details: Record<string, unknown>): never {
+export function fatalError(
+  message: string,
+  details: Record<string, unknown>,
+): never {
   const timestamp = new Date().toISOString();
   console.error(`[WordForge ${timestamp}] FATAL: ${message}`);
   for (const [key, value] of Object.entries(details)) {
-    console.error(`  ${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`);
+    console.error(
+      `  ${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`,
+    );
   }
   process.exit(1);
 }

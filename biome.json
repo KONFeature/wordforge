@@ -29,7 +29,8 @@
       "dist",
       "build",
       "packages/php/vendor",
-      "packages/php/assets/js/*.asset.php"
+      "packages/php/assets/js/*.asset.php",
+      "packages/php/assets/js/*.js"
     ]
   }
 }

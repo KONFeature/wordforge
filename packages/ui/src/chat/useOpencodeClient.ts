@@ -1,5 +1,8 @@
+import {
+  type OpencodeClient,
+  createOpencodeClient,
+} from '@opencode-ai/sdk/client';
 import { useMemo } from '@wordpress/element';
-import { createOpencodeClient, type OpencodeClient } from '@opencode-ai/sdk/client';
 
 interface WordForgeConfig {
   proxyUrl: string;

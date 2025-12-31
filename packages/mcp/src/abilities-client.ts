@@ -1,5 +1,5 @@
-import * as logger from "./logger.js";
-import type { Ability, Category, WPError, HttpMethod } from "./types.js";
+import * as logger from './logger.js';
+import type { Ability, Category, HttpMethod, WPError } from './types.js';
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 1_000;
@@ -9,20 +9,20 @@ export class AbilitiesApiClient {
   private auth: string;
 
   constructor(baseUrl: string, username: string, password: string) {
-    this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.auth = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.auth = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
   }
 
   async listAbilities(): Promise<Ability[]> {
-    logger.debug("Fetching all abilities");
-    const abilities = await this.get<Ability[]>("/abilities?per_page=100");
+    logger.debug('Fetching all abilities');
+    const abilities = await this.get<Ability[]>('/abilities?per_page=100');
     logger.info(`Fetched ${abilities.length} abilities`);
     return abilities;
   }
 
   async listCategories(): Promise<Category[]> {
-    logger.debug("Fetching all categories");
-    const categories = await this.get<Category[]>("/categories?per_page=100");
+    logger.debug('Fetching all categories');
+    const categories = await this.get<Category[]>('/categories?per_page=100');
     logger.info(`Fetched ${categories.length} categories`);
     return categories;
   }
@@ -36,20 +36,20 @@ export class AbilitiesApiClient {
   async executeAbility(
     name: string,
     method: HttpMethod,
-    input?: unknown
+    input?: unknown,
   ): Promise<unknown> {
     const path = `/abilities/${name}/run`;
     logger.debug(`Executing ability: ${name} [${method}]`, input);
 
     switch (method) {
-      case "GET": {
-        const query = input ? `?${this.serializeInput(input)}` : "";
+      case 'GET': {
+        const query = input ? `?${this.serializeInput(input)}` : '';
         return this.get(path + query);
       }
-      case "POST":
+      case 'POST':
         return this.post(path, input ? { input } : undefined);
-      case "DELETE": {
-        const query = input ? `?${this.serializeInput(input)}` : "";
+      case 'DELETE': {
+        const query = input ? `?${this.serializeInput(input)}` : '';
         return this.delete(path + query);
       }
     }
@@ -59,54 +59,62 @@ export class AbilitiesApiClient {
    * Serialize input object as PHP-style query params: input[key]=value
    * WordPress REST API expects this format for GET/DELETE requests.
    */
-  private serializeInput(input: unknown, prefix = "input"): string {
+  private serializeInput(input: unknown, prefix = 'input'): string {
     if (input === null || input === undefined) {
-      return "";
+      return '';
     }
 
     const params: string[] = [];
 
-    if (typeof input === "object" && !Array.isArray(input)) {
-      for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (typeof input === 'object' && !Array.isArray(input)) {
+      for (const [key, value] of Object.entries(
+        input as Record<string, unknown>,
+      )) {
         const paramKey = `${prefix}[${key}]`;
-        if (typeof value === "object" && value !== null) {
+        if (typeof value === 'object' && value !== null) {
           params.push(this.serializeInput(value, paramKey));
         } else {
-          params.push(`${encodeURIComponent(paramKey)}=${encodeURIComponent(String(value))}`);
+          params.push(
+            `${encodeURIComponent(paramKey)}=${encodeURIComponent(String(value))}`,
+          );
         }
       }
     } else if (Array.isArray(input)) {
       input.forEach((item, index) => {
         const paramKey = `${prefix}[${index}]`;
-        if (typeof item === "object" && item !== null) {
+        if (typeof item === 'object' && item !== null) {
           params.push(this.serializeInput(item, paramKey));
         } else {
-          params.push(`${encodeURIComponent(paramKey)}=${encodeURIComponent(String(item))}`);
+          params.push(
+            `${encodeURIComponent(paramKey)}=${encodeURIComponent(String(item))}`,
+          );
         }
       });
     } else {
-      params.push(`${encodeURIComponent(prefix)}=${encodeURIComponent(String(input))}`);
+      params.push(
+        `${encodeURIComponent(prefix)}=${encodeURIComponent(String(input))}`,
+      );
     }
 
-    return params.filter(Boolean).join("&");
+    return params.filter(Boolean).join('&');
   }
 
   private async get<T>(path: string): Promise<T> {
-    return this.request<T>("GET", path);
+    return this.request<T>('GET', path);
   }
 
   private async post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("POST", path, body);
+    return this.request<T>('POST', path, body);
   }
 
   private async delete<T>(path: string): Promise<T> {
-    return this.request<T>("DELETE", path);
+    return this.request<T>('DELETE', path);
   }
 
   private async request<T>(
     method: string,
     path: string,
-    body?: unknown
+    body?: unknown,
   ): Promise<T> {
     let lastError: Error | null = null;
 
@@ -117,8 +125,14 @@ export class AbilitiesApiClient {
         lastError = err instanceof Error ? err : new Error(String(err));
 
         if (attempt < MAX_RETRIES) {
-          const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt - 1);
-          logger.connectionError(this.baseUrl, attempt, MAX_RETRIES, err, delay);
+          const delay = INITIAL_RETRY_DELAY_MS * 2 ** (attempt - 1);
+          logger.connectionError(
+            this.baseUrl,
+            attempt,
+            MAX_RETRIES,
+            err,
+            delay,
+          );
           await this.sleep(delay);
         } else {
           logger.connectionError(this.baseUrl, attempt, MAX_RETRIES, err);
@@ -126,24 +140,24 @@ export class AbilitiesApiClient {
       }
     }
 
-    throw lastError ?? new Error("Request failed after all retries");
+    throw lastError ?? new Error('Request failed after all retries');
   }
 
   private async doRequest<T>(
     method: string,
     path: string,
-    body?: unknown
+    body?: unknown,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       Authorization: this.auth,
-      Accept: "application/json",
+      Accept: 'application/json',
     };
 
     const options: RequestInit = { method, headers };
 
     if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
+      headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(body);
     }
 
@@ -155,7 +169,7 @@ export class AbilitiesApiClient {
     if (!response.ok) {
       const wpError = data as WPError;
       throw new Error(
-        `${wpError.code}: ${wpError.message} (HTTP ${response.status}) (${method} ${url})`
+        `${wpError.code}: ${wpError.message} (HTTP ${response.status}) (${method} ${url})`,
       );
     }
 

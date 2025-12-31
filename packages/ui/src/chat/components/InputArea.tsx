@@ -1,7 +1,12 @@
-import { Button } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
-import { useState, useRef, useEffect, KeyboardEvent } from '@wordpress/element';
 import type { Provider } from '@opencode-ai/sdk/client';
+import { Button } from '@wordpress/components';
+import {
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { ModelSelector, type SelectedModel } from './ModelSelector';
 
 interface InputAreaProps {
@@ -14,11 +19,11 @@ interface InputAreaProps {
   onSelectModel: (model: SelectedModel) => void;
 }
 
-export const InputArea = ({ 
-  onSend, 
-  onAbort, 
-  disabled, 
-  isBusy, 
+export const InputArea = ({
+  onSend,
+  onAbort,
+  disabled,
+  isBusy,
   providers,
   selectedModel,
   onSelectModel,
@@ -29,7 +34,7 @@ export const InputArea = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   }, [text]);
 
@@ -47,7 +52,14 @@ export const InputArea = ({
   };
 
   return (
-    <div className="wf-input-container" style={{ padding: '16px', background: '#fff', borderTop: '1px solid #c3c4c7' }}>
+    <div
+      className="wf-input-container"
+      style={{
+        padding: '16px',
+        background: '#fff',
+        borderTop: '1px solid #c3c4c7',
+      }}
+    >
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
           <textarea
@@ -57,7 +69,7 @@ export const InputArea = ({
             onKeyDown={handleKeyDown}
             placeholder={__('Type your message...', 'wordforge')}
             rows={1}
-            disabled={disabled && !isBusy} 
+            disabled={disabled && !isBusy}
             style={{
               flex: 1,
               minHeight: '40px',
@@ -69,24 +81,27 @@ export const InputArea = ({
               fontSize: '14px',
               lineHeight: '1.4',
               fontFamily: 'inherit',
-              background: (disabled && !isBusy) ? '#f6f7f7' : '#fff',
-              cursor: (disabled && !isBusy) ? 'not-allowed' : 'text',
+              background: disabled && !isBusy ? '#f6f7f7' : '#fff',
+              cursor: disabled && !isBusy ? 'not-allowed' : 'text',
             }}
           />
-          <div className="wf-input-actions" style={{ display: 'flex', gap: '8px' }}>
+          <div
+            className="wf-input-actions"
+            style={{ display: 'flex', gap: '8px' }}
+          >
             {isBusy ? (
-              <Button 
-                variant="secondary" 
-                onClick={onAbort} 
+              <Button
+                variant="secondary"
+                onClick={onAbort}
                 icon="controls-pause"
                 style={{ minHeight: '40px' }}
               >
                 {__('Stop', 'wordforge')}
               </Button>
             ) : (
-              <Button 
-                variant="primary" 
-                onClick={handleSend} 
+              <Button
+                variant="primary"
+                onClick={handleSend}
                 disabled={!text.trim() || disabled}
                 icon="arrow-right-alt"
                 style={{ minHeight: '40px' }}
@@ -96,8 +111,15 @@ export const InputArea = ({
             )}
           </div>
         </div>
-        
-        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+        <div
+          style={{
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
           <ModelSelector
             providers={providers}
             selectedModel={selectedModel}

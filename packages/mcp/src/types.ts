@@ -1,4 +1,4 @@
-import type { ZodTypeAny } from "zod";
+import type { ZodTypeAny } from 'zod';
 
 export interface Config {
   /** WordPress Abilities REST API base URL (e.g., https://example.com/wp-json/wp-abilities/v1) */
@@ -44,7 +44,7 @@ export interface Ability {
     show_in_rest?: boolean;
     mcp?: {
       public: boolean;
-      type: "tool" | "prompt" | "resource";
+      type: 'tool' | 'prompt' | 'resource';
     };
     annotations?: {
       instructions?: string;
@@ -82,7 +82,7 @@ export interface WPError {
 /**
  * HTTP method to use for ability execution based on annotations.
  */
-export type HttpMethod = "GET" | "POST" | "DELETE";
+export type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
 export interface LoadedAbility {
   name: string;
@@ -92,7 +92,7 @@ export interface LoadedAbility {
   category: string;
   inputSchema: ZodTypeAny;
   outputSchema?: ZodTypeAny;
-  mcpType: "tool" | "prompt" | "resource";
+  mcpType: 'tool' | 'prompt' | 'resource';
   httpMethod: HttpMethod;
   annotations: {
     title?: string;
