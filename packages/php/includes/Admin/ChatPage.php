@@ -98,6 +98,13 @@ class ChatPage {
 
 		\wp_enqueue_style( 'wp-components' );
 
+		\wp_enqueue_style(
+			'wordforge-chat',
+			\plugins_url( 'assets/js/chat.css', WORDFORGE_PLUGIN_FILE ),
+			[ 'wp-components' ],
+			$asset_file['version']
+		);
+
 		$config = [
 			'proxyUrl'     => \rest_url( 'wordforge/v1/opencode/proxy' ),
 			'nonce'        => \wp_create_nonce( 'wp_rest' ),

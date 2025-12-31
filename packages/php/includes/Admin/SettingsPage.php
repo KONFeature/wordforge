@@ -64,6 +64,13 @@ class SettingsPage {
 
 		\wp_enqueue_style( 'wp-components' );
 
+		\wp_enqueue_style(
+			'wordforge-settings',
+			\plugins_url( 'assets/js/settings.css', WORDFORGE_PLUGIN_FILE ),
+			[ 'wp-components' ],
+			$asset_file['version']
+		);
+
 		$mcp_active    = class_exists( 'WP\\MCP\\Core\\McpAdapter' );
 		$woo_active    = \WordForge\is_woocommerce_active();
 		$settings      = \WordForge\get_settings();

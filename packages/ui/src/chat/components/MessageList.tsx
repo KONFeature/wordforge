@@ -10,6 +10,7 @@ import type {
 import { Spinner } from '@wordpress/components';
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import ReactMarkdown from 'react-markdown';
 import styles from './MessageList.module.css';
 
 export interface ChatMessage {
@@ -62,6 +63,28 @@ function groupMessagesIntoTurns(messages: ChatMessage[]): MessageTurn[] {
 
   return turns;
 }
+
+const Markdown = ({ children }: { children: string }) => (
+  <ReactMarkdown
+    components={{
+      pre: ({ children }) => <pre className={styles.codeBlock}>{children}</pre>,
+      code: ({ className, children, ...props }) => {
+        const isInline = !className;
+        return isInline ? (
+          <code className={styles.inlineCode} {...props}>
+            {children}
+          </code>
+        ) : (
+          <code className={className} {...props}>
+            {children}
+          </code>
+        );
+      },
+    }}
+  >
+    {children}
+  </ReactMarkdown>
+);
 
 interface CollapsibleStepProps {
   title: string;
@@ -177,7 +200,9 @@ const ReasoningStep = ({
       title={__('Thinking', 'wordforge')}
       defaultExpanded={defaultExpanded}
     >
-      <pre className={styles.stepSectionContent}>{part.text}</pre>
+      <div className={styles.reasoningContent}>
+        <Markdown>{part.text}</Markdown>
+      </div>
     </CollapsibleStep>
   );
 };
@@ -197,7 +222,7 @@ const UserMessageBlock = ({ message }: { message: ChatMessage }) => {
       </div>
       {textParts.map((part, i) => (
         <div key={part.id || i} className={styles.messageContent}>
-          {part.text}
+          <Markdown>{part.text}</Markdown>
         </div>
       ))}
     </div>
@@ -269,7 +294,7 @@ const AssistantResponseBlock = ({
 
       {allTextParts.map((part, i) => (
         <div key={part.id || i} className={styles.messageContent}>
-          {part.text}
+          <Markdown>{part.text}</Markdown>
         </div>
       ))}
 

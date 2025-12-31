@@ -21,6 +21,10 @@
   --wf-color-bg-code: #f0f0f1;
   --wf-color-bg-selected: #f0f6fc;
 
+  /* Colors - Code blocks */
+  --wf-color-code-bg: #1e1e1e;
+  --wf-color-code-text: #d4d4d4;
+
   /* Colors - Text */
   --wf-color-text: #1d2327;
   --wf-color-text-muted: #646970;
