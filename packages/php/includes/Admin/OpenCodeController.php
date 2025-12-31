@@ -280,16 +280,13 @@ class OpenCodeController {
 
 		$headers = [
 			'Accept' => $request->get_header( 'accept' ) ?: '*/*',
+			// Always set the WordPress root as the OpenCode working directory
+			'X-Opencode-Directory' => $this->get_wordpress_root(),
 		];
 
 		$content_type = $request->get_header( 'content-type' );
 		if ( $content_type ) {
 			$headers['Content-Type'] = $content_type;
-		}
-
-		$opencode_dir = $request->get_header( 'x-opencode-directory' );
-		if ( $opencode_dir ) {
-			$headers['X-Opencode-Directory'] = $opencode_dir;
 		}
 
 		$args = [
@@ -331,6 +328,10 @@ class OpenCodeController {
 		header( 'Access-Control-Max-Age: 86400' );
 	}
 
+	private function get_wordpress_root(): string {
+		return untrailingslashit( ABSPATH );
+	}
+
 	private function proxy_standard_request( string $target_url, array $args ): void {
 		$response = wp_remote_request( $target_url, $args );
 
@@ -369,6 +370,7 @@ class OpenCodeController {
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, [
 			'Accept: text/event-stream',
 			'Cache-Control: no-cache',
+			'X-Opencode-Directory: ' . $this->get_wordpress_root(),
 		] );
 		curl_setopt( $ch, CURLOPT_WRITEFUNCTION, function ( $ch, $data ) {
 			echo $data;

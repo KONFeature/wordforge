@@ -23,8 +23,12 @@ class ServerProcess {
 		return self::get_state_dir() . '/server.port';
 	}
 
+	public static function get_config_dir(): string {
+		return self::get_state_dir() . '/config';
+	}
+
 	public static function get_config_file(): string {
-		return self::get_state_dir() . '/opencode.json';
+		return self::get_config_dir() . '/opencode.json';
 	}
 
 	public static function get_log_file(): string {
@@ -111,6 +115,11 @@ class ServerProcess {
 		$port   = self::find_available_port();
 		$config = self::generate_config( $options, $port );
 
+		$config_dir = self::get_config_dir();
+		if ( ! file_exists( $config_dir ) ) {
+			wp_mkdir_p( $config_dir );
+		}
+
 		$config_file = self::get_config_file();
 		file_put_contents( $config_file, wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 
@@ -121,8 +130,9 @@ class ServerProcess {
 
 		if ( self::is_windows() ) {
 			$cmd = sprintf(
-				'set HOME=%s && start /B "" "%s" serve --port=%d --hostname=127.0.0.1 > "%s" 2>&1',
+				'set HOME=%s && set OPENCODE_CONFIG_DIR=%s && start /B "" "%s" serve --port=%d --hostname=127.0.0.1 > "%s" 2>&1',
 				$state_dir,
+				$config_dir,
 				$binary,
 				$port,
 				$log_file
@@ -131,9 +141,10 @@ class ServerProcess {
 			$pid = self::find_process_by_port( $port );
 		} else {
 			$cmd = sprintf(
-				'cd %s && HOME=%s %s serve --port=%d --hostname=127.0.0.1 > %s 2>&1 & echo $!',
+				'cd %s && HOME=%s OPENCODE_CONFIG_DIR=%s %s serve --port=%d --hostname=127.0.0.1 > %s 2>&1 & echo $!',
 				escapeshellarg( $state_dir ),
 				escapeshellarg( $state_dir ),
+				escapeshellarg( $config_dir ),
 				escapeshellarg( $binary ),
 				$port,
 				escapeshellarg( $log_file )
@@ -272,6 +283,39 @@ class ServerProcess {
 	private static function generate_config( array $options, int $port ): array {
 		$config = [
 			'$schema' => 'https://opencode.ai/config.json',
+			// Enforce read-only mode: deny file edits and require confirmation for bash commands
+			'permission' => [
+				'edit'               => 'deny',
+				'external_directory' => 'deny',
+				'bash'               => [
+					// Allow read-only commands
+					'cat *'        => 'allow',
+					'head *'       => 'allow',
+					'tail *'       => 'allow',
+					'less *'       => 'allow',
+					'more *'       => 'allow',
+					'grep *'       => 'allow',
+					'rg *'         => 'allow',
+					'find *'       => 'allow',
+					'ls *'         => 'allow',
+					'tree *'       => 'allow',
+					'pwd'          => 'allow',
+					'wc *'         => 'allow',
+					'diff *'       => 'allow',
+					'file *'       => 'allow',
+					'stat *'       => 'allow',
+					'du *'         => 'allow',
+					'git status*'  => 'allow',
+					'git log*'     => 'allow',
+					'git diff*'    => 'allow',
+					'git show*'    => 'allow',
+					'git branch'   => 'allow',
+					'git branch*'  => 'allow',
+					'wp *'         => 'allow',
+					// Deny everything else by default
+					'*'            => 'deny',
+				],
+			],
 		];
 
 		$app_password_auth = self::get_or_create_app_password();
