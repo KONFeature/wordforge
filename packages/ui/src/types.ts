@@ -1,3 +1,14 @@
+export type {
+  Session,
+  Message,
+  Part,
+  TextPart,
+  ToolPart,
+  ToolState,
+  SessionStatus,
+  Event,
+} from '@opencode-ai/sdk/client';
+
 export interface WordForgeChatConfig {
   proxyUrl: string;
   nonce: string;
@@ -61,61 +72,9 @@ export interface WordForgeSettingsConfig {
   i18n: Record<string, string>;
 }
 
-export interface Session {
-  id: string;
-  title: string;
-  time: {
-    created: number;
-    updated: number;
-  };
-}
-
-export interface MessageInfo {
-  id: string;
-  role: 'user' | 'assistant';
-  time: {
-    created: number;
-    updated?: number;
-  };
-  error?: {
-    code: string;
-    message: string;
-    data?: any;
-  };
-  sessionID: string;
-}
-
-export interface ToolCallState {
-  status: 'pending' | 'running' | 'completed' | 'error';
-  title?: string;
-  input?: any;
-  output?: any;
-  error?: string;
-}
-
-export interface MessagePart {
-  id: string;
-  type: 'text' | 'tool';
-  text?: string;
-  tool?: string;
-  state?: ToolCallState;
-  messageID: string;
-  sessionID: string;
-}
-
-export interface Message {
-  info: MessageInfo;
-  parts: MessagePart[];
-}
-
-export interface SessionStatus {
-  type: 'idle' | 'busy' | 'retry';
-  details?: string;
-}
-
-export interface SSEEvent {
-  type: string;
-  properties: any;
+export interface ChatMessage {
+  info: Message;
+  parts: Part[];
 }
 
 declare global {

@@ -1,39 +1,51 @@
-import { Button, Spinner } from '@wordpress/components';
+import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
-import { Message, MessagePart } from '../../types';
+import type { Message, Part, ToolPart, TextPart } from '@opencode-ai/sdk/client';
+
+export interface ChatMessage {
+  info: Message;
+  parts: Part[];
+}
 
 interface MessageListProps {
-  messages: Message[];
+  messages: ChatMessage[];
   isLoading: boolean;
   isThinking: boolean;
   isBusy: boolean;
 }
 
-const ToolCallItem = ({ part }: { part: MessagePart }) => {
+const isTextPart = (part: Part): part is TextPart => part.type === 'text';
+const isToolPart = (part: Part): part is ToolPart => part.type === 'tool';
+
+const ToolCallItem = ({ part }: { part: ToolPart }) => {
   const [expanded, setExpanded] = useState(false);
-  const state = part.state || {};
-  const status = state.status || 'pending';
-  const title = state.title || part.tool || 'unknown';
+  const state = part.state;
+  const status = state.status;
+  const title = ('title' in state && state.title) || part.tool || 'unknown';
 
   let statusLabel = __('Pending', 'wordforge');
   if (status === 'running') statusLabel = __('Running', 'wordforge');
   else if (status === 'completed') statusLabel = __('Completed', 'wordforge');
   else if (status === 'error') statusLabel = __('Failed', 'wordforge');
 
-  const statusColor = {
+  const statusColor: Record<string, string> = {
     pending: '#646970',
     running: '#856404',
     completed: '#155724',
     error: '#721c24'
-  }[status];
+  };
 
-  const statusBg = {
+  const statusBg: Record<string, string> = {
     pending: '#f0f0f1',
     running: '#fff3cd',
     completed: '#d4edda',
     error: '#f8d7da'
-  }[status];
+  };
+
+  const input = 'input' in state ? state.input : undefined;
+  const output = 'output' in state && state.status === 'completed' ? state.output : undefined;
+  const error = 'error' in state && state.status === 'error' ? state.error : undefined;
 
   return (
     <div style={{ background: '#f6f7f7', border: '1px solid #dcdcde', borderRadius: '4px', marginBottom: '8px', overflow: 'hidden' }}>
@@ -42,7 +54,7 @@ const ToolCallItem = ({ part }: { part: MessagePart }) => {
         style={{ padding: '8px 12px', background: '#fff', borderBottom: '1px solid #dcdcde', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}
       >
         <span style={{ fontFamily: 'monospace', fontWeight: 500, flex: 1 }}>{title}</span>
-        <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '10px', textTransform: 'uppercase', fontWeight: 500, background: statusBg, color: statusColor }}>
+        <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '10px', textTransform: 'uppercase', fontWeight: 500, background: statusBg[status], color: statusColor[status] }}>
           {statusLabel}
         </span>
         <span style={{ color: '#646970' }}>{expanded ? '-' : '+'}</span>
@@ -50,27 +62,27 @@ const ToolCallItem = ({ part }: { part: MessagePart }) => {
       
       {expanded && (
         <div style={{ padding: '12px', fontSize: '12px' }}>
-          {state.input && (
+          {input && (
             <div style={{ marginBottom: '8px' }}>
               <div style={{ fontWeight: 500, marginBottom: '4px', color: '#646970' }}>Input</div>
               <pre style={{ fontFamily: 'monospace', fontSize: '11px', background: '#fff', padding: '8px', borderRadius: '3px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '200px', overflowY: 'auto' }}>
-                {JSON.stringify(state.input, null, 2)}
+                {JSON.stringify(input, null, 2)}
               </pre>
             </div>
           )}
-          {state.output && (
+          {output && (
             <div style={{ marginBottom: '8px' }}>
               <div style={{ fontWeight: 500, marginBottom: '4px', color: '#646970' }}>Output</div>
               <pre style={{ fontFamily: 'monospace', fontSize: '11px', background: '#fff', padding: '8px', borderRadius: '3px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '200px', overflowY: 'auto' }}>
-                {typeof state.output === 'string' ? state.output : JSON.stringify(state.output, null, 2)}
+                {typeof output === 'string' ? output : JSON.stringify(output, null, 2)}
               </pre>
             </div>
           )}
-          {state.error && (
+          {error && (
             <div>
               <div style={{ fontWeight: 500, marginBottom: '4px', color: '#646970' }}>Error</div>
               <pre style={{ fontFamily: 'monospace', fontSize: '11px', background: '#fff', padding: '8px', borderRadius: '3px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '200px', overflowY: 'auto', color: '#d63638' }}>
-                {state.error}
+                {error}
               </pre>
             </div>
           )}
@@ -80,21 +92,21 @@ const ToolCallItem = ({ part }: { part: MessagePart }) => {
   );
 };
 
-const MessageItem = ({ message }: { message: Message }) => {
+const MessageItem = ({ message }: { message: ChatMessage }) => {
   const isUser = message.info.role === 'user';
-  const isError = message.info.error != null;
+  const hasError = message.info.role === 'assistant' && message.info.error != null;
   const time = new Date(message.info.time.created * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const textParts = message.parts.filter(p => p.type === 'text');
-  const toolParts = message.parts.filter(p => p.type === 'tool');
+  const textParts = message.parts.filter(isTextPart);
+  const toolParts = message.parts.filter(isToolPart);
 
   return (
     <div style={{ 
       marginBottom: '16px', 
       padding: '12px 16px', 
-      background: isUser ? '#f0f6fc' : isError ? '#fcf0f1' : '#fff', 
+      background: isUser ? '#f0f6fc' : hasError ? '#fcf0f1' : '#fff', 
       borderRadius: '8px', 
-      border: `1px solid ${isUser ? '#c5d9ed' : isError ? '#f0b8b8' : '#dcdcde'}` 
+      border: `1px solid ${isUser ? '#c5d9ed' : hasError ? '#f0b8b8' : '#dcdcde'}` 
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px' }}>
         <span style={{ fontWeight: 600, color: '#1d2327' }}>
@@ -104,14 +116,16 @@ const MessageItem = ({ message }: { message: Message }) => {
       </div>
 
       {textParts.map((part, i) => (
-        <div key={i} style={{ fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: i < textParts.length - 1 ? '8px' : 0 }}>
+        <div key={part.id || i} style={{ fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: i < textParts.length - 1 ? '8px' : 0 }}>
           {part.text}
         </div>
       ))}
 
-      {isError && message.info.error && (
+      {hasError && message.info.role === 'assistant' && message.info.error && (
         <div style={{ fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#d63638' }}>
-          {message.info.error.data?.message || message.info.error.message || __('Error', 'wordforge')}
+          {'data' in message.info.error && message.info.error.data ? 
+            (message.info.error.data as { message?: string }).message || __('Error', 'wordforge') : 
+            __('Error', 'wordforge')}
         </div>
       )}
 
@@ -126,7 +140,7 @@ const MessageItem = ({ message }: { message: Message }) => {
   );
 };
 
-export const MessageList = ({ messages, isLoading, isThinking, isBusy }: MessageListProps) => {
+export const MessageList = ({ messages, isLoading, isThinking }: MessageListProps) => {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

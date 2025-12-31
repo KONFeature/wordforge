@@ -1,49 +1,54 @@
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { useState, useEffect, useMemo } from '@wordpress/element';
 import { Notice, Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { ChatApiClient } from './api';
+import type { Session, SessionStatus, Message, Part } from '@opencode-ai/sdk/client';
+import { useOpencodeClient } from './useOpencodeClient';
 import { SessionList } from './components/SessionList';
-import { MessageList } from './components/MessageList';
+import { MessageList, type ChatMessage } from './components/MessageList';
 import { InputArea } from './components/InputArea';
 import { DeleteSessionModal } from './components/DeleteSessionModal';
-import { Session, Message, SessionStatus, MessageInfo, MessagePart } from '../types';
 
 export const ChatApp = () => {
-  const [config] = useState(() => window.wordforgeChat);
-  const [api] = useState(() => config ? new ChatApiClient(config) : null);
+  const config = window.wordforgeChat;
+  const client = config ? useOpencodeClient(config) : null;
   
   const [sessions, setSessions] = useState<Session[]>([]);
   const [statuses, setStatuses] = useState<Record<string, SessionStatus>>({});
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currentSession = useMemo(() => sessions.find(s => s.id === currentSessionId), [sessions, currentSessionId]);
+  const currentSession = useMemo(
+    () => sessions.find(s => s.id === currentSessionId), 
+    [sessions, currentSessionId]
+  );
   const currentStatus = currentSessionId ? statuses[currentSessionId]?.type || 'idle' : 'idle';
-  const isBusy = currentStatus === 'busy' || currentStatus === 'retry';
+  const isBusy = currentStatus === 'busy' || currentStatus === 'retry' || isSending;
 
   useEffect(() => {
-    if (!api) return;
+    if (!client) return;
 
     const loadData = async () => {
       setIsLoadingSessions(true);
       try {
-        const [loadedSessions, loadedStatuses] = await Promise.all([
-          api.request<Session[]>('session'),
-          api.request<Record<string, SessionStatus>>('session/status')
+        const [sessionsResult, statusesResult] = await Promise.all([
+          client.session.list(),
+          client.session.status()
         ]);
         
+        const loadedSessions = sessionsResult.data || [];
         loadedSessions.sort((a, b) => b.time.updated - a.time.updated);
         
         setSessions(loadedSessions);
-        setStatuses(loadedStatuses || {});
+        setStatuses(statusesResult.data || {});
       } catch (err) {
         console.error('Failed to load sessions:', err);
         setError(__('Failed to load sessions', 'wordforge'));
@@ -53,117 +58,19 @@ export const ChatApp = () => {
     };
 
     loadData();
-  }, [api]);
-
-  useEffect(() => {
-    if (!api) return;
-
-    const connectSSE = () => {
-      const source = api.getEventSource();
-
-      source.onopen = () => {
-        console.log('[WordForge Chat] Event stream connected');
-      };
-
-      source.onmessage = (e) => {
-        try {
-          const event = JSON.parse(e.data);
-          handleEvent(event);
-        } catch (err) {
-          console.error('[WordForge Chat] Failed to parse event:', err);
-        }
-      };
-
-      source.onerror = (e) => {
-        console.error('[WordForge Chat] Event stream error:', e);
-        source.close();
-        setTimeout(connectSSE, 5000);
-      };
-
-      return source;
-    };
-
-    const source = connectSSE();
-    return () => source.close();
-  }, [api]);
-
-  const handleEvent = useCallback((event: any) => {
-    const { type, properties } = event;
-
-    switch (type) {
-      case 'session.created':
-        setSessions(prev => {
-          if (prev.some(s => s.id === properties.info.id)) return prev;
-          return [properties.info, ...prev];
-        });
-        break;
-      case 'session.updated':
-        setSessions(prev => prev.map(s => s.id === properties.info.id ? properties.info : s));
-        break;
-      case 'session.deleted':
-        setSessions(prev => prev.filter(s => s.id !== properties.info.id));
-        if (currentSessionId === properties.info.id) {
-          setCurrentSessionId(null);
-          setMessages([]);
-        }
-        break;
-      case 'session.status':
-        setStatuses(prev => ({
-          ...prev,
-          [properties.sessionID]: properties.status
-        }));
-        break;
-      case 'message.updated':
-        if (properties.info.sessionID === currentSessionId) {
-             setMessages(prev => {
-                const index = prev.findIndex(m => m.info.id === properties.info.id);
-                if (index === -1) {
-                    return prev;
-                } else {
-                    const newMessages = [...prev];
-                    newMessages[index] = { ...newMessages[index], info: properties.info };
-                    return newMessages;
-                }
-             });
-        }
-        break;
-      case 'message.part.updated':
-         if (properties.part.sessionID === currentSessionId) {
-             setMessages(prev => {
-                 const msgIndex = prev.findIndex(m => m.info.id === properties.part.messageID);
-                 if (msgIndex === -1) {
-                     return prev;
-                 }
-                 
-                 const newMessages = [...prev];
-                 const msg = { ...newMessages[msgIndex], parts: [...newMessages[msgIndex].parts] };
-                 const partIndex = msg.parts.findIndex(p => p.id === properties.part.id);
-                 
-                 if (partIndex === -1) {
-                     msg.parts.push(properties.part);
-                 } else {
-                     msg.parts[partIndex] = properties.part;
-                 }
-                 
-                 newMessages[msgIndex] = msg;
-                 return newMessages;
-             });
-         }
-         break;
-    }
-  }, [currentSessionId]);
+  }, [client]);
 
   const selectSession = async (id: string) => {
+    if (!client) return;
+    
     setCurrentSessionId(id);
     setIsLoadingMessages(true);
     setMessages([]);
     setError(null);
-    
-    if (!api) return;
 
     try {
-      const msgs = await api.request<Message[]>(`session/${id}/message?limit=10`);
-      setMessages(msgs || []);
+      const result = await client.session.messages({ path: { id } });
+      setMessages(result.data || []);
     } catch (err) {
       console.error('Failed to load messages:', err);
       setError(__('Failed to load messages', 'wordforge'));
@@ -173,15 +80,15 @@ export const ChatApp = () => {
   };
 
   const createSession = async () => {
-    if (!api) return;
+    if (!client) return;
+    
     setIsCreatingSession(true);
     try {
-      const session = await api.request<Session>('session', {
-        method: 'POST',
-        body: JSON.stringify({})
-      });
-      setSessions(prev => [session, ...prev]);
-      selectSession(session.id);
+      const result = await client.session.create({ body: {} });
+      if (result.data) {
+        setSessions(prev => [result.data!, ...prev]);
+        selectSession(result.data.id);
+      }
     } catch (err) {
       console.error('Failed to create session:', err);
       setError(__('Failed to create session', 'wordforge'));
@@ -191,10 +98,11 @@ export const ChatApp = () => {
   };
 
   const deleteSession = async () => {
-    if (!api || !currentSessionId) return;
+    if (!client || !currentSessionId) return;
+    
     setIsDeletingSession(true);
     try {
-      await api.request(`session/${currentSessionId}`, { method: 'DELETE' });
+      await client.session.delete({ path: { id: currentSessionId } });
       setSessions(prev => prev.filter(s => s.id !== currentSessionId));
       setCurrentSessionId(null);
       setMessages([]);
@@ -208,37 +116,58 @@ export const ChatApp = () => {
   };
 
   const sendMessage = async (text: string) => {
-    if (!api || !currentSessionId) return;
+    if (!client || !currentSessionId) return;
 
-    const tempUserMsg: Message = {
+    const tempUserMsg: ChatMessage = {
       info: {
         id: 'temp-user-' + Date.now(),
+        sessionID: currentSessionId,
         role: 'user',
         time: { created: Date.now() / 1000 },
-        sessionID: currentSessionId
+        agent: 'build',
+        model: { providerID: '', modelID: '' },
       },
-      parts: [{ id: 'temp-part-' + Date.now(), type: 'text', text, messageID: 'temp', sessionID: currentSessionId }]
+      parts: [{
+        id: 'temp-part-' + Date.now(),
+        type: 'text',
+        text,
+        messageID: 'temp',
+        sessionID: currentSessionId,
+      }]
     };
     
     setMessages(prev => [...prev, tempUserMsg]);
+    setIsSending(true);
 
     try {
-      await api.request(`session/${currentSessionId}/prompt_async`, {
-        method: 'POST',
-        body: JSON.stringify({
-          parts: [{ type: 'text', text }]
-        })
+      const result = await client.session.prompt({
+        path: { id: currentSessionId },
+        body: { parts: [{ type: 'text', text }] }
       });
+
+      if (result.data) {
+        setMessages(prev => {
+          const withoutTemp = prev.filter(m => !m.info.id.startsWith('temp-'));
+          return [...withoutTemp, result.data as ChatMessage];
+        });
+      }
+
+      const messagesResult = await client.session.messages({ path: { id: currentSessionId } });
+      if (messagesResult.data) {
+        setMessages(messagesResult.data);
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
       setError(__('Failed to send message', 'wordforge'));
+    } finally {
+      setIsSending(false);
     }
   };
 
   const abortSession = async () => {
-    if (!api || !currentSessionId) return;
+    if (!client || !currentSessionId) return;
     try {
-      await api.request(`session/${currentSessionId}/abort`, { method: 'POST' });
+      await client.session.abort({ path: { id: currentSessionId } });
     } catch (err) {
       console.error('Failed to abort session:', err);
     }

@@ -1,7 +1,6 @@
 import { Button, Spinner } from '@wordpress/components';
-import { format } from '@wordpress/date';
 import { __ } from '@wordpress/i18n';
-import { Session, SessionStatus } from '../../types';
+import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
 
 interface SessionListProps {
   sessions: Session[];
