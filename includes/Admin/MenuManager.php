@@ -8,6 +8,7 @@ class MenuManager {
 
 	public const MENU_SLUG = 'wordforge';
 	public const OPENCODE_SLUG = 'wordforge-opencode';
+	public const CHAT_SLUG = 'wordforge-chat';
 
 	public function __construct() {
 		add_action( 'admin_menu', [ $this, 'register_menu' ] );
@@ -43,6 +44,15 @@ class MenuManager {
 			self::OPENCODE_SLUG,
 			[ $this, 'render_opencode_page' ]
 		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'Chat', 'wordforge' ),
+			__( 'Chat', 'wordforge' ),
+			'manage_options',
+			self::CHAT_SLUG,
+			[ $this, 'render_chat_page' ]
+		);
 	}
 
 	public function render_settings_page(): void {
@@ -52,6 +62,11 @@ class MenuManager {
 
 	public function render_opencode_page(): void {
 		$page = new OpenCodePage();
+		$page->render();
+	}
+
+	public function render_chat_page(): void {
+		$page = new ChatPage();
 		$page->render();
 	}
 
@@ -69,6 +84,7 @@ class MenuManager {
 			[
 				'toplevel_page_' . self::MENU_SLUG,
 				'wordforge-ia_page_' . self::OPENCODE_SLUG,
+				'wordforge-ia_page_' . self::CHAT_SLUG,
 			],
 			true
 		);
