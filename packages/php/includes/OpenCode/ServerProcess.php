@@ -281,70 +281,122 @@ class ServerProcess {
 	}
 
 	private static function generate_config( array $options, int $port ): array {
+		$bash_permissions = self::get_bash_permissions();
+
 		$config = [
-			'$schema' => 'https://opencode.ai/config.json',
-			// Enforce read-only mode: deny file edits and require confirmation for bash commands
-			'permission' => [
+			'$schema'       => 'https://opencode.ai/config.json',
+			'default_agent' => 'wordpress-manager',
+			'agent'         => [
+				'wordpress-manager' => [
+					'mode'        => 'primary',
+					'description' => 'WordPress site manager with MCP tools and WP-CLI access (read-only file system)',
+					'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
+					'color'       => '#3858E9',
+				],
+			],
+			'permission'    => [
 				'edit'               => 'deny',
 				'external_directory' => 'deny',
-				'bash'               => [
-					// Allow read-only commands
-					'cat *'        => 'allow',
-					'head *'       => 'allow',
-					'tail *'       => 'allow',
-					'less *'       => 'allow',
-					'more *'       => 'allow',
-					'grep *'       => 'allow',
-					'rg *'         => 'allow',
-					'find *'       => 'allow',
-					'ls *'         => 'allow',
-					'tree *'       => 'allow',
-					'pwd'          => 'allow',
-					'wc *'         => 'allow',
-					'diff *'       => 'allow',
-					'file *'       => 'allow',
-					'stat *'       => 'allow',
-					'du *'         => 'allow',
-					'git status*'  => 'allow',
-					'git log*'     => 'allow',
-					'git diff*'    => 'allow',
-					'git show*'    => 'allow',
-					'git branch'   => 'allow',
-					'git branch*'  => 'allow',
-					'wp *'         => 'allow',
-					// Deny everything else by default
-					'*'            => 'deny',
-				],
+				'bash'               => $bash_permissions,
 			],
 		];
 
-		$app_password_auth = self::get_or_create_app_password();
-		if ( $app_password_auth ) {
-			$mcp_url = \WordForge\get_endpoint_url();
-
+		$mcp_config = self::get_mcp_config();
+		if ( $mcp_config ) {
 			$config['mcp'] = [
-				'wordforge' => [
-					'type'    => 'remote',
-					'url'     => $mcp_url,
-					'headers' => [
-						'Authorization' => 'Basic ' . $app_password_auth,
-					],
-				],
+				'wordforge' => $mcp_config,
 			];
 		}
 
 		return $config;
 	}
 
-	private static function get_or_create_app_password(): ?string {
+	private static function get_mcp_config(): ?array {
+		$app_password_data = self::get_or_create_app_password_data();
+		if ( ! $app_password_data ) {
+			return null;
+		}
+
+		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
+		$abilities_url   = rest_url( 'wp-abilities/v1' );
+
+		if ( file_exists( $mcp_server_path ) && self::has_node() ) {
+			return [
+				'type'        => 'local',
+				'command'     => [ 'node', $mcp_server_path ],
+				'environment' => [
+					'WORDPRESS_URL'          => $abilities_url,
+					'WORDPRESS_USERNAME'     => $app_password_data['username'],
+					'WORDPRESS_APP_PASSWORD' => $app_password_data['password'],
+				],
+			];
+		}
+
+		$mcp_url = \WordForge\get_endpoint_url();
+		return [
+			'type'    => 'remote',
+			'url'     => $mcp_url,
+			'headers' => [
+				'Authorization' => 'Basic ' . $app_password_data['auth'],
+			],
+		];
+	}
+
+	private static function has_node(): bool {
+		exec( 'which node 2>/dev/null', $output, $code );
+		return 0 === $code;
+	}
+
+	private static function get_bash_permissions(): array {
+		return [
+			'cat *'            => 'allow',
+			'head *'           => 'allow',
+			'tail *'           => 'allow',
+			'less *'           => 'allow',
+			'more *'           => 'allow',
+			'grep *'           => 'allow',
+			'rg *'             => 'allow',
+			'find *'           => 'allow',
+			'ls *'             => 'allow',
+			'tree *'           => 'allow',
+			'pwd'              => 'allow',
+			'wc *'             => 'allow',
+			'diff *'           => 'allow',
+			'file *'           => 'allow',
+			'stat *'           => 'allow',
+			'du *'             => 'allow',
+			'git status*'      => 'allow',
+			'git log*'         => 'allow',
+			'git diff*'        => 'allow',
+			'git show*'        => 'allow',
+			'git branch'       => 'allow',
+			'git branch*'      => 'allow',
+			'wp *'             => 'allow',
+			'composer show*'   => 'allow',
+			'composer info*'   => 'allow',
+			'npm list*'        => 'allow',
+			'npm ls*'          => 'allow',
+			'bun pm ls*'       => 'allow',
+			'*'                => 'deny',
+		];
+	}
+
+	/**
+	 * @return array{username: string, password: string, auth: string}|null
+	 */
+	private static function get_or_create_app_password_data(): ?array {
 		$user = wp_get_current_user();
 		if ( ! $user || ! $user->ID ) {
 			return null;
 		}
 
 		$stored = get_option( 'wordforge_app_password' );
-		if ( $stored && isset( $stored['user_id'] ) && $stored['user_id'] === $user->ID && isset( $stored['auth'] ) ) {
-			return $stored['auth'];
+		if ( $stored && isset( $stored['user_id'] ) && $stored['user_id'] === $user->ID && isset( $stored['auth'], $stored['password'] ) ) {
+			return [
+				'username' => $user->user_login,
+				'password' => $stored['password'],
+				'auth'     => $stored['auth'],
+			];
 		}
 
 		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
@@ -368,12 +420,22 @@ class ServerProcess {
 		$auth = base64_encode( $user->user_login . ':' . $password );
 
 		update_option( 'wordforge_app_password', [
-			'user_id' => $user->ID,
-			'uuid'    => $item['uuid'],
-			'auth'    => $auth,
+			'user_id'  => $user->ID,
+			'uuid'     => $item['uuid'],
+			'auth'     => $auth,
+			'password' => $password,
 		], false );
 
-		return $auth;
+		return [
+			'username' => $user->user_login,
+			'password' => $password,
+			'auth'     => $auth,
+		];
+	}
+
+	private static function get_or_create_app_password(): ?string {
+		$data = self::get_or_create_app_password_data();
+		return $data ? $data['auth'] : null;
 	}
 
 	public static function revoke_app_password(): bool {
@@ -392,13 +454,11 @@ class ServerProcess {
 	}
 
 	private static function register_wordforge_mcp( int $port, string $auth_token ): void {
-		$app_password_auth = self::get_or_create_app_password();
-		if ( ! $app_password_auth ) {
+		$mcp_config = self::get_mcp_config();
+		if ( ! $mcp_config ) {
 			error_log( 'WordForge: Cannot register MCP - no app password available' );
 			return;
 		}
-
-		$mcp_url = \WordForge\get_endpoint_url();
 
 		$response = wp_remote_post(
 			"http://127.0.0.1:{$port}/mcp/add",
@@ -406,13 +466,7 @@ class ServerProcess {
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode( [
 					'name'   => 'wordforge',
-					'config' => [
-						'type'    => 'remote',
-						'url'     => $mcp_url,
-						'headers' => [
-							'Authorization' => 'Basic ' . $app_password_auth,
-						],
-					],
+					'config' => $mcp_config,
 				] ),
 				'timeout' => 5,
 			]

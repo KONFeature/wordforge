@@ -30,14 +30,17 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
       const action = serverAction.data;
       if (action === 'download') return __('Downloaded!', 'wordforge');
       if (action === 'start') return __('Started!', 'wordforge');
+      if (action === 'refresh') return __('Context refreshed!', 'wordforge');
       return __('Stopped!', 'wordforge');
     }
     if (serverAction.isPending) {
-      return serverAction.variables === 'download'
-        ? __('Downloading...', 'wordforge')
-        : serverAction.variables === 'start'
-          ? __('Starting...', 'wordforge')
-          : __('Stopping...', 'wordforge');
+      if (serverAction.variables === 'download')
+        return __('Downloading...', 'wordforge');
+      if (serverAction.variables === 'start')
+        return __('Starting...', 'wordforge');
+      if (serverAction.variables === 'refresh')
+        return __('Refreshing context...', 'wordforge');
+      return __('Stopping...', 'wordforge');
     }
     if (serverAction.isError) {
       const error = serverAction.error;
@@ -167,11 +170,24 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
               <Button
                 variant="secondary"
                 onClick={() => serverAction.mutate('stop')}
-                isBusy={serverAction.isPending}
+                isBusy={
+                  serverAction.isPending && serverAction.variables === 'stop'
+                }
                 disabled={serverAction.isPending}
                 icon="controls-pause"
               >
                 {__('Stop Server', 'wordforge')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => serverAction.mutate('refresh')}
+                isBusy={
+                  serverAction.isPending && serverAction.variables === 'refresh'
+                }
+                disabled={serverAction.isPending}
+                icon="update"
+              >
+                {__('Refresh Context', 'wordforge')}
               </Button>
               <Button
                 variant="primary"

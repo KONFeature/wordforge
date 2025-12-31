@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import apiFetch from '@wordpress/api-fetch';
 
-type ServerAction = 'download' | 'start' | 'stop';
+type ServerAction = 'download' | 'start' | 'stop' | 'refresh';
 
 export const useServerAction = (onSuccess?: () => void) => {
   return useMutation({

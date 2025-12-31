@@ -4,6 +4,9 @@ vendor/
 # Output directory
 dist/
 
-# built JS from the frontend
+# Built JS from the frontend
 assets/js/*.js
 assets/js/*.css
+
+# Built MCP server
+assets/bin/

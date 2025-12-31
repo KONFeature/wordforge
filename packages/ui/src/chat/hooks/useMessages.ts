@@ -57,7 +57,7 @@ export const useSendMessage = (
           sessionID: sessionId!,
           role: 'user',
           time: { created: Date.now() / 1000 },
-          agent: 'build',
+          agent: 'wordpress-manager',
           model: { providerID: '', modelID: '' },
         },
         parts: [

@@ -19,6 +19,11 @@ cd packages/ui
 bun run build
 cd ../..
 
+echo "==> Building MCP server..."
+cd packages/mcp
+bun run build
+cd ../..
+
 echo "==> Deploying to $SSH_HOST..."
 $SSH_CONNECT $SSH_HOST "rm -rf $REMOTE_PLUGIN_DIR/includes $REMOTE_PLUGIN_DIR/assets"
 

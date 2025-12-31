@@ -71,6 +71,16 @@ class OpenCodeController {
 
 		register_rest_route(
 			self::NAMESPACE,
+			'/opencode/refresh',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'refresh_context' ],
+				'permission_callback' => [ $this, 'check_permission' ],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
 			'/opencode/session-token',
 			[
 				'methods'             => 'POST',
@@ -196,6 +206,31 @@ class OpenCodeController {
 			'success' => true,
 			'binary'  => BinaryManager::get_platform_info(),
 			'server'  => ServerProcess::get_status(),
+		] );
+	}
+
+	public function refresh_context(): WP_REST_Response {
+		ServerProcess::stop();
+		usleep( 500000 );
+
+		$token  = $this->generate_mcp_auth_token();
+		$result = ServerProcess::start( [
+			'mcp_auth_token' => $token,
+		] );
+
+		if ( ! $result['success'] ) {
+			return new WP_REST_Response(
+				[ 'error' => $result['error'] ?? 'Failed to restart server' ],
+				500
+			);
+		}
+
+		return new WP_REST_Response( [
+			'success' => true,
+			'message' => 'WordPress context refreshed',
+			'url'     => $result['url'],
+			'port'    => $result['port'],
+			'version' => $result['version'] ?? null,
 		] );
 	}
 
