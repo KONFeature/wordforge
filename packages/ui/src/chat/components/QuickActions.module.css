@@ -1,0 +1,50 @@
+.container {
+  padding: var(--wf-spacing-xs) var(--wf-spacing-md);
+  border-top: 1px solid var(--wf-color-border-light);
+  background: var(--wf-color-bg-alt);
+}
+
+.scrollArea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wf-spacing-xs);
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm) !important;
+  border-radius: var(--wf-radius-pill) !important;
+  font-size: var(--wf-font-size-sm) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: auto !important;
+  min-height: 28px !important;
+  background: var(--wf-color-white) !important;
+  border: 1px solid var(--wf-color-border) !important;
+  color: var(--wf-color-text) !important;
+  transition: all 0.15s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  background: var(--wf-color-bg-selected) !important;
+  border-color: var(--wf-color-primary) !important;
+  color: var(--wf-color-primary) !important;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionIcon {
+  font-size: var(--wf-font-size-base);
+  line-height: 1;
+}
+
+.actionLabel {
+  font-weight: 500;
+}

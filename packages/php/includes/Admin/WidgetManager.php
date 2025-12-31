@@ -44,37 +44,54 @@ class WidgetManager {
 	}
 
 	private function should_show_widget_for_hook( string $hook ): bool {
-		if ( ! function_exists( 'wc_get_product' ) ) {
-			return false;
-		}
-
 		if ( 'edit.php' === $hook ) {
 			$post_type = isset( $_GET['post_type'] ) ? sanitize_key( $_GET['post_type'] ) : 'post';
-			return 'product' === $post_type;
+
+			if ( 'product' === $post_type && function_exists( 'wc_get_product' ) ) {
+				return true;
+			}
+
+			if ( in_array( $post_type, [ 'post', 'page' ], true ) ) {
+				return true;
+			}
+
+			return false;
 		}
 
 		if ( 'post.php' === $hook || 'post-new.php' === $hook ) {
 			$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
 			if ( $post_id ) {
-				return 'product' === get_post_type( $post_id );
+				$post_type = get_post_type( $post_id );
+				if ( 'product' === $post_type && function_exists( 'wc_get_product' ) ) {
+					return true;
+				}
 			}
+
 			$post_type = isset( $_GET['post_type'] ) ? sanitize_key( $_GET['post_type'] ) : '';
-			return 'product' === $post_type;
+			if ( 'product' === $post_type && function_exists( 'wc_get_product' ) ) {
+				return true;
+			}
+
+			return false;
+		}
+
+		if ( 'upload.php' === $hook ) {
+			return true;
 		}
 
 		return false;
 	}
 
 	private function should_show_widget_for_screen( \WP_Screen $screen ): bool {
-		if ( ! function_exists( 'wc_get_product' ) ) {
-			return false;
-		}
-
-		if ( 'edit-product' === $screen->id ) {
+		if ( 'edit-product' === $screen->id && function_exists( 'wc_get_product' ) ) {
 			return true;
 		}
 
-		if ( 'product' === $screen->id ) {
+		if ( 'product' === $screen->id && function_exists( 'wc_get_product' ) ) {
+			return true;
+		}
+
+		if ( in_array( $screen->id, [ 'edit-post', 'edit-page', 'upload' ], true ) ) {
 			return true;
 		}
 

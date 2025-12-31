@@ -2,13 +2,13 @@ import type { OpencodeClient } from '@opencode-ai/sdk/client';
 import { Button, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { useAutoContextInjection } from '../hooks/useAutoContextInjection';
 import { useChatCore } from '../hooks/useChatCore';
 import type { ScopedContext } from '../hooks/useContextInjection';
 import styles from './CompactChat.module.css';
 import { DeleteSessionModal } from './DeleteSessionModal';
 import { InputArea } from './InputArea';
 import { MessageList } from './MessageList';
+import { QuickActions } from './QuickActions';
 import { SessionList } from './SessionList';
 
 interface ContextBadgeProps {
@@ -21,14 +21,15 @@ const ContextBadge = ({ context }: ContextBadgeProps) => {
       case 'product-editor':
         return { icon: '📦', label: context.productName };
       case 'product-list':
-        return { icon: '📋', label: `${context.totalProducts} products` };
+        return { icon: '📦', label: `${context.totalProducts} products` };
       case 'page-editor':
         return { icon: '📄', label: context.pageTitle };
       case 'page-list':
-        return {
-          icon: '📑',
-          label: `${context.totalPosts} ${context.postType}s`,
-        };
+        return { icon: '📄', label: `${context.totalPosts} pages` };
+      case 'post-list':
+        return { icon: '📝', label: `${context.totalPosts} posts` };
+      case 'media-list':
+        return { icon: '🖼️', label: `${context.totalMedia} media files` };
       case 'template-editor':
         return { icon: '🎨', label: context.templateName };
       case 'custom':
@@ -51,9 +52,16 @@ const ContextBadge = ({ context }: ContextBadgeProps) => {
 interface EmptyStateProps {
   onCreateSession: () => void;
   isCreating: boolean;
+  context: ScopedContext | null;
+  onQuickAction: (prompt: string) => void;
 }
 
-const EmptyState = ({ onCreateSession, isCreating }: EmptyStateProps) => (
+const EmptyState = ({
+  onCreateSession,
+  isCreating,
+  context,
+  onQuickAction,
+}: EmptyStateProps) => (
   <div className={styles.emptyState}>
     <div className={styles.emptyIcon}>💬</div>
     <p className={styles.emptyText}>
@@ -69,6 +77,18 @@ const EmptyState = ({ onCreateSession, isCreating }: EmptyStateProps) => (
         ? __('Creating...', 'wordforge')
         : __('New Chat', 'wordforge')}
     </Button>
+    {context && (
+      <div className={styles.emptyQuickActions}>
+        <p className={styles.quickActionsLabel}>
+          {__('Or try a quick action:', 'wordforge')}
+        </p>
+        <QuickActions
+          context={context}
+          onSelectAction={onQuickAction}
+          disabled={isCreating}
+        />
+      </div>
+    )}
   </div>
 );
 
@@ -88,12 +108,17 @@ export const CompactChat = ({
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const chat = useChatCore(client);
-
-  useAutoContextInjection(client, chat.currentSessionId, context ?? null);
+  const chat = useChatCore(client, { context });
 
   const errorMessage = chat.error?.message ?? null;
   const hasSession = !!chat.currentSessionId;
+
+  const handleQuickAction = async (prompt: string) => {
+    if (!hasSession) {
+      await chat.handleCreateSession();
+    }
+    chat.handleSendMessage(prompt);
+  };
 
   return (
     <div className={styles.root}>
@@ -123,13 +148,21 @@ export const CompactChat = ({
         </div>
         <div className={styles.headerRight}>
           {hasSession && (
-            <Button
-              icon="trash"
-              label={__('Delete Session', 'wordforge')}
-              onClick={() => setShowDeleteModal(true)}
-              isSmall
-              isDestructive
-            />
+            <>
+              <Button
+                icon="update"
+                label={__('Refresh', 'wordforge')}
+                onClick={() => chat.refetchMessages()}
+                isSmall
+              />
+              <Button
+                icon="trash"
+                label={__('Delete Session', 'wordforge')}
+                onClick={() => setShowDeleteModal(true)}
+                isSmall
+                isDestructive
+              />
+            </>
           )}
         </div>
       </div>
@@ -173,6 +206,14 @@ export const CompactChat = ({
                 </div>
               )}
 
+              {context && (
+                <QuickActions
+                  context={context}
+                  onSelectAction={handleQuickAction}
+                  disabled={chat.isBusy}
+                />
+              )}
+
               <InputArea
                 onSend={chat.handleSendMessage}
                 onAbort={chat.handleAbort}
@@ -187,6 +228,8 @@ export const CompactChat = ({
             <EmptyState
               onCreateSession={chat.handleCreateSession}
               isCreating={chat.isCreatingSession}
+              context={context ?? null}
+              onQuickAction={handleQuickAction}
             />
           )}
         </div>

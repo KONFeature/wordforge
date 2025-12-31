@@ -35,10 +35,11 @@ export const ChatApp = () => {
   const { data: sessions = [], isLoading: isLoadingSessions } =
     useSessions(client);
   const { data: statuses = {} } = useSessionStatuses(client);
-  const { data: messages = [], isLoading: isLoadingMessages } = useMessages(
-    client,
-    currentSessionId,
-  );
+  const {
+    data: messages = [],
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages,
+  } = useMessages(client, currentSessionId);
   const { data: configData, isLoading: isLoadingConfig } =
     useProvidersConfig(client);
   const { data: mcpStatus = {} } = useMcpStatus(client);
@@ -129,7 +130,14 @@ export const ChatApp = () => {
                 </span>
               )}
             </div>
-            <div>
+            <div className={styles.headerActions}>
+              <Button
+                icon="update"
+                label={__('Refresh', 'wordforge')}
+                onClick={() => refetchMessages()}
+                disabled={!currentSessionId}
+                isSmall
+              />
               <Button
                 icon="trash"
                 label={__('Delete Session', 'wordforge')}

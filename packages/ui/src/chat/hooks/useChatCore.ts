@@ -2,6 +2,7 @@ import type { OpencodeClient } from '@opencode-ai/sdk/client';
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import type { SelectedModel } from '../components/ModelSelector';
 import { useMcpStatus, useProvidersConfig } from './useConfig';
+import type { ScopedContext } from './useContextInjection';
 import { useAbortSession, useMessages, useSendMessage } from './useMessages';
 import {
   useCreateSession,
@@ -9,6 +10,11 @@ import {
   useSessionStatuses,
   useSessions,
 } from './useSessions';
+
+export interface Session {
+  id: string;
+  title?: string;
+}
 
 export interface ChatCoreState {
   currentSessionId: string | null;
@@ -25,6 +31,7 @@ export interface ChatCoreState {
 
   messages: ReturnType<typeof useMessages>['data'];
   isLoadingMessages: boolean;
+  refetchMessages: () => void;
 
   selectedModel: SelectedModel | null;
   setSelectedModel: (model: SelectedModel | null) => void;
@@ -42,7 +49,7 @@ export interface ChatCoreState {
   error: Error | null;
 
   handleSelectSession: (id: string) => void;
-  handleCreateSession: () => Promise<void>;
+  handleCreateSession: () => Promise<Session | null>;
   handleDeleteSession: () => Promise<void>;
   handleSendMessage: (text: string) => void;
   handleAbort: () => void;
@@ -53,7 +60,15 @@ export interface ChatCoreState {
   isSendingMessage: boolean;
 }
 
-export const useChatCore = (client: OpencodeClient | null): ChatCoreState => {
+interface UseChatCoreOptions {
+  context?: ScopedContext | null;
+}
+
+export const useChatCore = (
+  client: OpencodeClient | null,
+  options: UseChatCoreOptions = {},
+): ChatCoreState => {
+  const { context = null } = options;
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(
     null,
@@ -62,10 +77,11 @@ export const useChatCore = (client: OpencodeClient | null): ChatCoreState => {
   const { data: sessions = [], isLoading: isLoadingSessions } =
     useSessions(client);
   const { data: statuses = {} } = useSessionStatuses(client);
-  const { data: messages = [], isLoading: isLoadingMessages } = useMessages(
-    client,
-    currentSessionId,
-  );
+  const {
+    data: messages = [],
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages,
+  } = useMessages(client, currentSessionId);
   const { data: configData, isLoading: isLoadingConfig } =
     useProvidersConfig(client);
   const { data: mcpStatus = {} } = useMcpStatus(client);
@@ -101,9 +117,10 @@ export const useChatCore = (client: OpencodeClient | null): ChatCoreState => {
     setCurrentSessionId(id);
   };
 
-  const handleCreateSession = async () => {
+  const handleCreateSession = async (): Promise<Session | null> => {
     const newSession = await createSession.mutateAsync();
     setCurrentSessionId(newSession.id);
+    return newSession;
   };
 
   const handleDeleteSession = async () => {
@@ -113,7 +130,12 @@ export const useChatCore = (client: OpencodeClient | null): ChatCoreState => {
   };
 
   const handleSendMessage = (text: string) => {
-    sendMessage.mutate({ text, model: selectedModel ?? undefined });
+    sendMessage.mutate({
+      text,
+      model: selectedModel ?? undefined,
+      context,
+      messages,
+    });
   };
 
   const handleAbort = () => {
@@ -137,6 +159,7 @@ export const useChatCore = (client: OpencodeClient | null): ChatCoreState => {
 
     messages,
     isLoadingMessages,
+    refetchMessages,
 
     selectedModel,
     setSelectedModel,

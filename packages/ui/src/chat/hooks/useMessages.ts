@@ -2,6 +2,11 @@ import type { OpencodeClient } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
+import {
+  type ScopedContext,
+  formatContextXml,
+  shouldIncludeContext,
+} from './useContextInjection';
 
 export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
@@ -25,6 +30,8 @@ export const useMessages = (
 interface SendMessageParams {
   text: string;
   model?: SelectedModel;
+  context?: ScopedContext | null;
+  messages?: ChatMessage[];
 }
 
 export const useSendMessage = (
@@ -34,13 +41,27 @@ export const useSendMessage = (
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ text, model }: SendMessageParams) => {
+    mutationFn: async ({
+      text,
+      model,
+      context,
+      messages = [],
+    }: SendMessageParams) => {
+      const parts: { type: 'text'; text: string }[] = [];
+
+      if (context) {
+        const contextXml = formatContextXml(context);
+        if (shouldIncludeContext(messages, contextXml)) {
+          parts.push({ type: 'text', text: contextXml });
+        }
+      }
+
+      parts.push({ type: 'text', text });
+
       const body: {
-        parts: Array<{ type: 'text'; text: string }>;
+        parts: { type: 'text'; text: string }[];
         model?: SelectedModel;
-      } = {
-        parts: [{ type: 'text', text }],
-      };
+      } = { parts };
       if (model) body.model = model;
 
       await client!.session.prompt({ path: { id: sessionId! }, body });

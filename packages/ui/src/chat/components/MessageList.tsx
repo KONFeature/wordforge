@@ -11,6 +11,10 @@ import { Spinner } from '@wordpress/components';
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ReactMarkdown from 'react-markdown';
+import {
+  extractContextFromXml,
+  isContextPart,
+} from '../hooks/useContextInjection';
 import styles from './MessageList.module.css';
 
 export interface ChatMessage {
@@ -63,6 +67,31 @@ function groupMessagesIntoTurns(messages: ChatMessage[]): MessageTurn[] {
 
   return turns;
 }
+
+const ContextBadge = ({ contextText }: { contextText: string }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className={styles.contextBadge}>
+      <button
+        type="button"
+        className={styles.contextBadgeHeader}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <span className={styles.contextBadgeIcon}>📍</span>
+        <span className={styles.contextBadgeLabel}>
+          {__('Page Context', 'wordforge')}
+        </span>
+        <span className={styles.contextBadgeExpander}>
+          {expanded ? '−' : '+'}
+        </span>
+      </button>
+      {expanded && (
+        <div className={styles.contextBadgeContent}>{contextText}</div>
+      )}
+    </div>
+  );
+};
 
 const Markdown = ({ children }: { children: string }) => (
   <ReactMarkdown
@@ -133,10 +162,7 @@ const CollapsibleStep = ({
   );
 };
 
-const ToolCallStep = ({
-  part,
-  defaultExpanded,
-}: { part: ToolPart; defaultExpanded: boolean }) => {
+const ToolCallStep = ({ part }: { part: ToolPart }) => {
   const state = part.state;
   const status = state.status;
   const title = ('title' in state && state.title) || part.tool || 'unknown';
@@ -149,12 +175,28 @@ const ToolCallStep = ({
   const error =
     'error' in state && state.status === 'error' ? state.error : undefined;
 
+  const hasContent = input || output || error;
+
+  if (!hasContent) {
+    return (
+      <div className={`${styles.simpleStep} ${styles[status]}`}>
+        {status === 'running' || status === 'pending' ? <Spinner /> : null}
+        <span>{title}</span>
+        {status && status !== 'running' && status !== 'pending' && (
+          <span className={`${styles.simpleStepStatus} ${styles[status]}`}>
+            {status === 'completed'
+              ? __('Done', 'wordforge')
+              : status === 'error'
+                ? __('Failed', 'wordforge')
+                : ''}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <CollapsibleStep
-      title={title}
-      status={status}
-      defaultExpanded={defaultExpanded}
-    >
+    <CollapsibleStep title={title} status={status} defaultExpanded={false}>
       {input && (
         <div className={styles.stepSection}>
           <div className={styles.stepSectionLabel}>
@@ -191,14 +233,21 @@ const ToolCallStep = ({
   );
 };
 
-const ReasoningStep = ({
-  part,
-  defaultExpanded,
-}: { part: ReasoningPart; defaultExpanded: boolean }) => {
+const ReasoningStep = ({ part }: { part: ReasoningPart }) => {
+  const hasContent = part.text && part.text.trim().length > 0;
+
+  if (!hasContent) {
+    return (
+      <div className={styles.simpleStep}>
+        <span>{__('Thinking...', 'wordforge')}</span>
+      </div>
+    );
+  }
+
   return (
     <CollapsibleStep
       title={__('Thinking', 'wordforge')}
-      defaultExpanded={defaultExpanded}
+      defaultExpanded={false}
     >
       <div className={styles.reasoningContent}>
         <Markdown>{part.text}</Markdown>
@@ -212,7 +261,13 @@ const UserMessageBlock = ({ message }: { message: ChatMessage }) => {
     [],
     { hour: '2-digit', minute: '2-digit' },
   );
+
   const textParts = message.parts.filter(isTextPart);
+  const contextPart = textParts.find(isContextPart);
+  const messageParts = textParts.filter((p) => !isContextPart(p));
+  const contextText = contextPart
+    ? extractContextFromXml(contextPart.text)
+    : null;
 
   return (
     <div className={`${styles.message} ${styles.user}`}>
@@ -220,7 +275,8 @@ const UserMessageBlock = ({ message }: { message: ChatMessage }) => {
         <span className={styles.messageRole}>{__('You', 'wordforge')}</span>
         <span className={styles.messageTime}>{time}</span>
       </div>
-      {textParts.map((part, i) => (
+      {contextText && <ContextBadge contextText={contextText} />}
+      {messageParts.map((part, i) => (
         <div key={part.id || i} className={styles.messageContent}>
           <Markdown>{part.text}</Markdown>
         </div>
@@ -256,8 +312,6 @@ const AssistantResponseBlock = ({
   );
   const hasError = !!errorMessage;
 
-  const stepsDefaultExpanded = !isComplete;
-
   return (
     <div className={`${styles.message} ${hasError ? styles.error : ''}`}>
       <div className={styles.messageHeader}>
@@ -276,17 +330,9 @@ const AssistantResponseBlock = ({
         <div className={styles.stepsContainer}>
           {allSteps.map((step) =>
             isToolPart(step) ? (
-              <ToolCallStep
-                key={step.id}
-                part={step}
-                defaultExpanded={stepsDefaultExpanded}
-              />
+              <ToolCallStep key={step.id} part={step} />
             ) : (
-              <ReasoningStep
-                key={step.id}
-                part={step}
-                defaultExpanded={stepsDefaultExpanded}
-              />
+              <ReasoningStep key={step.id} part={step} />
             ),
           )}
         </div>

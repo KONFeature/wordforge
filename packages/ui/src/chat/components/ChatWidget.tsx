@@ -3,8 +3,8 @@ import { Button, Spinner } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { ScopedContext } from '../hooks/useContextInjection';
-import { CompactChat } from './CompactChat';
 import styles from './ChatWidget.module.css';
+import { CompactChat } from './CompactChat';
 
 const STORAGE_KEY = 'wordforge_widget_open';
 

@@ -219,6 +219,47 @@
   margin-bottom: var(--wf-spacing-md);
 }
 
+.simpleStep {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  background: var(--wf-color-bg-alt);
+  border: 1px solid var(--wf-color-border-light);
+  border-radius: var(--wf-radius-md);
+  margin-bottom: var(--wf-spacing-sm);
+  font-family: monospace;
+  font-size: var(--wf-font-size-md);
+  color: var(--wf-color-text-muted);
+}
+
+.simpleStep:last-child {
+  margin-bottom: 0;
+}
+
+.simpleStep.completed {
+  color: var(--wf-color-success-text);
+}
+
+.simpleStep.error {
+  color: var(--wf-color-error-text);
+}
+
+.simpleStepStatus {
+  margin-left: auto;
+  font-size: var(--wf-font-size-xs);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.simpleStepStatus.completed {
+  color: var(--wf-color-success-text);
+}
+
+.simpleStepStatus.error {
+  color: var(--wf-color-error-text);
+}
+
 .step {
   background: var(--wf-color-bg-alt);
   border: 1px solid var(--wf-color-border-light);
@@ -407,4 +448,56 @@
   align-items: center;
   gap: var(--wf-spacing-sm);
   color: var(--wf-color-text-muted);
+}
+
+.contextBadge {
+  margin-bottom: var(--wf-spacing-sm);
+  background: var(--wf-color-bg-alt);
+  border: 1px solid var(--wf-color-border-light);
+  border-radius: var(--wf-radius-md);
+  overflow: hidden;
+}
+
+.contextBadgeHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: var(--wf-font-size-sm);
+  font-family: inherit;
+  text-align: left;
+  color: var(--wf-color-text-muted);
+  transition: background-color 0.15s ease;
+}
+
+.contextBadgeHeader:hover {
+  background: var(--wf-color-bg);
+}
+
+.contextBadgeIcon {
+  font-size: var(--wf-font-size-base);
+}
+
+.contextBadgeLabel {
+  flex: 1;
+  font-weight: 500;
+}
+
+.contextBadgeExpander {
+  font-size: var(--wf-font-size-lg);
+  font-weight: 300;
+  width: 16px;
+  text-align: center;
+}
+
+.contextBadgeContent {
+  padding: var(--wf-spacing-sm);
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+  border-top: 1px solid var(--wf-color-border-light);
+  line-height: 1.5;
 }

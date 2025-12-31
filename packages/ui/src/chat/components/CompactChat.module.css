@@ -138,3 +138,16 @@
   margin: 0;
   max-width: 200px;
 }
+
+.emptyQuickActions {
+  margin-top: var(--wf-spacing-md);
+  width: 100%;
+  max-width: 380px;
+}
+
+.quickActionsLabel {
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+  margin: 0 0 var(--wf-spacing-sm) 0;
+  text-align: center;
+}

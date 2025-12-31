@@ -43,6 +43,12 @@
   min-width: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+}
+
 .sessionTitle {
   font-weight: 500;
   white-space: nowrap;
