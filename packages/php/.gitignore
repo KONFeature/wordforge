@@ -1,0 +1,12 @@
+# PHP vendor
+vendor/
+
+# Output directory
+dist/
+
+# Built JS from the frontend
+assets/js/*.js
+assets/js/*.css
+
+# Built MCP server
+assets/bin/

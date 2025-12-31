@@ -1,0 +1,45 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--wf-spacing-xl);
+}
+
+.groupTitle {
+  font-size: var(--wf-font-size-lg);
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.inactiveBadge {
+  margin-left: var(--wf-spacing-sm);
+  background: var(--wf-color-text-muted);
+  color: var(--wf-color-white);
+  padding: 2px 6px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-sm);
+  font-weight: normal;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  margin-bottom: var(--wf-spacing-sm);
+}
+
+.abilityName {
+  background: var(--wf-color-bg-code);
+  padding: 2px var(--wf-spacing-xs);
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-md);
+}
+
+.abilityDescription {
+  display: block;
+  font-size: var(--wf-font-size-md);
+  color: var(--wf-color-text-muted);
+  margin-top: 2px;
+}

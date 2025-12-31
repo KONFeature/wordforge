@@ -1,19 +1,28 @@
 {
-    "name": "wordforge",
-    "version": "1.0.0",
-    "description": "Forge your WordPress site through conversation",
-    "private": true,
-    "scripts": {
-        "start": "wp-env start",
-        "stop": "wp-env stop",
-        "build": "./build.sh",
-        "composer:install": "composer install",
-        "lint:php": "composer run-script lint:php"
-    },
-    "devDependencies": {
-        "@wordpress/env": "^10.0.0"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    }
+  "name": "wordforge",
+  "version": "1.0.0",
+  "description": "Forge your WordPress site through conversation",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "start": "wp-env start",
+    "stop": "wp-env stop",
+    "build": "./build.sh",
+    "build:ui": "bun run --filter @wordforge/ui build",
+    "build:mcp": "bun run --filter @wordforge/mcp build",
+    "dev": "bun run --filter @wordforge/ui start",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "composer:install": "composer install -d packages/php",
+    "lint:php": "composer run-script lint:php -d packages/php"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@wordpress/env": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

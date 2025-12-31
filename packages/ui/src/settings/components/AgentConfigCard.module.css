@@ -1,0 +1,121 @@
+.description {
+  color: var(--wf-color-text-muted, #646970);
+  margin-bottom: 16px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.serverStopped {
+  text-align: center;
+  padding: var(--wf-spacing-xl);
+  background: var(--wf-color-bg-alt);
+  border-radius: var(--wf-radius-md);
+}
+
+.serverStopped p {
+  margin: 0 0 var(--wf-spacing-md);
+  color: var(--wf-color-text-muted);
+}
+
+.noProviders {
+  padding: var(--wf-spacing-lg);
+  background: var(--wf-color-warning-bg);
+  border-radius: var(--wf-radius-md);
+  border-left: 4px solid var(--wf-color-warning);
+}
+
+.noProviders p {
+  margin: 0;
+  color: var(--wf-color-warning-text);
+}
+
+.agentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agentItem {
+  border: 1px solid var(--wf-color-border, #c3c4c7);
+  border-radius: 4px;
+  padding: 12px 16px;
+  background: var(--wf-color-bg-card, #fff);
+}
+
+.agentHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.agentColor {
+  width: 4px;
+  min-height: 36px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.agentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.agentName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.agentDescription {
+  font-size: 12px;
+  color: var(--wf-color-text-muted, #646970);
+}
+
+.modelSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modelSelector > div:first-child {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.select select {
+  width: 100%;
+}
+
+.recommendedBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--wf-color-success-bg, #d7f7c2);
+  color: var(--wf-color-success-text, #1e4620);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wf-color-border, #c3c4c7);
+}
+
+.pendingNote {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: var(--wf-color-warning-text, #996800);
+  font-style: italic;
+}

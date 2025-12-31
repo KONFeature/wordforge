@@ -1,0 +1,18 @@
+.content {
+  padding: 0 var(--wf-spacing-lg) var(--wf-spacing-lg);
+}
+
+.sessionName {
+  font-weight: 500;
+  background: var(--wf-color-bg-alt);
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  border-radius: var(--wf-radius-md);
+  margin: var(--wf-spacing-md) 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wf-spacing-sm);
+  margin-top: var(--wf-spacing-xl);
+}

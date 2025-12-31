@@ -1,0 +1,99 @@
+.sidebar {
+  width: 100%;
+  min-width: 0;
+  border-right: 1px solid var(--wf-color-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--wf-color-bg-alt);
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--wf-spacing-md) var(--wf-spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--wf-color-border);
+  background: var(--wf-color-white);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--wf-font-size-lg);
+  font-weight: 600;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--wf-spacing-sm);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  padding: var(--wf-spacing-xl);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--wf-spacing-xl);
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-base);
+}
+
+.sessionItem {
+  width: 100%;
+  text-align: left;
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  margin-bottom: var(--wf-spacing-xs);
+  background: var(--wf-color-white);
+  border: 1px solid var(--wf-color-border-light);
+  border-radius: var(--wf-radius-md);
+  cursor: pointer;
+  transition: all var(--wf-transition-fast);
+  font-family: inherit;
+  font-size: inherit;
+  overflow: hidden;
+}
+
+.sessionItem:hover {
+  border-color: var(--wf-color-border);
+}
+
+.sessionItem.active {
+  background: var(--wf-color-bg-selected);
+  border-color: var(--wf-color-border-selected);
+}
+
+.sessionTitle {
+  font-weight: 500;
+  font-size: var(--wf-font-size-base);
+  margin-bottom: var(--wf-spacing-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessionMeta {
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--wf-radius-circle);
+  display: inline-block;
+}
+
+.statusDot.idle {
+  background: var(--wf-color-text-muted);
+}
+
+.statusDot.busy {
+  background: var(--wf-color-warning);
+}

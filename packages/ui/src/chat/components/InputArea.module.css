@@ -1,0 +1,56 @@
+.root {
+  padding: var(--wf-spacing-lg);
+  background: var(--wf-color-white);
+  border-top: 1px solid var(--wf-color-border);
+}
+
+.container {
+  max-width: var(--wf-content-max-width);
+  margin: 0 auto;
+}
+
+.inputRow {
+  display: flex;
+  gap: var(--wf-spacing-md);
+  align-items: flex-end;
+}
+
+.textarea {
+  flex: 1;
+  min-height: var(--wf-input-min-height);
+  max-height: 150px;
+  padding: 10px var(--wf-spacing-md);
+  border: 1px solid var(--wf-color-border-input);
+  border-radius: var(--wf-radius-md);
+  resize: none;
+  font-size: var(--wf-font-size-lg);
+  line-height: 1.4;
+  font-family: inherit;
+  background: var(--wf-color-white);
+}
+
+.textarea:disabled {
+  background: var(--wf-color-bg-alt);
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: var(--wf-spacing-sm);
+}
+
+.actionButton {
+  min-height: var(--wf-input-min-height);
+}
+
+.modelRow {
+  margin-top: var(--wf-spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+}
+
+.modelHint {
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+}

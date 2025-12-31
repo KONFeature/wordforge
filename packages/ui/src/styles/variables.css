@@ -1,0 +1,73 @@
+:root {
+  /* Colors - Primary */
+  --wf-color-primary: #2271b1;
+  --wf-color-primary-hover: #135e96;
+
+  /* Colors - Status */
+  --wf-color-success: #00a32a;
+  --wf-color-success-bg: #d4edda;
+  --wf-color-success-text: #155724;
+  --wf-color-warning: #dba617;
+  --wf-color-warning-bg: #fff3cd;
+  --wf-color-warning-text: #856404;
+  --wf-color-error: #d63638;
+  --wf-color-error-bg: #f8d7da;
+  --wf-color-error-text: #721c24;
+
+  /* Colors - Neutral */
+  --wf-color-white: #fff;
+  --wf-color-bg: #f9f9f9;
+  --wf-color-bg-alt: #f6f7f7;
+  --wf-color-bg-code: #f0f0f1;
+  --wf-color-bg-selected: #f0f6fc;
+
+  /* Colors - Code blocks */
+  --wf-color-code-bg: #1e1e1e;
+  --wf-color-code-text: #d4d4d4;
+
+  /* Colors - Text */
+  --wf-color-text: #1d2327;
+  --wf-color-text-muted: #646970;
+  --wf-color-text-light: #8c8f94;
+
+  /* Colors - Borders */
+  --wf-color-border: #c3c4c7;
+  --wf-color-border-light: #dcdcde;
+  --wf-color-border-selected: #2271b1;
+  --wf-color-border-input: #8c8f94;
+
+  /* Spacing */
+  --wf-spacing-xs: 4px;
+  --wf-spacing-sm: 8px;
+  --wf-spacing-md: 12px;
+  --wf-spacing-lg: 16px;
+  --wf-spacing-xl: 20px;
+
+  /* Font sizes */
+  --wf-font-size-xs: 10px;
+  --wf-font-size-sm: 11px;
+  --wf-font-size-md: 12px;
+  --wf-font-size-base: 13px;
+  --wf-font-size-lg: 14px;
+  --wf-font-size-xl: 18px;
+
+  /* Border radius */
+  --wf-radius-sm: 3px;
+  --wf-radius-md: 4px;
+  --wf-radius-lg: 8px;
+  --wf-radius-pill: 10px;
+  --wf-radius-circle: 50%;
+
+  /* Shadows */
+  --wf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --wf-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --wf-transition-fast: 0.15s ease;
+  --wf-transition-normal: 0.2s ease;
+
+  /* Layout */
+  --wf-sidebar-width: 280px;
+  --wf-content-max-width: 900px;
+  --wf-input-min-height: 40px;
+}

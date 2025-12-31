@@ -1,0 +1,20 @@
+.configMissing {
+  padding: var(--wf-spacing-xl);
+  color: var(--wf-color-error);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--wf-spacing-xl);
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 960px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
