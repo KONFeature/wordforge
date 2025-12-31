@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from '@wordpress/element';
 import { Notice, Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import type { Session, SessionStatus, Message, Part } from '@opencode-ai/sdk/client';
+import type { Session, SessionStatus, Message, Part, Provider, McpStatus } from '@opencode-ai/sdk/client';
 import { useOpencodeClient } from './useOpencodeClient';
 import { SessionList } from './components/SessionList';
 import { MessageList, type ChatMessage } from './components/MessageList';
 import { InputArea } from './components/InputArea';
 import { DeleteSessionModal } from './components/DeleteSessionModal';
+import { ConfigPanel } from './components/ConfigPanel';
+import type { SelectedModel } from './components/ModelSelector';
 
 export const ChatApp = () => {
   const config = window.wordforgeChat;
@@ -17,8 +19,13 @@ export const ChatApp = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [mcpStatus, setMcpStatus] = useState<Record<string, McpStatus>>({});
+  const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
+  
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -38,22 +45,56 @@ export const ChatApp = () => {
 
     const loadData = async () => {
       setIsLoadingSessions(true);
+      setIsLoadingConfig(true);
+      
       try {
         const [sessionsResult, statusesResult] = await Promise.all([
           client.session.list(),
-          client.session.status()
+          client.session.status(),
         ]);
         
-        const loadedSessions = sessionsResult.data || [];
+        const loadedSessions = Array.isArray(sessionsResult.data) ? sessionsResult.data : [];
         loadedSessions.sort((a, b) => b.time.updated - a.time.updated);
         
         setSessions(loadedSessions);
-        setStatuses(statusesResult.data || {});
+        setStatuses(statusesResult.data && typeof statusesResult.data === 'object' ? statusesResult.data : {});
       } catch (err) {
         console.error('Failed to load sessions:', err);
         setError(__('Failed to load sessions', 'wordforge'));
       } finally {
         setIsLoadingSessions(false);
+      }
+      
+      try {
+        const [configProvidersResult, mcpResult] = await Promise.all([
+          client.config.providers(),
+          client.mcp.status(),
+        ]);
+        
+        const configData = configProvidersResult.data;
+        const loadedProviders = configData && Array.isArray(configData.providers) ? configData.providers : [];
+        const defaultModels = configData && configData.default ? configData.default : {};
+        
+        setProviders(loadedProviders);
+        setMcpStatus(mcpResult.data && typeof mcpResult.data === 'object' ? mcpResult.data : {});
+        
+        const defaultModelKey = Object.keys(defaultModels)[0];
+        if (defaultModelKey && defaultModels[defaultModelKey]) {
+          const [providerID, modelID] = defaultModels[defaultModelKey].split('/');
+          if (providerID && modelID) {
+            setSelectedModel({ providerID, modelID });
+          }
+        } else if (loadedProviders.length > 0) {
+          const firstProvider = loadedProviders[0];
+          const firstModelId = Object.keys(firstProvider.models || {})[0];
+          if (firstModelId) {
+            setSelectedModel({ providerID: firstProvider.id, modelID: firstModelId });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load config (non-critical):', err);
+      } finally {
+        setIsLoadingConfig(false);
       }
     };
 
@@ -140,17 +181,18 @@ export const ChatApp = () => {
     setIsSending(true);
 
     try {
-      const result = await client.session.prompt({
-        path: { id: currentSessionId },
-        body: { parts: [{ type: 'text', text }] }
-      });
-
-      if (result.data) {
-        setMessages(prev => {
-          const withoutTemp = prev.filter(m => !m.info.id.startsWith('temp-'));
-          return [...withoutTemp, result.data as ChatMessage];
-        });
+      const promptBody: { parts: Array<{ type: 'text'; text: string }>; model?: { providerID: string; modelID: string } } = {
+        parts: [{ type: 'text', text }],
+      };
+      
+      if (selectedModel) {
+        promptBody.model = selectedModel;
       }
+
+      await client.session.prompt({
+        path: { id: currentSessionId },
+        body: promptBody,
+      });
 
       const messagesResult = await client.session.messages({ path: { id: currentSessionId } });
       if (messagesResult.data) {
@@ -178,76 +220,87 @@ export const ChatApp = () => {
   }
 
   return (
-    <div className="wf-chat-container" style={{ display: 'flex', height: 'calc(100vh - 120px)', minHeight: '500px', background: '#fff', border: '1px solid #c3c4c7', borderRadius: '4px', overflow: 'hidden' }}>
-      <SessionList
-        sessions={sessions}
-        statuses={statuses}
-        currentSessionId={currentSessionId}
-        isLoading={isLoadingSessions}
-        onSelectSession={selectSession}
-        onCreateSession={createSession}
-        isCreating={isCreatingSession}
-      />
-      
-      <div className="wf-chat-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div className="wf-chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #c3c4c7', background: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            <span style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {currentSession?.title || __('Select a session', 'wordforge')}
-            </span>
-            {currentSessionId && (
-              <span style={{ 
-                fontSize: '11px', 
-                padding: '2px 8px', 
-                borderRadius: '10px', 
-                background: isBusy ? '#fff3cd' : '#d4edda', 
-                color: isBusy ? '#856404' : '#155724' 
-              }}>
-                {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', minHeight: '500px' }}>
+      <div className="wf-chat-container" style={{ display: 'flex', flex: 1, background: '#fff', border: '1px solid #c3c4c7', borderRadius: '4px 4px 0 0', overflow: 'hidden' }}>
+        <SessionList
+          sessions={sessions}
+          statuses={statuses}
+          currentSessionId={currentSessionId}
+          isLoading={isLoadingSessions}
+          onSelectSession={selectSession}
+          onCreateSession={createSession}
+          isCreating={isCreatingSession}
+        />
+        
+        <div className="wf-chat-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div className="wf-chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #c3c4c7', background: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <span style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentSession?.title || __('Select a session', 'wordforge')}
               </span>
-            )}
+              {currentSessionId && (
+                <span style={{ 
+                  fontSize: '11px', 
+                  padding: '2px 8px', 
+                  borderRadius: '10px', 
+                  background: isBusy ? '#fff3cd' : '#d4edda', 
+                  color: isBusy ? '#856404' : '#155724' 
+                }}>
+                  {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
+                </span>
+              )}
+            </div>
+            <div className="wf-chat-actions">
+              <Button
+                icon="trash"
+                label={__('Delete Session', 'wordforge')}
+                onClick={() => setShowDeleteModal(true)}
+                disabled={!currentSessionId}
+                isSmall
+                isDestructive
+              />
+            </div>
           </div>
-          <div className="wf-chat-actions">
-            <Button
-              icon="trash"
-              label={__('Delete Session', 'wordforge')}
-              onClick={() => setShowDeleteModal(true)}
-              disabled={!currentSessionId}
-              isSmall
-              isDestructive
-            />
-          </div>
+
+          <MessageList
+            messages={messages}
+            isLoading={isLoadingMessages}
+            isThinking={isBusy}
+            isBusy={isBusy}
+          />
+
+          {error && (
+            <div style={{ padding: '0 16px' }}>
+              <Notice status="error" onRemove={() => setError(null)} isDismissible>
+                {error}
+              </Notice>
+            </div>
+          )}
+
+          <InputArea
+            onSend={sendMessage}
+            onAbort={abortSession}
+            disabled={!currentSessionId}
+            isBusy={isBusy}
+            providers={providers}
+            selectedModel={selectedModel}
+            onSelectModel={setSelectedModel}
+          />
         </div>
 
-        <MessageList
-          messages={messages}
-          isLoading={isLoadingMessages}
-          isThinking={isBusy}
-          isBusy={isBusy}
-        />
-
-        {error && (
-          <div style={{ padding: '0 16px' }}>
-            <Notice status="error" onRemove={() => setError(null)} isDismissible>
-              {error}
-            </Notice>
-          </div>
-        )}
-
-        <InputArea
-          onSend={sendMessage}
-          onAbort={abortSession}
-          disabled={!currentSessionId}
-          isBusy={isBusy}
+        <DeleteSessionModal
+          sessionName={currentSession?.title || __('Untitled Session', 'wordforge')}
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={deleteSession}
+          isDeleting={isDeletingSession}
         />
       </div>
-
-      <DeleteSessionModal
-        sessionName={currentSession?.title || __('Untitled Session', 'wordforge')}
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={deleteSession}
-        isDeleting={isDeletingSession}
+      
+      <ConfigPanel
+        providers={providers}
+        mcpStatus={mcpStatus}
+        isLoading={isLoadingConfig}
       />
     </div>
   );

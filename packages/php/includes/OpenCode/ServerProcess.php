@@ -270,20 +270,94 @@ class ServerProcess {
 	}
 
 	private static function generate_config( array $options, int $port ): array {
-		return [
+		$config = [
 			'$schema' => 'https://opencode.ai/config.json',
 		];
+
+		$app_password_auth = self::get_or_create_app_password();
+		if ( $app_password_auth ) {
+			$mcp_url = \WordForge\get_endpoint_url();
+
+			$config['mcp'] = [
+				'wordforge' => [
+					'type'    => 'remote',
+					'url'     => $mcp_url,
+					'headers' => [
+						'Authorization' => 'Basic ' . $app_password_auth,
+					],
+				],
+			];
+		}
+
+		return $config;
+	}
+
+	private static function get_or_create_app_password(): ?string {
+		$user = wp_get_current_user();
+		if ( ! $user || ! $user->ID ) {
+			return null;
+		}
+
+		$stored = get_option( 'wordforge_app_password' );
+		if ( $stored && isset( $stored['user_id'] ) && $stored['user_id'] === $user->ID && isset( $stored['auth'] ) ) {
+			return $stored['auth'];
+		}
+
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return null;
+		}
+
+		$result = \WP_Application_Passwords::create_new_application_password(
+			$user->ID,
+			[
+				'name' => 'WordForge OpenCode',
+			]
+		);
+
+		if ( is_wp_error( $result ) ) {
+			error_log( 'WordForge: Failed to create app password: ' . $result->get_error_message() );
+			return null;
+		}
+
+		[ $password, $item ] = $result;
+
+		$auth = base64_encode( $user->user_login . ':' . $password );
+
+		update_option( 'wordforge_app_password', [
+			'user_id' => $user->ID,
+			'uuid'    => $item['uuid'],
+			'auth'    => $auth,
+		], false );
+
+		return $auth;
+	}
+
+	public static function revoke_app_password(): bool {
+		$stored = get_option( 'wordforge_app_password' );
+		if ( ! $stored || ! isset( $stored['uuid'] ) || ! isset( $stored['user_id'] ) ) {
+			delete_option( 'wordforge_app_password' );
+			return true;
+		}
+
+		if ( class_exists( 'WP_Application_Passwords' ) ) {
+			\WP_Application_Passwords::delete_application_password( $stored['user_id'], $stored['uuid'] );
+		}
+
+		delete_option( 'wordforge_app_password' );
+		return true;
 	}
 
 	private static function register_wordforge_mcp( int $port, string $auth_token ): void {
-		if ( empty( $auth_token ) ) {
+		$app_password_auth = self::get_or_create_app_password();
+		if ( ! $app_password_auth ) {
+			error_log( 'WordForge: Cannot register MCP - no app password available' );
 			return;
 		}
 
 		$mcp_url = \WordForge\get_endpoint_url();
 
 		$response = wp_remote_post(
-			"http://127.0.0.1:{$port}/mcp",
+			"http://127.0.0.1:{$port}/mcp/add",
 			[
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode( [
@@ -292,7 +366,7 @@ class ServerProcess {
 						'type'    => 'remote',
 						'url'     => $mcp_url,
 						'headers' => [
-							'Authorization' => 'Bearer ' . $auth_token,
+							'Authorization' => 'Basic ' . $app_password_auth,
 						],
 					],
 				] ),
@@ -302,6 +376,11 @@ class ServerProcess {
 
 		if ( is_wp_error( $response ) ) {
 			error_log( 'WordForge: Failed to register MCP: ' . $response->get_error_message() );
+		} else {
+			$code = wp_remote_retrieve_response_code( $response );
+			if ( $code >= 400 ) {
+				error_log( 'WordForge: MCP registration failed with status ' . $code . ': ' . wp_remote_retrieve_body( $response ) );
+			}
 		}
 	}
 

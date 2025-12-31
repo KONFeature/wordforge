@@ -223,7 +223,9 @@ register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\cleanup_opencode_on_dea
 
 function cleanup_opencode_on_uninstall(): void {
 	OpenCode\ServerProcess::stop();
+	OpenCode\ServerProcess::revoke_app_password();
 	OpenCode\BinaryManager::cleanup();
+	delete_option( 'wordforge_settings' );
 }
 
 if ( ! function_exists( 'wordforge_uninstall' ) ) {

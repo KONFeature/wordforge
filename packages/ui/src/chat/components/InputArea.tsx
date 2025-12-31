@@ -1,15 +1,28 @@
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useState, useRef, useEffect, KeyboardEvent } from '@wordpress/element';
+import type { Provider } from '@opencode-ai/sdk/client';
+import { ModelSelector, type SelectedModel } from './ModelSelector';
 
 interface InputAreaProps {
   onSend: (text: string) => void;
   onAbort: () => void;
   disabled: boolean;
   isBusy: boolean;
+  providers: Provider[];
+  selectedModel: SelectedModel | null;
+  onSelectModel: (model: SelectedModel) => void;
 }
 
-export const InputArea = ({ onSend, onAbort, disabled, isBusy }: InputAreaProps) => {
+export const InputArea = ({ 
+  onSend, 
+  onAbort, 
+  disabled, 
+  isBusy, 
+  providers,
+  selectedModel,
+  onSelectModel,
+}: InputAreaProps) => {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,50 +48,66 @@ export const InputArea = ({ onSend, onAbort, disabled, isBusy }: InputAreaProps)
 
   return (
     <div className="wf-input-container" style={{ padding: '16px', background: '#fff', borderTop: '1px solid #c3c4c7' }}>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', maxWidth: '900px', margin: '0 auto' }}>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={__('Type your message...', 'wordforge')}
-          rows={1}
-          disabled={disabled && !isBusy} 
-          style={{
-            flex: 1,
-            minHeight: '40px',
-            maxHeight: '150px',
-            padding: '10px 12px',
-            border: '1px solid #8c8f94',
-            borderRadius: '4px',
-            resize: 'none',
-            fontSize: '14px',
-            lineHeight: '1.4',
-            fontFamily: 'inherit',
-            background: (disabled && !isBusy) ? '#f6f7f7' : '#fff',
-            cursor: (disabled && !isBusy) ? 'not-allowed' : 'text',
-          }}
-        />
-        <div className="wf-input-actions" style={{ display: 'flex', gap: '8px' }}>
-          {isBusy ? (
-            <Button 
-              variant="secondary" 
-              onClick={onAbort} 
-              icon="controls-pause"
-              style={{ minHeight: '40px' }}
-            >
-              {__('Stop', 'wordforge')}
-            </Button>
-          ) : (
-            <Button 
-              variant="primary" 
-              onClick={handleSend} 
-              disabled={!text.trim() || disabled}
-              icon="arrow-right-alt"
-              style={{ minHeight: '40px' }}
-            >
-              {__('Send', 'wordforge')}
-            </Button>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={__('Type your message...', 'wordforge')}
+            rows={1}
+            disabled={disabled && !isBusy} 
+            style={{
+              flex: 1,
+              minHeight: '40px',
+              maxHeight: '150px',
+              padding: '10px 12px',
+              border: '1px solid #8c8f94',
+              borderRadius: '4px',
+              resize: 'none',
+              fontSize: '14px',
+              lineHeight: '1.4',
+              fontFamily: 'inherit',
+              background: (disabled && !isBusy) ? '#f6f7f7' : '#fff',
+              cursor: (disabled && !isBusy) ? 'not-allowed' : 'text',
+            }}
+          />
+          <div className="wf-input-actions" style={{ display: 'flex', gap: '8px' }}>
+            {isBusy ? (
+              <Button 
+                variant="secondary" 
+                onClick={onAbort} 
+                icon="controls-pause"
+                style={{ minHeight: '40px' }}
+              >
+                {__('Stop', 'wordforge')}
+              </Button>
+            ) : (
+              <Button 
+                variant="primary" 
+                onClick={handleSend} 
+                disabled={!text.trim() || disabled}
+                icon="arrow-right-alt"
+                style={{ minHeight: '40px' }}
+              >
+                {__('Send', 'wordforge')}
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ModelSelector
+            providers={providers}
+            selectedModel={selectedModel}
+            onSelectModel={onSelectModel}
+            disabled={disabled || isBusy}
+          />
+          {selectedModel && (
+            <span style={{ fontSize: '11px', color: '#646970' }}>
+              {__('Model will be used for next message', 'wordforge')}
+            </span>
           )}
         </div>
       </div>

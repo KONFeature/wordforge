@@ -96,6 +96,11 @@ const MessageItem = ({ message }: { message: ChatMessage }) => {
   const isUser = message.info.role === 'user';
   const hasError = message.info.role === 'assistant' && message.info.error != null;
   const time = new Date(message.info.time.created * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  const modelInfo = message.info.role === 'assistant' ? {
+    provider: message.info.providerID,
+    model: message.info.modelID,
+  } : null;
 
   const textParts = message.parts.filter(isTextPart);
   const toolParts = message.parts.filter(isToolPart);
@@ -108,11 +113,22 @@ const MessageItem = ({ message }: { message: ChatMessage }) => {
       borderRadius: '8px', 
       border: `1px solid ${isUser ? '#c5d9ed' : hasError ? '#f0b8b8' : '#dcdcde'}` 
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', flexWrap: 'wrap' }}>
         <span style={{ fontWeight: 600, color: '#1d2327' }}>
           {isUser ? __('You', 'wordforge') : __('Assistant', 'wordforge')}
         </span>
         <span style={{ color: '#646970' }}>{time}</span>
+        {modelInfo && modelInfo.model && (
+          <span style={{ 
+            padding: '1px 6px', 
+            background: '#f0f0f1', 
+            borderRadius: '3px', 
+            fontSize: '10px',
+            color: '#646970',
+          }}>
+            🤖 {modelInfo.provider}/{modelInfo.model}
+          </span>
+        )}
       </div>
 
       {textParts.map((part, i) => (
