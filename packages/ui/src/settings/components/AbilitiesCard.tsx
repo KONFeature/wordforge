@@ -1,5 +1,6 @@
 import { Card, CardBody, CardHeader } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import styles from './AbilitiesCard.module.css';
 
 interface AbilitiesCardProps {
   abilities: Record<string, Array<{ name: string; description: string }>>;
@@ -16,61 +17,22 @@ export const AbilitiesCard = ({
         <h2>{__('Available Abilities', 'wordforge')}</h2>
       </CardHeader>
       <CardBody>
-        <div
-          className="wordforge-abilities-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '20px',
-          }}
-        >
+        <div className={`wordforge-abilities-grid ${styles.grid}`}>
           {Object.entries(abilities).map(([group, groupAbilities]) => (
             <div key={group} className="wordforge-ability-group">
-              <h3
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  margin: '0 0 10px',
-                }}
-              >
+              <h3 className={styles.groupTitle}>
                 {group}
                 {group === 'WooCommerce' && !wooCommerceActive && (
-                  <span
-                    style={{
-                      marginLeft: '8px',
-                      background: '#646970',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                      fontWeight: 'normal',
-                    }}
-                  >
+                  <span className={styles.inactiveBadge}>
                     {__('Inactive', 'wordforge')}
                   </span>
                 )}
               </h3>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+              <ul className={styles.list}>
                 {groupAbilities.map((ability) => (
-                  <li key={ability.name} style={{ marginBottom: '8px' }}>
-                    <code
-                      style={{
-                        background: '#f0f0f1',
-                        padding: '2px 4px',
-                        borderRadius: '3px',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {ability.name}
-                    </code>
-                    <span
-                      style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        color: '#646970',
-                        marginTop: '2px',
-                      }}
-                    >
+                  <li key={ability.name} className={styles.listItem}>
+                    <code className={styles.abilityName}>{ability.name}</code>
+                    <span className={styles.abilityDescription}>
                       {ability.description}
                     </span>
                   </li>

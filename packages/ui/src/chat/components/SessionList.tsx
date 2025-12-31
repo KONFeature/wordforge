@@ -1,6 +1,7 @@
 import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
 import { Button, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import styles from './SessionList.module.css';
 
 interface SessionListProps {
   sessions: Session[];
@@ -22,31 +23,9 @@ export const SessionList = ({
   isCreating,
 }: SessionListProps) => {
   return (
-    <div
-      className="wf-chat-sidebar"
-      style={{
-        width: '280px',
-        minWidth: '280px',
-        borderRight: '1px solid #c3c4c7',
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#f6f7f7',
-      }}
-    >
-      <div
-        className="wf-sidebar-header"
-        style={{
-          padding: '12px 16px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid #c3c4c7',
-          background: '#fff',
-        }}
-      >
-        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>
-          {__('Sessions', 'wordforge')}
-        </h3>
+    <div className={styles.sidebar}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>{__('Sessions', 'wordforge')}</h3>
         <Button
           icon="plus-alt2"
           label={__('New Session', 'wordforge')}
@@ -56,29 +35,13 @@ export const SessionList = ({
         />
       </div>
 
-      <div
-        className="wf-sessions-list"
-        style={{ flex: 1, overflowY: 'auto', padding: '8px' }}
-      >
+      <div className={styles.list}>
         {isLoading && sessions.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '20px',
-            }}
-          >
+          <div className={styles.loadingContainer}>
             <Spinner />
           </div>
         ) : sessions.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '20px',
-              color: '#646970',
-              fontSize: '13px',
-            }}
-          >
+          <div className={styles.emptyState}>
             <p>{__('No sessions yet', 'wordforge')}</p>
           </div>
         ) : (
@@ -92,53 +55,22 @@ export const SessionList = ({
             });
 
             return (
-              <div
+              <button
+                type="button"
                 key={session.id}
                 onClick={() => onSelectSession(session.id)}
-                className={`wf-session-item ${isActive ? 'is-active' : ''}`}
-                style={{
-                  padding: '12px',
-                  marginBottom: '4px',
-                  background: isActive ? '#f0f6fc' : '#fff',
-                  border: `1px solid ${isActive ? '#2271b1' : '#dcdcde'}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`${styles.sessionItem} ${isActive ? styles.active : ''}`}
               >
-                <div
-                  style={{
-                    fontWeight: 500,
-                    fontSize: '13px',
-                    marginBottom: '4px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <div className={styles.sessionTitle}>
                   {session.title || __('Untitled Session', 'wordforge')}
                 </div>
-                <div
-                  style={{
-                    fontSize: '11px',
-                    color: '#646970',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                >
+                <div className={styles.sessionMeta}>
                   <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: status === 'busy' ? '#dba617' : '#646970',
-                      display: 'inline-block',
-                    }}
+                    className={`${styles.statusDot} ${status === 'busy' ? styles.busy : styles.idle}`}
                   />
                   <span>{timeStr}</span>
                 </div>
-              </div>
+              </button>
             );
           })
         )}

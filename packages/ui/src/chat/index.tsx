@@ -1,4 +1,5 @@
 import { createRoot } from '@wordpress/element';
+import '../styles/variables.css';
 import { QueryProvider } from '../lib/QueryProvider';
 import { ChatApp } from './ChatApp';
 

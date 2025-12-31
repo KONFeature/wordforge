@@ -7,6 +7,7 @@ import {
   useState,
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import styles from './InputArea.module.css';
 import { ModelSelector, type SelectedModel } from './ModelSelector';
 
 interface InputAreaProps {
@@ -52,16 +53,9 @@ export const InputArea = ({
   };
 
   return (
-    <div
-      className="wf-input-container"
-      style={{
-        padding: '16px',
-        background: '#fff',
-        borderTop: '1px solid #c3c4c7',
-      }}
-    >
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+    <div className={styles.root}>
+      <div className={styles.container}>
+        <div className={styles.inputRow}>
           <textarea
             ref={textareaRef}
             value={text}
@@ -70,31 +64,15 @@ export const InputArea = ({
             placeholder={__('Type your message...', 'wordforge')}
             rows={1}
             disabled={disabled && !isBusy}
-            style={{
-              flex: 1,
-              minHeight: '40px',
-              maxHeight: '150px',
-              padding: '10px 12px',
-              border: '1px solid #8c8f94',
-              borderRadius: '4px',
-              resize: 'none',
-              fontSize: '14px',
-              lineHeight: '1.4',
-              fontFamily: 'inherit',
-              background: disabled && !isBusy ? '#f6f7f7' : '#fff',
-              cursor: disabled && !isBusy ? 'not-allowed' : 'text',
-            }}
+            className={styles.textarea}
           />
-          <div
-            className="wf-input-actions"
-            style={{ display: 'flex', gap: '8px' }}
-          >
+          <div className={styles.actions}>
             {isBusy ? (
               <Button
                 variant="secondary"
                 onClick={onAbort}
                 icon="controls-pause"
-                style={{ minHeight: '40px' }}
+                className={styles.actionButton}
               >
                 {__('Stop', 'wordforge')}
               </Button>
@@ -104,7 +82,7 @@ export const InputArea = ({
                 onClick={handleSend}
                 disabled={!text.trim() || disabled}
                 icon="arrow-right-alt"
-                style={{ minHeight: '40px' }}
+                className={styles.actionButton}
               >
                 {__('Send', 'wordforge')}
               </Button>
@@ -112,14 +90,7 @@ export const InputArea = ({
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
+        <div className={styles.modelRow}>
           <ModelSelector
             providers={providers}
             selectedModel={selectedModel}
@@ -127,7 +98,7 @@ export const InputArea = ({
             disabled={disabled || isBusy}
           />
           {selectedModel && (
-            <span style={{ fontSize: '11px', color: '#646970' }}>
+            <span className={styles.modelHint}>
               {__('Model will be used for next message', 'wordforge')}
             </span>
           )}

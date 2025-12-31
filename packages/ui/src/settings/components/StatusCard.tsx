@@ -1,6 +1,7 @@
 import { Button, Card, CardBody, CardHeader } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useServerAction } from '../hooks/useServerActions';
+import styles from './StatusCard.module.css';
 
 interface StatusCardProps {
   status: {
@@ -53,77 +54,42 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
         <h2>{__('Status', 'wordforge')}</h2>
       </CardHeader>
       <CardBody>
-        <table
-          className="wordforge-status-table"
-          style={{ width: '100%', marginBottom: '20px' }}
-        >
+        <table className={`wordforge-status-table ${styles.table}`}>
           <tbody>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('MCP Adapter', 'wordforge')}
               </td>
               <td>
                 {status.mcpAdapter ? (
-                  <span
-                    style={{
-                      background: '#00a32a',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.success}`}>
                     {__('Active', 'wordforge')}
                   </span>
                 ) : (
-                  <span
-                    style={{
-                      background: '#d63638',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.error}`}>
                     {__('Not Found', 'wordforge')}
                   </span>
                 )}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('WooCommerce', 'wordforge')}
               </td>
               <td>
                 {status.woocommerce ? (
-                  <span
-                    style={{
-                      background: '#00a32a',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.success}`}>
                     {__('Active', 'wordforge')}
                   </span>
                 ) : (
-                  <span
-                    style={{
-                      background: '#646970',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.muted}`}>
                     {__('Not Installed', 'wordforge')}
                   </span>
                 )}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('Plugin Version', 'wordforge')}
               </td>
               <td>
@@ -134,83 +100,48 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
         </table>
 
         <h3>{__('OpenCode AI', 'wordforge')}</h3>
-        <table
-          className="wordforge-status-table"
-          style={{ width: '100%', marginBottom: '20px' }}
-        >
+        <table className={`wordforge-status-table ${styles.table}`}>
           <tbody>
             <tr>
-              <td style={{ padding: '8px 0' }}>{__('Binary', 'wordforge')}</td>
+              <td className={styles.tableCell}>{__('Binary', 'wordforge')}</td>
               <td>
                 {status.binary.is_installed ? (
                   <>
-                    <span
-                      style={{
-                        background: '#00a32a',
-                        color: '#fff',
-                        padding: '2px 6px',
-                        borderRadius: '3px',
-                        fontSize: '11px',
-                      }}
-                    >
+                    <span className={`${styles.badge} ${styles.success}`}>
                       {__('Installed', 'wordforge')}
                     </span>
-                    <code style={{ marginLeft: '8px' }}>
+                    <code className={styles.version}>
                       {status.binary.version}
                     </code>
                   </>
                 ) : (
-                  <span
-                    style={{
-                      background: '#646970',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.muted}`}>
                     {__('Not Installed', 'wordforge')}
                   </span>
                 )}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '8px 0' }}>{__('Server', 'wordforge')}</td>
+              <td className={styles.tableCell}>{__('Server', 'wordforge')}</td>
               <td>
                 {status.server.running ? (
                   <>
-                    <span
-                      style={{
-                        background: '#00a32a',
-                        color: '#fff',
-                        padding: '2px 6px',
-                        borderRadius: '3px',
-                        fontSize: '11px',
-                      }}
-                    >
+                    <span className={`${styles.badge} ${styles.success}`}>
                       {__('Running', 'wordforge')}
                     </span>
-                    <code style={{ marginLeft: '8px' }}>
+                    <code className={styles.version}>
                       port {status.server.port}
                     </code>
                   </>
                 ) : (
-                  <span
-                    style={{
-                      background: '#646970',
-                      color: '#fff',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '11px',
-                    }}
-                  >
+                  <span className={`${styles.badge} ${styles.muted}`}>
                     {__('Stopped', 'wordforge')}
                   </span>
                 )}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('Platform', 'wordforge')}
               </td>
               <td>
@@ -220,10 +151,7 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
           </tbody>
         </table>
 
-        <div
-          className="wordforge-actions"
-          style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
-        >
+        <div className={`wordforge-actions ${styles.actions}`}>
           {!status.binary.is_installed ? (
             <Button
               variant="primary"
@@ -264,11 +192,7 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
               {__('Start Server', 'wordforge')}
             </Button>
           )}
-          {message && (
-            <span style={{ marginLeft: '8px', fontSize: '13px' }}>
-              {message}
-            </span>
-          )}
+          {message && <span className={styles.message}>{message}</span>}
         </div>
       </CardBody>
     </Card>

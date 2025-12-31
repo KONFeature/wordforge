@@ -1,6 +1,7 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { WordForgeSettingsConfig } from '../types';
+import styles from './SettingsApp.module.css';
 import { AbilitiesCard } from './components/AbilitiesCard';
 import { ConnectionCard } from './components/ConnectionCard';
 import { SettingsFormCard } from './components/SettingsFormCard';
@@ -13,7 +14,7 @@ export const SettingsApp = () => {
 
   if (!config) {
     return (
-      <div style={{ padding: '20px', color: '#d63638' }}>
+      <div className={styles.configMissing}>
         WordForge Settings Configuration Missing
       </div>
     );
@@ -41,14 +42,7 @@ export const SettingsApp = () => {
 
   return (
     <div className="wordforge-settings-container">
-      <div
-        className="wordforge-cards"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '20px',
-        }}
-      >
+      <div className={`wordforge-cards ${styles.cards}`}>
         <StatusCard status={statusProps} onStatusChange={handleStatusChange} />
 
         <SettingsFormCard

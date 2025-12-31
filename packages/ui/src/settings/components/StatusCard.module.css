@@ -1,0 +1,42 @@
+.table {
+  width: 100%;
+  margin-bottom: var(--wf-spacing-xl);
+}
+
+.tableCell {
+  padding: var(--wf-spacing-sm) 0;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-white);
+}
+
+.badge.success {
+  background: var(--wf-color-success);
+}
+
+.badge.error {
+  background: var(--wf-color-error);
+}
+
+.badge.muted {
+  background: var(--wf-color-text-muted);
+}
+
+.version {
+  margin-left: var(--wf-spacing-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--wf-spacing-sm);
+  align-items: center;
+}
+
+.message {
+  margin-left: var(--wf-spacing-sm);
+  font-size: var(--wf-font-size-base);
+}

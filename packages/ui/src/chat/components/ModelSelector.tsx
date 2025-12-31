@@ -2,6 +2,7 @@ import type { Model, Provider } from '@opencode-ai/sdk/client';
 import { Button, Popover } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import styles from './ModelSelector.module.css';
 
 export interface SelectedModel {
   providerID: string;
@@ -42,22 +43,16 @@ export const ModelSelector = ({
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className={styles.root}>
       <Button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         isSmall
-        style={{
-          fontSize: '11px',
-          padding: '2px 8px',
-          background: '#f0f0f1',
-          border: '1px solid #c3c4c7',
-          borderRadius: '3px',
-        }}
+        className={styles.trigger}
       >
-        <span style={{ marginRight: '4px' }}>🤖</span>
+        <span className={styles.triggerIcon}>🤖</span>
         {getModelDisplayName()}
-        <span style={{ marginLeft: '4px', opacity: 0.6 }}>▾</span>
+        <span className={styles.triggerArrow}>▾</span>
       </Button>
 
       {isOpen && (
@@ -66,22 +61,9 @@ export const ModelSelector = ({
           onClose={() => setIsOpen(false)}
           focusOnMount={false}
         >
-          <div
-            style={{
-              maxHeight: '300px',
-              overflowY: 'auto',
-              minWidth: '250px',
-              padding: '8px 0',
-            }}
-          >
+          <div className={styles.popoverContent}>
             {!Array.isArray(providers) || providers.length === 0 ? (
-              <div
-                style={{
-                  padding: '12px 16px',
-                  color: '#646970',
-                  fontSize: '12px',
-                }}
-              >
+              <div className={styles.emptyState}>
                 {__('No providers available', 'wordforge')}
               </div>
             ) : (
@@ -91,18 +73,7 @@ export const ModelSelector = ({
 
                 return (
                   <div key={provider.id}>
-                    <div
-                      style={{
-                        padding: '4px 12px',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        color: '#646970',
-                        textTransform: 'uppercase',
-                        background: '#f6f7f7',
-                      }}
-                    >
-                      {provider.name}
-                    </div>
+                    <div className={styles.providerHeader}>{provider.name}</div>
                     {models.map(([modelID, model]) => {
                       const isSelected =
                         selectedModel?.providerID === provider.id &&
@@ -114,40 +85,20 @@ export const ModelSelector = ({
                           onClick={() =>
                             handleSelectModel(provider.id, modelID)
                           }
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '8px 12px',
-                            border: 'none',
-                            background: isSelected ? '#f0f6fc' : 'transparent',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                          }}
+                          className={`${styles.modelButton} ${isSelected ? styles.selected : ''}`}
                         >
-                          <div style={{ fontWeight: 500 }}>{model.name}</div>
-                          <div
-                            style={{
-                              fontSize: '10px',
-                              color: '#646970',
-                              marginTop: '2px',
-                            }}
-                          >
+                          <div className={styles.modelName}>{model.name}</div>
+                          <div className={styles.modelId}>
                             {model.capabilities.reasoning && '🧠 '}
                             {model.capabilities.toolcall && '🔧 '}
                             {model.capabilities.attachment && '📎 '}
                             {model.status !== 'active' && (
                               <span
-                                style={{
-                                  marginLeft: '4px',
-                                  padding: '1px 4px',
-                                  background:
-                                    model.status === 'deprecated'
-                                      ? '#f8d7da'
-                                      : '#fff3cd',
-                                  borderRadius: '2px',
-                                  fontSize: '9px',
-                                }}
+                                className={
+                                  model.status === 'deprecated'
+                                    ? styles.statusDeprecated
+                                    : styles.statusPreview
+                                }
                               >
                                 {model.status}
                               </span>

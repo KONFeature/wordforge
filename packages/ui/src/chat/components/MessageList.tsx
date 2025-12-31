@@ -7,6 +7,7 @@ import type {
 import { Spinner } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import styles from './MessageList.module.css';
 
 export interface ChatMessage {
   info: Message;
@@ -34,20 +35,6 @@ const ToolCallItem = ({ part }: { part: ToolPart }) => {
   else if (status === 'completed') statusLabel = __('Completed', 'wordforge');
   else if (status === 'error') statusLabel = __('Failed', 'wordforge');
 
-  const statusColor: Record<string, string> = {
-    pending: '#646970',
-    running: '#856404',
-    completed: '#155724',
-    error: '#721c24',
-  };
-
-  const statusBg: Record<string, string> = {
-    pending: '#f0f0f1',
-    running: '#fff3cd',
-    completed: '#d4edda',
-    error: '#f8d7da',
-  };
-
   const input = 'input' in state ? state.input : undefined;
   const output =
     'output' in state && state.status === 'completed'
@@ -57,103 +44,33 @@ const ToolCallItem = ({ part }: { part: ToolPart }) => {
     'error' in state && state.status === 'error' ? state.error : undefined;
 
   return (
-    <div
-      style={{
-        background: '#f6f7f7',
-        border: '1px solid #dcdcde',
-        borderRadius: '4px',
-        marginBottom: '8px',
-        overflow: 'hidden',
-      }}
-    >
-      <div
+    <div className={styles.toolCall}>
+      <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
-        style={{
-          padding: '8px 12px',
-          background: '#fff',
-          borderBottom: '1px solid #dcdcde',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          cursor: 'pointer',
-          fontSize: '12px',
-        }}
+        className={styles.toolHeader}
       >
-        <span style={{ fontFamily: 'monospace', fontWeight: 500, flex: 1 }}>
-          {title}
-        </span>
-        <span
-          style={{
-            padding: '2px 6px',
-            borderRadius: '3px',
-            fontSize: '10px',
-            textTransform: 'uppercase',
-            fontWeight: 500,
-            background: statusBg[status],
-            color: statusColor[status],
-          }}
-        >
+        <span className={styles.toolName}>{title}</span>
+        <span className={`${styles.toolStatus} ${styles[status]}`}>
           {statusLabel}
         </span>
-        <span style={{ color: '#646970' }}>{expanded ? '-' : '+'}</span>
-      </div>
+        <span className={styles.toolExpander}>{expanded ? '-' : '+'}</span>
+      </button>
 
       {expanded && (
-        <div style={{ padding: '12px', fontSize: '12px' }}>
+        <div className={styles.toolBody}>
           {input && (
-            <div style={{ marginBottom: '8px' }}>
-              <div
-                style={{
-                  fontWeight: 500,
-                  marginBottom: '4px',
-                  color: '#646970',
-                }}
-              >
-                Input
-              </div>
-              <pre
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: '11px',
-                  background: '#fff',
-                  padding: '8px',
-                  borderRadius: '3px',
-                  overflowX: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                }}
-              >
+            <div className={styles.toolSection}>
+              <div className={styles.toolSectionLabel}>Input</div>
+              <pre className={styles.toolSectionContent}>
                 {JSON.stringify(input, null, 2)}
               </pre>
             </div>
           )}
           {output && (
-            <div style={{ marginBottom: '8px' }}>
-              <div
-                style={{
-                  fontWeight: 500,
-                  marginBottom: '4px',
-                  color: '#646970',
-                }}
-              >
-                Output
-              </div>
-              <pre
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: '11px',
-                  background: '#fff',
-                  padding: '8px',
-                  borderRadius: '3px',
-                  overflowX: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                }}
-              >
+            <div className={styles.toolSection}>
+              <div className={styles.toolSectionLabel}>Output</div>
+              <pre className={styles.toolSectionContent}>
                 {typeof output === 'string'
                   ? output
                   : JSON.stringify(output, null, 2)}
@@ -161,31 +78,9 @@ const ToolCallItem = ({ part }: { part: ToolPart }) => {
             </div>
           )}
           {error && (
-            <div>
-              <div
-                style={{
-                  fontWeight: 500,
-                  marginBottom: '4px',
-                  color: '#646970',
-                }}
-              >
-                Error
-              </div>
-              <pre
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: '11px',
-                  background: '#fff',
-                  padding: '8px',
-                  borderRadius: '3px',
-                  overflowX: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  color: '#d63638',
-                }}
-              >
+            <div className={styles.toolSection}>
+              <div className={styles.toolSectionLabel}>Error</div>
+              <pre className={`${styles.toolSectionContent} ${styles.error}`}>
                 {error}
               </pre>
             </div>
@@ -216,70 +111,30 @@ const MessageItem = ({ message }: { message: ChatMessage }) => {
   const textParts = message.parts.filter(isTextPart);
   const toolParts = message.parts.filter(isToolPart);
 
+  const messageClassName = `${styles.message} ${isUser ? styles.user : ''} ${hasError ? styles.error : ''}`;
+
   return (
-    <div
-      style={{
-        marginBottom: '16px',
-        padding: '12px 16px',
-        background: isUser ? '#f0f6fc' : hasError ? '#fcf0f1' : '#fff',
-        borderRadius: '8px',
-        border: `1px solid ${isUser ? '#c5d9ed' : hasError ? '#f0b8b8' : '#dcdcde'}`,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '8px',
-          fontSize: '12px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontWeight: 600, color: '#1d2327' }}>
+    <div className={messageClassName}>
+      <div className={styles.messageHeader}>
+        <span className={styles.messageRole}>
           {isUser ? __('You', 'wordforge') : __('Assistant', 'wordforge')}
         </span>
-        <span style={{ color: '#646970' }}>{time}</span>
+        <span className={styles.messageTime}>{time}</span>
         {modelInfo?.model && (
-          <span
-            style={{
-              padding: '1px 6px',
-              background: '#f0f0f1',
-              borderRadius: '3px',
-              fontSize: '10px',
-              color: '#646970',
-            }}
-          >
+          <span className={styles.messageModel}>
             🤖 {modelInfo.provider}/{modelInfo.model}
           </span>
         )}
       </div>
 
       {textParts.map((part, i) => (
-        <div
-          key={part.id || i}
-          style={{
-            fontSize: '14px',
-            lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            marginBottom: i < textParts.length - 1 ? '8px' : 0,
-          }}
-        >
+        <div key={part.id || i} className={styles.messageContent}>
           {part.text}
         </div>
       ))}
 
       {hasError && message.info.role === 'assistant' && message.info.error && (
-        <div
-          style={{
-            fontSize: '14px',
-            lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            color: '#d63638',
-          }}
-        >
+        <div className={styles.messageError}>
           {'data' in message.info.error && message.info.error.data
             ? (message.info.error.data as { message?: string }).message ||
               __('Error', 'wordforge')
@@ -288,7 +143,7 @@ const MessageItem = ({ message }: { message: ChatMessage }) => {
       )}
 
       {toolParts.length > 0 && (
-        <div style={{ marginTop: '12px' }}>
+        <div className={styles.toolCalls}>
           {toolParts.map((part) => (
             <ToolCallItem key={part.id} part={part} />
           ))}
@@ -311,15 +166,7 @@ export const MessageList = ({
 
   if (isLoading && messages.length === 0) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: '#f9f9f9',
-        }}
-      >
+      <div className={styles.loadingContainer}>
         <Spinner />
       </div>
     );
@@ -327,24 +174,11 @@ export const MessageList = ({
 
   if (messages.length === 0) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: '#f9f9f9',
-          padding: '20px',
-          textAlign: 'center',
-          color: '#646970',
-        }}
-      >
+      <div className={styles.emptyState}>
         <div
-          style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}
-          className="dashicons dashicons-format-chat"
+          className={`${styles.emptyIcon} dashicons dashicons-format-chat`}
         />
-        <p style={{ fontSize: '14px' }}>
+        <p className={styles.emptyText}>
           {__(
             'Select a session to view messages, or create a new one.',
             'wordforge',
@@ -355,50 +189,20 @@ export const MessageList = ({
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '16px',
-        background: '#f9f9f9',
-      }}
-    >
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div className={styles.root}>
+      <div className={styles.container}>
         {messages.map((msg) => (
           <MessageItem key={msg.info.id} message={msg} />
         ))}
 
         {isThinking && (
-          <div
-            style={{
-              marginBottom: '16px',
-              padding: '12px 16px',
-              background: '#fff',
-              borderRadius: '8px',
-              border: '1px dashed #dcdcde',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '8px',
-                fontSize: '12px',
-              }}
-            >
-              <span style={{ fontWeight: 600, color: '#1d2327' }}>
+          <div className={styles.thinking}>
+            <div className={styles.thinkingHeader}>
+              <span className={styles.messageRole}>
                 {__('Assistant', 'wordforge')}
               </span>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: '#646970',
-              }}
-            >
+            <div className={styles.thinkingContent}>
               <Spinner />
               <span>{__('Thinking...', 'wordforge')}</span>
             </div>

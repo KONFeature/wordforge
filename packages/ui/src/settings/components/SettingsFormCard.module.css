@@ -1,0 +1,39 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  width: 200px;
+  text-align: left;
+  padding: 15px 10px 15px 0;
+  vertical-align: top;
+}
+
+.tableCell {
+  padding: 15px 10px;
+}
+
+.description {
+  font-size: var(--wf-font-size-base);
+  font-style: italic;
+  margin-top: var(--wf-spacing-xs);
+  color: var(--wf-color-text-muted);
+}
+
+.code {
+  background: var(--wf-color-bg-code);
+  padding: var(--wf-radius-sm) 5px;
+}
+
+.disabledBadge {
+  background: var(--wf-color-text-muted);
+  color: var(--wf-color-white);
+  padding: 2px 6px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-sm);
+}
+
+.submitRow {
+  margin-top: var(--wf-spacing-xl);
+}

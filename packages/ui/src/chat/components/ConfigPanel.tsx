@@ -1,6 +1,7 @@
 import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import styles from './ConfigPanel.module.css';
 
 interface ConfigPanelProps {
   providers: Provider[];
@@ -13,15 +14,27 @@ const getMcpStatusColor = (
 ): { bg: string; color: string } => {
   switch (status.status) {
     case 'connected':
-      return { bg: '#d4edda', color: '#155724' };
+      return {
+        bg: 'var(--wf-color-success-bg)',
+        color: 'var(--wf-color-success-text)',
+      };
     case 'disabled':
-      return { bg: '#f0f0f1', color: '#646970' };
+      return {
+        bg: 'var(--wf-color-bg-code)',
+        color: 'var(--wf-color-text-muted)',
+      };
     case 'failed':
     case 'needs_auth':
     case 'needs_client_registration':
-      return { bg: '#f8d7da', color: '#721c24' };
+      return {
+        bg: 'var(--wf-color-error-bg)',
+        color: 'var(--wf-color-error-text)',
+      };
     default:
-      return { bg: '#f0f0f1', color: '#646970' };
+      return {
+        bg: 'var(--wf-color-bg-code)',
+        color: 'var(--wf-color-text-muted)',
+      };
   }
 };
 
@@ -49,16 +62,10 @@ export const ConfigPanel = ({
 }: ConfigPanelProps) => {
   if (isLoading) {
     return (
-      <div
-        style={{
-          padding: '16px',
-          borderTop: '1px solid #c3c4c7',
-          background: '#f6f7f7',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className={styles.loading}>
+        <div className={styles.loadingContent}>
           <Spinner />
-          <span style={{ fontSize: '12px', color: '#646970' }}>
+          <span className={styles.loadingText}>
             {__('Loading configuration...', 'wordforge')}
           </span>
         </div>
@@ -73,76 +80,46 @@ export const ConfigPanel = ({
     : 0;
 
   return (
-    <div
-      style={{
-        borderTop: '1px solid #c3c4c7',
-        background: '#f6f7f7',
-        fontSize: '12px',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          gap: '16px',
-          padding: '12px 16px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
-          <div
-            style={{ fontWeight: 600, marginBottom: '8px', color: '#1d2327' }}
-          >
+    <div className={styles.root}>
+      <div className={styles.content}>
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>
             {__('Providers', 'wordforge')} ({providers.length})
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <div className={styles.tagList}>
             {(Array.isArray(providers) ? providers : []).map((provider) => {
               const modelCount = Object.keys(provider.models || {}).length;
               return (
                 <span
                   key={provider.id}
-                  style={{
-                    padding: '2px 8px',
-                    background: '#fff',
-                    border: '1px solid #dcdcde',
-                    borderRadius: '3px',
-                    fontSize: '11px',
-                  }}
+                  className={styles.providerTag}
                   title={`${modelCount} models`}
                 >
                   {provider.name}
-                  <span style={{ color: '#646970', marginLeft: '4px' }}>
-                    ({modelCount})
-                  </span>
+                  <span className={styles.tagCount}>({modelCount})</span>
                 </span>
               );
             })}
             {providers.length === 0 && (
-              <span style={{ color: '#646970', fontStyle: 'italic' }}>
+              <span className={styles.emptyText}>
                 {__('No providers configured', 'wordforge')}
               </span>
             )}
           </div>
         </div>
 
-        <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
-          <div
-            style={{ fontWeight: 600, marginBottom: '8px', color: '#1d2327' }}
-          >
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>
             {__('MCP Servers', 'wordforge')} ({mcpServers.length})
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <div className={styles.tagList}>
             {mcpServers.map(([name, status]) => {
               const colors = getMcpStatusColor(status);
               return (
                 <span
                   key={name}
-                  style={{
-                    padding: '2px 8px',
-                    background: colors.bg,
-                    color: colors.color,
-                    borderRadius: '3px',
-                    fontSize: '11px',
-                  }}
+                  className={styles.mcpTag}
+                  style={{ background: colors.bg, color: colors.color }}
                   title={getMcpStatusLabel(status)}
                 >
                   {name}
@@ -150,22 +127,18 @@ export const ConfigPanel = ({
               );
             })}
             {mcpServers.length === 0 && (
-              <span style={{ color: '#646970', fontStyle: 'italic' }}>
+              <span className={styles.emptyText}>
                 {__('No MCP servers', 'wordforge')}
               </span>
             )}
           </div>
         </div>
 
-        <div style={{ flex: '0 0 auto' }}>
-          <div
-            style={{ fontWeight: 600, marginBottom: '8px', color: '#1d2327' }}
-          >
+        <div className={styles.sectionAuto}>
+          <div className={styles.sectionTitle}>
             {__('Total Models', 'wordforge')}
           </div>
-          <span style={{ fontSize: '18px', fontWeight: 600, color: '#2271b1' }}>
-            {totalModels}
-          </span>
+          <span className={styles.totalModels}>{totalModels}</span>
         </div>
       </div>
     </div>

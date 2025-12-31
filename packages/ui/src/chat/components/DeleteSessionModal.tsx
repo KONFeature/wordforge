@@ -1,5 +1,6 @@
 import { Button, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import styles from './DeleteSessionModal.module.css';
 
 interface DeleteSessionModalProps {
   sessionName: string;
@@ -19,37 +20,16 @@ export const DeleteSessionModal = ({
   if (!isOpen) return null;
 
   return (
-    <Modal
-      title={__('Delete Session?', 'wordforge')}
-      onRequestClose={onClose}
-      className="wf-delete-modal"
-    >
-      <div style={{ padding: '0 16px 16px' }}>
+    <Modal title={__('Delete Session?', 'wordforge')} onRequestClose={onClose}>
+      <div className={styles.content}>
         <p>
           {__(
             'Are you sure you want to delete this session? This action cannot be undone.',
             'wordforge',
           )}
         </p>
-        <p
-          style={{
-            fontWeight: 500,
-            background: '#f6f7f7',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            margin: '12px 0',
-          }}
-        >
-          {sessionName}
-        </p>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            marginTop: '20px',
-          }}
-        >
+        <p className={styles.sessionName}>{sessionName}</p>
+        <div className={styles.actions}>
           <Button variant="secondary" onClick={onClose} disabled={isDeleting}>
             {__('Cancel', 'wordforge')}
           </Button>

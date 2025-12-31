@@ -1,5 +1,6 @@
 import { Card, CardBody, CardHeader } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import styles from './ConnectionCard.module.css';
 
 interface ConnectionCardProps {
   settings: {
@@ -17,14 +18,7 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
           <h2>{__('MCP Connection', 'wordforge')}</h2>
         </CardHeader>
         <CardBody>
-          <p
-            style={{
-              background: '#fff3cd',
-              borderLeft: '4px solid #dba617',
-              padding: '12px',
-              margin: 0,
-            }}
-          >
+          <p className={styles.disabledNotice}>
             {__(
               'MCP server is currently disabled. Enable it in the settings above to connect.',
               'wordforge',
@@ -64,13 +58,10 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
           {__('Use these details to connect your MCP client.', 'wordforge')}
         </p>
 
-        <table
-          className="wordforge-status-table"
-          style={{ width: '100%', marginBottom: '20px' }}
-        >
+        <table className={`wordforge-status-table ${styles.table}`}>
           <tbody>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('HTTP Endpoint', 'wordforge')}
               </td>
               <td>
@@ -78,7 +69,7 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '8px 0' }}>
+              <td className={styles.tableCell}>
                 {__('STDIO Command', 'wordforge')}
               </td>
               <td>
@@ -89,27 +80,14 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
         </table>
 
         <h3>{__('Claude Desktop Config', 'wordforge')}</h3>
-        <pre
-          style={{
-            background: '#f6f7f7',
-            padding: '12px',
-            overflow: 'auto',
-            borderRadius: '4px',
-            fontSize: '12px',
-          }}
-        >
-          {claudeConfig}
-        </pre>
-        <p
-          className="description"
-          style={{ fontSize: '13px', color: '#646970' }}
-        >
+        <pre className={styles.codeBlock}>{claudeConfig}</pre>
+        <p className={`description ${styles.hint}`}>
           {__('Generate credentials:', 'wordforge')}{' '}
           <code>echo -n "username:app_password" | base64</code>
         </p>
 
-        <h3 style={{ marginTop: '20px' }}>{__('Setup Guides', 'wordforge')}</h3>
-        <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0 }}>
+        <h3 className={styles.linksTitle}>{__('Setup Guides', 'wordforge')}</h3>
+        <ul className={styles.links}>
           <li>
             <a
               href="https://modelcontextprotocol.io/quickstart/user"

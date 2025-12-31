@@ -6,3 +6,4 @@ dist/
 
 # built JS from the frontend
 assets/js/*.js
+assets/js/*.css

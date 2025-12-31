@@ -1,6 +1,7 @@
 import { Button, Notice } from '@wordpress/components';
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import styles from './ChatApp.module.css';
 import { ConfigPanel } from './components/ConfigPanel';
 import { DeleteSessionModal } from './components/DeleteSessionModal';
 import { InputArea } from './components/InputArea';
@@ -95,32 +96,15 @@ export const ChatApp = () => {
 
   if (!config) {
     return (
-      <div style={{ padding: '20px', color: '#d63638' }}>
+      <div className={styles.configMissing}>
         WordForge Configuration Missing
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100vh - 120px)',
-        minHeight: '500px',
-      }}
-    >
-      <div
-        className="wf-chat-container"
-        style={{
-          display: 'flex',
-          flex: 1,
-          background: '#fff',
-          border: '1px solid #c3c4c7',
-          borderRadius: '4px 4px 0 0',
-          overflow: 'hidden',
-        }}
-      >
+    <div className={styles.root}>
+      <div className={styles.container}>
         <SessionList
           sessions={sessions}
           statuses={statuses}
@@ -131,59 +115,21 @@ export const ChatApp = () => {
           isCreating={createSession.isPending}
         />
 
-        <div
-          className="wf-chat-main"
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-          }}
-        >
-          <div
-            className="wf-chat-header"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 16px',
-              borderBottom: '1px solid #c3c4c7',
-              background: '#fff',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                minWidth: 0,
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+        <div className={styles.main}>
+          <div className={styles.header}>
+            <div className={styles.headerInfo}>
+              <span className={styles.sessionTitle}>
                 {currentSession?.title || __('Select a session', 'wordforge')}
               </span>
               {currentSessionId && (
                 <span
-                  style={{
-                    fontSize: '11px',
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    background: isBusy ? '#fff3cd' : '#d4edda',
-                    color: isBusy ? '#856404' : '#155724',
-                  }}
+                  className={`${styles.statusBadge} ${isBusy ? styles.busy : styles.ready}`}
                 >
                   {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
                 </span>
               )}
             </div>
-            <div className="wf-chat-actions">
+            <div>
               <Button
                 icon="trash"
                 label={__('Delete Session', 'wordforge')}
@@ -203,7 +149,7 @@ export const ChatApp = () => {
           />
 
           {errorMessage && (
-            <div style={{ padding: '0 16px' }}>
+            <div className={styles.errorContainer}>
               <Notice
                 status="error"
                 onRemove={() => {
