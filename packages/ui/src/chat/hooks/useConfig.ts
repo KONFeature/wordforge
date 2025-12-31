@@ -4,6 +4,7 @@ import type {
   Provider,
 } from '@opencode-ai/sdk/client';
 import { useQuery } from '@tanstack/react-query';
+import { filterProviders } from '../../lib/filterModels';
 import type { SelectedModel } from '../components/ModelSelector';
 
 export const CONFIG_KEY = ['config'] as const;
@@ -20,8 +21,9 @@ export const useProvidersConfig = (client: OpencodeClient | null) => {
     queryFn: async (): Promise<ConfigData> => {
       const result = await client!.config.providers();
       const data = result.data;
-      const providers =
+      const rawProviders =
         data && Array.isArray(data.providers) ? data.providers : [];
+      const providers = filterProviders(rawProviders);
       const defaultModels = data?.default ?? {};
 
       let defaultModel: SelectedModel | null = null;

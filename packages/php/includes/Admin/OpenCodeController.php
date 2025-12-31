@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ServerProcess;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -102,6 +104,66 @@ class OpenCodeController {
 						'default'  => '',
 					],
 				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/providers',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'get_providers' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'save_provider' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/providers/(?P<provider_id>[a-z]+)',
+			[
+				'methods'             => 'DELETE',
+				'callback'            => [ $this, 'delete_provider' ],
+				'permission_callback' => [ $this, 'check_permission' ],
+				'args'                => [
+					'provider_id' => [
+						'required' => true,
+						'type'     => 'string',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/agents',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'get_agents' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'save_agents' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/agents/reset',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'reset_agents' ],
+				'permission_callback' => [ $this, 'check_permission' ],
 			]
 		);
 	}
@@ -437,5 +499,124 @@ class OpenCodeController {
 		$token     = $payload . '.' . $signature;
 
 		return rest_url( 'wordforge/v1/opencode/proxy' ) . '?_wf_token=' . urlencode( $token );
+	}
+
+	public function get_providers(): WP_REST_Response {
+		return new WP_REST_Response( [
+			'providers' => ProviderConfig::get_providers_for_display(),
+		] );
+	}
+
+	public function save_provider( WP_REST_Request $request ): WP_REST_Response {
+		$provider_id = $request->get_param( 'providerId' );
+		$api_key     = $request->get_param( 'apiKey' );
+
+		if ( ! $provider_id || ! isset( ProviderConfig::PROVIDERS[ $provider_id ] ) ) {
+			return new WP_REST_Response(
+				[ 'error' => 'Invalid provider ID' ],
+				400
+			);
+		}
+
+		if ( empty( $api_key ) ) {
+			return new WP_REST_Response(
+				[ 'error' => 'API key is required' ],
+				400
+			);
+		}
+
+		$result = ProviderConfig::save_provider_key( $provider_id, $api_key );
+
+		if ( ! $result ) {
+			return new WP_REST_Response(
+				[ 'error' => 'Failed to save API key' ],
+				500
+			);
+		}
+
+		$this->restart_server_if_running();
+
+		return new WP_REST_Response( [
+			'success'   => true,
+			'providers' => ProviderConfig::get_providers_for_display(),
+		] );
+	}
+
+	public function delete_provider( WP_REST_Request $request ): WP_REST_Response {
+		$provider_id = $request->get_param( 'provider_id' );
+
+		if ( ! $provider_id || ! isset( ProviderConfig::PROVIDERS[ $provider_id ] ) ) {
+			return new WP_REST_Response(
+				[ 'error' => 'Invalid provider ID' ],
+				400
+			);
+		}
+
+		ProviderConfig::remove_provider_key( $provider_id );
+
+		$this->restart_server_if_running();
+
+		return new WP_REST_Response( [
+			'success'   => true,
+			'providers' => ProviderConfig::get_providers_for_display(),
+		] );
+	}
+
+	public function get_agents(): WP_REST_Response {
+		return new WP_REST_Response( [
+			'agents' => AgentConfig::get_agents_for_display(),
+		] );
+	}
+
+	public function save_agents( WP_REST_Request $request ): WP_REST_Response {
+		$models = $request->get_param( 'models' );
+
+		if ( ! is_array( $models ) ) {
+			return new WP_REST_Response(
+				[ 'error' => 'Invalid models format' ],
+				400
+			);
+		}
+
+		$result = AgentConfig::save_agent_models( $models );
+
+		if ( ! $result ) {
+			return new WP_REST_Response(
+				[ 'error' => 'Failed to save agent models' ],
+				500
+			);
+		}
+
+		$this->restart_server_if_running();
+
+		return new WP_REST_Response( [
+			'success' => true,
+			'agents'  => AgentConfig::get_agents_for_display(),
+		] );
+	}
+
+	public function reset_agents(): WP_REST_Response {
+		AgentConfig::reset_to_recommended();
+
+		$this->restart_server_if_running();
+
+		return new WP_REST_Response( [
+			'success' => true,
+			'agents'  => AgentConfig::get_agents_for_display(),
+		] );
+	}
+
+	private function restart_server_if_running(): void {
+		if ( ! ServerProcess::is_running() ) {
+			return;
+		}
+
+		ServerProcess::stop();
+		usleep( 300000 );
+
+		$token = $this->generate_mcp_auth_token();
+		ServerProcess::start( [
+			'mcp_auth_token' => $token,
+		] );
 	}
 }

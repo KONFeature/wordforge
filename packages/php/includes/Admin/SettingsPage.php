@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ServerProcess;
 
 class SettingsPage {
@@ -102,11 +104,13 @@ class SettingsPage {
 				],
 			],
 			'abilities'    => $abilities,
+			'providers'    => ProviderConfig::get_providers_for_display(),
+			'agents'       => AgentConfig::get_agents_for_display(),
 			'integrations' => [
 				'mcpAdapter'  => $mcp_active,
 				'woocommerce' => $woo_active,
 			],
-			'i18n'         => [],
+			'i18n'            => [],
 		];
 
 		\wp_add_inline_script(

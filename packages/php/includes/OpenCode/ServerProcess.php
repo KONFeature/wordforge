@@ -286,18 +286,21 @@ class ServerProcess {
 		$agents = [
 			'wordpress-manager'         => [
 				'mode'        => 'primary',
+				'model'       => AgentConfig::get_effective_model( 'wordpress-manager' ),
 				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
 				'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
 				'color'       => '#3858E9',
 			],
 			'wordpress-content-creator' => [
 				'mode'        => 'subagent',
+				'model'       => AgentConfig::get_effective_model( 'wordpress-content-creator' ),
 				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
 				'prompt'      => AgentPrompts::get_content_creator_prompt(),
 				'color'       => '#10B981',
 			],
 			'wordpress-auditor'         => [
 				'mode'        => 'subagent',
+				'model'       => AgentConfig::get_effective_model( 'wordpress-auditor' ),
 				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
 				'prompt'      => AgentPrompts::get_auditor_prompt(),
 				'color'       => '#F59E0B',
@@ -307,6 +310,7 @@ class ServerProcess {
 		if ( class_exists( 'WooCommerce' ) ) {
 			$agents['wordpress-commerce-manager'] = [
 				'mode'        => 'subagent',
+				'model'       => AgentConfig::get_effective_model( 'wordpress-commerce-manager' ),
 				'description' => 'WooCommerce specialist - product management, inventory, pricing',
 				'prompt'      => AgentPrompts::get_commerce_manager_prompt(),
 				'color'       => '#8B5CF6',
@@ -323,6 +327,11 @@ class ServerProcess {
 				'bash'               => $bash_permissions,
 			],
 		];
+
+		$provider_config = ProviderConfig::get_opencode_provider_config();
+		if ( ! empty( $provider_config ) ) {
+			$config['provider'] = $provider_config;
+		}
 
 		$mcp_config = self::get_mcp_config();
 		if ( $mcp_config ) {

@@ -1,9 +1,10 @@
 import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
 import type { WordForgeSettingsConfig } from '../types';
 import styles from './SettingsApp.module.css';
 import { AbilitiesCard } from './components/AbilitiesCard';
+import { AgentConfigCard } from './components/AgentConfigCard';
 import { ConnectionCard } from './components/ConnectionCard';
+import { ProvidersCard } from './components/ProvidersCard';
 import { SettingsFormCard } from './components/SettingsFormCard';
 import { StatusCard } from './components/StatusCard';
 
@@ -44,6 +45,18 @@ export const SettingsApp = () => {
     <div className="wordforge-settings-container">
       <div className={`wordforge-cards ${styles.cards}`}>
         <StatusCard status={statusProps} onStatusChange={handleStatusChange} />
+
+        <ProvidersCard
+          restUrl={config.restUrl}
+          nonce={config.nonce}
+          initialProviders={config.providers}
+        />
+
+        <AgentConfigCard
+          restUrl={config.restUrl}
+          nonce={config.nonce}
+          initialAgents={config.agents}
+        />
 
         <SettingsFormCard
           settings={{

@@ -41,6 +41,26 @@ export interface WordForgeChatConfig {
   };
 }
 
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  configured: boolean;
+  api_key_masked: string | null;
+  help_url: string;
+  help_text: string;
+}
+
+export interface AgentInfo {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  currentModel: string | null;
+  effectiveModel: string;
+  recommendedModel: string;
+  recommendations: string[];
+}
+
 export interface WordForgeSettingsConfig {
   restUrl: string;
   nonce: string;
@@ -65,6 +85,8 @@ export interface WordForgeSettingsConfig {
     };
   };
   abilities: Record<string, Array<{ name: string; description: string }>>;
+  providers: ProviderInfo[];
+  agents: AgentInfo[];
   integrations: {
     woocommerce: boolean;
     mcpAdapter: boolean;
