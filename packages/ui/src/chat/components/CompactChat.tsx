@@ -1,0 +1,209 @@
+import type { OpencodeClient } from '@opencode-ai/sdk/client';
+import { Button, Notice } from '@wordpress/components';
+import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { useAutoContextInjection } from '../hooks/useAutoContextInjection';
+import { useChatCore } from '../hooks/useChatCore';
+import type { ScopedContext } from '../hooks/useContextInjection';
+import styles from './CompactChat.module.css';
+import { DeleteSessionModal } from './DeleteSessionModal';
+import { InputArea } from './InputArea';
+import { MessageList } from './MessageList';
+import { SessionList } from './SessionList';
+
+interface ContextBadgeProps {
+  context: ScopedContext;
+}
+
+const ContextBadge = ({ context }: ContextBadgeProps) => {
+  const getContextLabel = (): { icon: string; label: string } => {
+    switch (context.type) {
+      case 'product-editor':
+        return { icon: '📦', label: context.productName };
+      case 'product-list':
+        return { icon: '📋', label: `${context.totalProducts} products` };
+      case 'page-editor':
+        return { icon: '📄', label: context.pageTitle };
+      case 'page-list':
+        return {
+          icon: '📑',
+          label: `${context.totalPosts} ${context.postType}s`,
+        };
+      case 'template-editor':
+        return { icon: '🎨', label: context.templateName };
+      case 'custom':
+        return { icon: '💡', label: 'Custom context' };
+      default:
+        return { icon: '📍', label: 'Context active' };
+    }
+  };
+
+  const { icon, label } = getContextLabel();
+
+  return (
+    <div className={styles.contextBadge}>
+      <span className={styles.contextIcon}>{icon}</span>
+      <span className={styles.contextLabel}>{label}</span>
+    </div>
+  );
+};
+
+interface EmptyStateProps {
+  onCreateSession: () => void;
+  isCreating: boolean;
+}
+
+const EmptyState = ({ onCreateSession, isCreating }: EmptyStateProps) => (
+  <div className={styles.emptyState}>
+    <div className={styles.emptyIcon}>💬</div>
+    <p className={styles.emptyText}>
+      {__('Start a conversation with your AI assistant', 'wordforge')}
+    </p>
+    <Button
+      variant="primary"
+      onClick={onCreateSession}
+      isBusy={isCreating}
+      disabled={isCreating}
+    >
+      {isCreating
+        ? __('Creating...', 'wordforge')
+        : __('New Chat', 'wordforge')}
+    </Button>
+  </div>
+);
+
+interface CompactChatProps {
+  client: OpencodeClient;
+  context?: ScopedContext | null;
+  defaultSessionsCollapsed?: boolean;
+}
+
+export const CompactChat = ({
+  client,
+  context,
+  defaultSessionsCollapsed = true,
+}: CompactChatProps) => {
+  const [sessionsCollapsed, setSessionsCollapsed] = useState(
+    defaultSessionsCollapsed,
+  );
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const chat = useChatCore(client);
+
+  useAutoContextInjection(client, chat.currentSessionId, context ?? null);
+
+  const errorMessage = chat.error?.message ?? null;
+  const hasSession = !!chat.currentSessionId;
+
+  return (
+    <div className={styles.root}>
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <Button
+            icon={sessionsCollapsed ? 'menu' : 'no-alt'}
+            label={
+              sessionsCollapsed
+                ? __('Show sessions', 'wordforge')
+                : __('Hide sessions', 'wordforge')
+            }
+            onClick={() => setSessionsCollapsed(!sessionsCollapsed)}
+            className={styles.menuButton}
+            isSmall
+          />
+          <span className={styles.sessionTitle}>
+            {chat.currentSession?.title || __('New Chat', 'wordforge')}
+          </span>
+          {hasSession && (
+            <span
+              className={`${styles.statusBadge} ${chat.isBusy ? styles.busy : styles.ready}`}
+            >
+              {chat.isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
+            </span>
+          )}
+        </div>
+        <div className={styles.headerRight}>
+          {hasSession && (
+            <Button
+              icon="trash"
+              label={__('Delete Session', 'wordforge')}
+              onClick={() => setShowDeleteModal(true)}
+              isSmall
+              isDestructive
+            />
+          )}
+        </div>
+      </div>
+
+      {context && <ContextBadge context={context} />}
+
+      <div className={styles.body}>
+        {!sessionsCollapsed && (
+          <div className={styles.sessionsSidebar}>
+            <SessionList
+              sessions={chat.sessions ?? []}
+              statuses={chat.statuses ?? {}}
+              currentSessionId={chat.currentSessionId}
+              isLoading={chat.isLoadingSessions}
+              onSelectSession={chat.handleSelectSession}
+              onCreateSession={chat.handleCreateSession}
+              isCreating={chat.isCreatingSession}
+            />
+          </div>
+        )}
+
+        <div className={styles.chatArea}>
+          {hasSession ? (
+            <>
+              <MessageList
+                messages={chat.messages ?? []}
+                isLoading={chat.isLoadingMessages}
+                isThinking={chat.isBusy}
+                isBusy={chat.isBusy}
+              />
+
+              {errorMessage && (
+                <div className={styles.errorContainer}>
+                  <Notice
+                    status="error"
+                    onRemove={chat.resetErrors}
+                    isDismissible
+                  >
+                    {errorMessage}
+                  </Notice>
+                </div>
+              )}
+
+              <InputArea
+                onSend={chat.handleSendMessage}
+                onAbort={chat.handleAbort}
+                disabled={false}
+                isBusy={chat.isBusy}
+                providers={chat.providers ?? []}
+                selectedModel={chat.selectedModel}
+                onSelectModel={chat.setSelectedModel}
+              />
+            </>
+          ) : (
+            <EmptyState
+              onCreateSession={chat.handleCreateSession}
+              isCreating={chat.isCreatingSession}
+            />
+          )}
+        </div>
+      </div>
+
+      <DeleteSessionModal
+        sessionName={
+          chat.currentSession?.title || __('Untitled Session', 'wordforge')
+        }
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          await chat.handleDeleteSession();
+          setShowDeleteModal(false);
+        }}
+        isDeleting={chat.isDeletingSession}
+      />
+    </div>
+  );
+};

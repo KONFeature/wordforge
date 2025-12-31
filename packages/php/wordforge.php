@@ -86,9 +86,10 @@ function get_endpoint_url(): string {
 }
 
 function init(): void {
-    new Admin\MenuManager();
-    new Admin\SettingsPage();
-    new Admin\OpenCodeController();
+	new Admin\MenuManager();
+	new Admin\SettingsPage();
+	new Admin\OpenCodeController();
+	new Admin\WidgetManager();
 
     if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
         add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );

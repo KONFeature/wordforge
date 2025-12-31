@@ -1,0 +1,140 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--wf-color-white);
+  border-radius: var(--wf-radius-lg);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  border-bottom: 1px solid var(--wf-color-border);
+  background: var(--wf-color-bg-alt);
+  min-height: 44px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+  min-width: 0;
+  flex: 1;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+}
+
+.menuButton {
+  flex-shrink: 0;
+}
+
+.sessionTitle {
+  font-weight: 500;
+  font-size: var(--wf-font-size-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusBadge {
+  font-size: var(--wf-font-size-xs);
+  padding: 2px var(--wf-spacing-xs);
+  border-radius: var(--wf-radius-pill);
+  flex-shrink: 0;
+}
+
+.statusBadge.busy {
+  background: var(--wf-color-warning-bg);
+  color: var(--wf-color-warning-text);
+}
+
+.statusBadge.ready {
+  background: var(--wf-color-success-bg);
+  color: var(--wf-color-success-text);
+}
+
+.contextBadge {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-md);
+  background: var(--wf-color-bg-selected);
+  border-bottom: 1px solid var(--wf-color-border-light);
+  font-size: var(--wf-font-size-sm);
+}
+
+.contextIcon {
+  font-size: var(--wf-font-size-base);
+}
+
+.contextLabel {
+  color: var(--wf-color-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sessionsSidebar {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  border-right: 1px solid var(--wf-color-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sessionsSidebar > * {
+  height: 100%;
+  width: 100%;
+}
+
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.errorContainer {
+  padding: 0 var(--wf-spacing-md);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--wf-spacing-xl);
+  text-align: center;
+  gap: var(--wf-spacing-md);
+}
+
+.emptyIcon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.emptyText {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-base);
+  margin: 0;
+  max-width: 200px;
+}

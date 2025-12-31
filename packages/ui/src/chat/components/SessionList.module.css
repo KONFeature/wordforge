@@ -1,10 +1,11 @@
 .sidebar {
-  width: var(--wf-sidebar-width);
-  min-width: var(--wf-sidebar-width);
+  width: 100%;
+  min-width: 0;
   border-right: 1px solid var(--wf-color-border);
   display: flex;
   flex-direction: column;
   background: var(--wf-color-bg-alt);
+  overflow: hidden;
 }
 
 .header {
@@ -44,7 +45,7 @@
 .sessionItem {
   width: 100%;
   text-align: left;
-  padding: var(--wf-spacing-md);
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
   margin-bottom: var(--wf-spacing-xs);
   background: var(--wf-color-white);
   border: 1px solid var(--wf-color-border-light);
@@ -53,6 +54,7 @@
   transition: all var(--wf-transition-fast);
   font-family: inherit;
   font-size: inherit;
+  overflow: hidden;
 }
 
 .sessionItem:hover {

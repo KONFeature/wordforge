@@ -1,31 +1,5 @@
 import type { OpencodeClient } from '@opencode-ai/sdk/client';
 
-/**
- * Injects scoped context into a session without triggering an AI response.
- *
- * Use this when entering a specific editing context (page editor, product editor, etc.)
- * to give the AI additional awareness without changing the agent configuration.
- *
- * @example
- * // When user opens the page editor
- * await injectScopedContext(client, sessionId, {
- *   type: 'page-editor',
- *   pageId: 123,
- *   pageTitle: 'About Us',
- *   blockCount: 5,
- *   lastModified: '2025-01-01',
- * });
- *
- * @example
- * // When user opens the product editor (WooCommerce)
- * await injectScopedContext(client, sessionId, {
- *   type: 'product-editor',
- *   productId: 456,
- *   productName: 'Awesome T-Shirt',
- *   productType: 'simple',
- *   stockStatus: 'instock',
- * });
- */
 export async function injectScopedContext(
   client: OpencodeClient,
   sessionId: string,
@@ -44,7 +18,9 @@ export async function injectScopedContext(
 
 export type ScopedContext =
   | PageEditorContext
+  | PageListContext
   | ProductEditorContext
+  | ProductListContext
   | TemplateEditorContext
   | CustomContext;
 
@@ -57,6 +33,13 @@ interface PageEditorContext {
   status?: string;
 }
 
+interface PageListContext {
+  type: 'page-list';
+  postType: string;
+  totalPosts: number;
+  draftPosts?: number;
+}
+
 interface ProductEditorContext {
   type: 'product-editor';
   productId: number;
@@ -64,6 +47,15 @@ interface ProductEditorContext {
   productType?: string;
   stockStatus?: string;
   price?: string;
+  sku?: string;
+  categories?: string[];
+}
+
+interface ProductListContext {
+  type: 'product-list';
+  totalProducts: number;
+  draftProducts?: number;
+  productCategories?: Array<{ id: number; name: string; count: number }>;
 }
 
 interface TemplateEditorContext {
@@ -89,12 +81,30 @@ function buildContextMessage(context: ScopedContext): string {
         context.status ? ` Status: ${context.status}.` : ''
       } Use the wordforge/get-page-blocks and wordforge/update-page-blocks tools to work with this page.`;
 
+    case 'page-list':
+      return `[CONTEXT UPDATE] The user is viewing the ${context.postType} list. There are ${context.totalPosts} published${
+        context.draftPosts ? ` and ${context.draftPosts} draft` : ''
+      } items. The user may want to create new ${context.postType}s, search existing ones, or bulk edit. Use wordforge/list-content and wordforge/save-content tools.`;
+
     case 'product-editor':
-      return `[CONTEXT UPDATE] You are now helping the user edit Product ID ${context.productId} named "${context.productName}".${
+      return `[CONTEXT UPDATE] You are now helping the user edit WooCommerce Product ID ${context.productId} named "${context.productName}".${
         context.productType ? ` Type: ${context.productType}.` : ''
       }${context.stockStatus ? ` Stock: ${context.stockStatus}.` : ''}${
         context.price ? ` Price: ${context.price}.` : ''
-      } Use the wordforge/get-product and wordforge/save-product tools to work with this product.`;
+      }${context.sku ? ` SKU: ${context.sku}.` : ''}${
+        context.categories?.length
+          ? ` Categories: ${context.categories.join(', ')}.`
+          : ''
+      } Use wordforge/get-product and wordforge/save-product to work with this product.`;
+
+    case 'product-list':
+      return `[CONTEXT UPDATE] The user is viewing the WooCommerce Products list. There are ${context.totalProducts} published${
+        context.draftProducts ? ` and ${context.draftProducts} draft` : ''
+      } products.${
+        context.productCategories?.length
+          ? ` Categories: ${context.productCategories.map((c) => `${c.name} (${c.count})`).join(', ')}.`
+          : ''
+      } The user may want to create new products, search existing ones, analyze inventory, or bulk edit. Use wordforge/list-products and wordforge/save-product tools.`;
 
     case 'template-editor':
       return `[CONTEXT UPDATE] You are now helping the user edit ${context.templateType || 'template'} "${context.templateName}" (${context.templateId}). Use the wordforge/get-template and wordforge/update-template tools to work with this template.`;
@@ -104,20 +114,6 @@ function buildContextMessage(context: ScopedContext): string {
   }
 }
 
-/**
- * Hook for injecting context when entering an editing context.
- * Returns a mutation that can be called with context data.
- *
- * @example
- * const injectContext = useInjectContext(client, sessionId);
- *
- * // When entering page editor
- * injectContext.mutate({
- *   type: 'page-editor',
- *   pageId: 123,
- *   pageTitle: 'About Us',
- * });
- */
 export function useInjectContext(
   client: OpencodeClient | null,
   sessionId: string | null,
