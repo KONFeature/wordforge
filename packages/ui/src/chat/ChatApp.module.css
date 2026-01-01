@@ -27,55 +27,6 @@
   min-width: 0;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--wf-spacing-md) var(--wf-spacing-lg);
-  border-bottom: 1px solid var(--wf-color-border);
-  background: var(--wf-color-white);
-}
-
-.headerInfo {
-  display: flex;
-  align-items: center;
-  gap: var(--wf-spacing-sm);
-  min-width: 0;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: var(--wf-spacing-xs);
-}
-
-.sessionTitle {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.statusBadge {
-  font-size: var(--wf-font-size-sm);
-  padding: 2px var(--wf-spacing-sm);
-  border-radius: var(--wf-radius-pill);
-}
-
-.statusBadge.busy {
-  background: var(--wf-color-warning-bg);
-  color: var(--wf-color-warning-text);
-}
-
-.statusBadge.ready {
-  background: var(--wf-color-success-bg);
-  color: var(--wf-color-success-text);
-}
-
-.errorContainer {
-  padding: 0 var(--wf-spacing-lg);
-}
-
 .configMissing {
   padding: var(--wf-spacing-xl);
   color: var(--wf-color-error);

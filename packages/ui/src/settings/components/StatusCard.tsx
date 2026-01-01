@@ -9,8 +9,8 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import {
-  formatDuration,
   THRESHOLD_OPTIONS,
+  formatDuration,
   useAutoShutdownSettings,
   useSaveAutoShutdown,
 } from '../hooks/useAutoShutdown';

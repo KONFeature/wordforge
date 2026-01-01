@@ -1,109 +1,26 @@
-import { Button, Notice } from '@wordpress/components';
-import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import styles from './ChatApp.module.css';
+import { ChatHeader } from './components/ChatHeader';
+import { ChatInterface } from './components/ChatInterface';
 import { ConfigPanel } from './components/ConfigPanel';
 import { DeleteSessionModal } from './components/DeleteSessionModal';
-import { InputArea } from './components/InputArea';
-import { MessageList } from './components/MessageList';
-import type { SelectedModel } from './components/ModelSelector';
-import { ServerStatusBanner } from './components/ServerStatusBanner';
 import { SessionList } from './components/SessionList';
-import { useMcpStatus, useProvidersConfig } from './hooks/useConfig';
-import {
-  useAbortSession,
-  useMessages,
-  useSendMessage,
-} from './hooks/useMessages';
-import { useAutoStartServer, useServerStatus } from './hooks/useServerStatus';
-import {
-  useCreateSession,
-  useDeleteSession,
-  useSessionStatuses,
-  useSessions,
-} from './hooks/useSessions';
+import { useChat } from './hooks/useChat';
+import { useMcpStatus } from './hooks/useConfig';
 import { useOpencodeClient } from './useOpencodeClient';
 
 export const ChatApp = () => {
   const config = window.wordforgeChat;
   const client = config ? useOpencodeClient(config) : null;
-
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(
-    null,
-  );
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const { data: sessions = [], isLoading: isLoadingSessions } =
-    useSessions(client);
-  const { data: statuses = {} } = useSessionStatuses(client);
-  const {
-    data: messages = [],
-    isLoading: isLoadingMessages,
-    refetch: refetchMessages,
-  } = useMessages(client, currentSessionId);
-  const { data: configData, isLoading: isLoadingConfig } =
-    useProvidersConfig(client);
+  const chat = useChat(client);
   const { data: mcpStatus = {} } = useMcpStatus(client);
 
-  const { data: serverStatus } = useServerStatus();
-  const autoStart = useAutoStartServer();
-
-  const createSession = useCreateSession(client);
-  const deleteSession = useDeleteSession(client);
-  const sendMessage = useSendMessage(client);
-  const abortSession = useAbortSession(client);
-
-  useEffect(() => {
-    if (configData?.defaultModel && !selectedModel) {
-      setSelectedModel(configData.defaultModel);
-    }
-  }, [configData?.defaultModel, selectedModel]);
-
-  const currentSession = useMemo(
-    () => sessions.find((s) => s.id === currentSessionId),
-    [sessions, currentSessionId],
-  );
-  const currentStatus = currentSessionId
-    ? statuses[currentSessionId]?.type || 'idle'
-    : 'idle';
-  const isBusy =
-    currentStatus === 'busy' ||
-    currentStatus === 'retry' ||
-    sendMessage.isPending;
-
-  const error = createSession.error || deleteSession.error || sendMessage.error;
-  const errorMessage =
-    error instanceof Error ? error.message : error ? String(error) : null;
-
-  const handleSelectSession = (id: string) => {
-    setCurrentSessionId(id);
-  };
-
-  const handleCreateSession = async () => {
-    const newSession = await createSession.mutateAsync();
-    setCurrentSessionId(newSession.id);
-  };
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteSession = async () => {
-    if (!currentSessionId) return;
-    await deleteSession.mutateAsync(currentSessionId);
-    setCurrentSessionId(null);
+    await chat.deleteSession();
     setShowDeleteModal(false);
-  };
-
-  const handleSendMessage = (text: string) => {
-    if (!currentSessionId) return;
-    sendMessage.mutate({
-      text,
-      sessionId: currentSessionId,
-      model: selectedModel ?? undefined,
-    });
-  };
-
-  const handleAbort = () => {
-    if (!currentSessionId) return;
-    abortSession.mutate(currentSessionId);
   };
 
   if (!config) {
@@ -118,110 +35,42 @@ export const ChatApp = () => {
     <div className={styles.root}>
       <div className={styles.container}>
         <SessionList
-          sessions={sessions}
-          statuses={statuses}
-          currentSessionId={currentSessionId}
-          isLoading={isLoadingSessions}
-          onSelectSession={handleSelectSession}
-          onCreateSession={handleCreateSession}
-          isCreating={createSession.isPending}
+          sessions={chat.sessions}
+          statuses={chat.statuses}
+          currentSessionId={chat.sessionId}
+          isLoading={chat.isLoadingSessions}
+          onSelectSession={chat.selectSession}
+          onCreateSession={() => chat.selectSession(null)}
+          isCreating={chat.isSending}
         />
 
         <div className={styles.main}>
-          <div className={styles.header}>
-            <div className={styles.headerInfo}>
-              <span className={styles.sessionTitle}>
-                {currentSession?.title || __('Select a session', 'wordforge')}
-              </span>
-              {currentSessionId && (
-                <span
-                  className={`${styles.statusBadge} ${isBusy ? styles.busy : styles.ready}`}
-                >
-                  {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
-                </span>
-              )}
-            </div>
-            <div className={styles.headerActions}>
-              <Button
-                icon="update"
-                label={__('Refresh', 'wordforge')}
-                onClick={() => refetchMessages()}
-                disabled={!currentSessionId}
-                isSmall
-              />
-              <Button
-                icon="trash"
-                label={__('Delete Session', 'wordforge')}
-                onClick={() => setShowDeleteModal(true)}
-                disabled={!currentSessionId}
-                isSmall
-                isDestructive
-              />
-            </div>
-          </div>
-
-          {serverStatus && !serverStatus.running ? (
-            <ServerStatusBanner
-              status={serverStatus}
-              onAutoStart={() => autoStart.mutate()}
-              isStarting={autoStart.isPending}
-              error={
-                autoStart.error instanceof Error
-                  ? autoStart.error.message
-                  : null
-              }
-            />
-          ) : (
-            <MessageList
-              messages={messages}
-              isLoading={isLoadingMessages}
-              isThinking={isBusy}
-              isBusy={isBusy}
-            />
-          )}
-
-          {errorMessage && (
-            <div className={styles.errorContainer}>
-              <Notice
-                status="error"
-                onRemove={() => {
-                  createSession.reset();
-                  deleteSession.reset();
-                  sendMessage.reset();
-                }}
-                isDismissible
-              >
-                {errorMessage}
-              </Notice>
-            </div>
-          )}
-
-          <InputArea
-            onSend={handleSendMessage}
-            onAbort={handleAbort}
-            disabled={!currentSessionId}
-            isBusy={isBusy}
-            providers={configData?.providers ?? []}
-            selectedModel={selectedModel}
-            onSelectModel={setSelectedModel}
+          <ChatHeader
+            title={chat.session?.title || __('Select a session', 'wordforge')}
+            isBusy={chat.isBusy}
+            hasSession={!!chat.sessionId}
+            onRefresh={chat.refresh}
+            onDelete={() => setShowDeleteModal(true)}
           />
+
+          <ChatInterface chat={chat} />
         </div>
 
         <DeleteSessionModal
           sessionName={
-            currentSession?.title || __('Untitled Session', 'wordforge')
+            chat.session?.title || __('Untitled Session', 'wordforge')
           }
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteSession}
-          isDeleting={deleteSession.isPending}
+          isDeleting={chat.isDeleting}
         />
       </div>
 
       <ConfigPanel
-        providers={configData?.providers ?? []}
+        providers={chat.providers}
         mcpStatus={mcpStatus}
-        isLoading={isLoadingConfig}
+        isLoading={false}
       />
     </div>
   );

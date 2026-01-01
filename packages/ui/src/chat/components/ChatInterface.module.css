@@ -1,0 +1,34 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.welcomeArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--wf-spacing-xl);
+  text-align: center;
+  gap: var(--wf-spacing-sm);
+}
+
+.welcomeIcon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.welcomeText {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-base);
+  margin: 0;
+  max-width: 240px;
+}
+
+.errorContainer {
+  padding: 0 var(--wf-spacing-md);
+}

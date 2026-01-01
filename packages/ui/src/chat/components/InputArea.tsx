@@ -18,6 +18,7 @@ interface InputAreaProps {
   providers: Provider[];
   selectedModel: SelectedModel | null;
   onSelectModel: (model: SelectedModel) => void;
+  placeholder?: string;
 }
 
 export const InputArea = ({
@@ -28,6 +29,7 @@ export const InputArea = ({
   providers,
   selectedModel,
   onSelectModel,
+  placeholder,
 }: InputAreaProps) => {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -61,7 +63,7 @@ export const InputArea = ({
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={__('Type your message...', 'wordforge')}
+            placeholder={placeholder ?? __('Type your message...', 'wordforge')}
             rows={1}
             disabled={disabled && !isBusy}
             className={styles.textarea}

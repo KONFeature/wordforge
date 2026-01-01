@@ -1,4 +1,4 @@
-import type { OpencodeClient } from '@opencode-ai/sdk/client';
+import type { OpencodeClient, Session } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
@@ -7,6 +7,7 @@ import {
   formatContextXml,
   shouldIncludeContext,
 } from './useContextInjection';
+import { SESSIONS_KEY } from './useSessions';
 
 export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
@@ -29,10 +30,16 @@ export const useMessages = (
 
 interface SendMessageParams {
   text: string;
-  sessionId: string;
+  sessionId?: string;
   model?: SelectedModel;
   context?: ScopedContext | null;
   messages?: ChatMessage[];
+}
+
+export interface SendMessageResult {
+  sessionId: string;
+  messages: ChatMessage[];
+  isNewSession: boolean;
 }
 
 export const useSendMessage = (client: OpencodeClient | null) => {
@@ -41,11 +48,25 @@ export const useSendMessage = (client: OpencodeClient | null) => {
   return useMutation({
     mutationFn: async ({
       text,
-      sessionId,
+      sessionId: providedSessionId,
       model,
       context,
       messages = [],
-    }: SendMessageParams) => {
+    }: SendMessageParams): Promise<SendMessageResult> => {
+      let sessionId = providedSessionId;
+      let isNewSession = false;
+
+      if (!sessionId) {
+        const createResult = await client!.session.create({ body: {} });
+        const newSession = createResult.data!;
+        sessionId = newSession.id;
+        isNewSession = true;
+
+        queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
+          old ? [newSession, ...old] : [newSession],
+        );
+      }
+
       const parts: { type: 'text'; text: string }[] = [];
 
       if (context) {
@@ -68,9 +89,18 @@ export const useSendMessage = (client: OpencodeClient | null) => {
       const result = await client!.session.messages({
         path: { id: sessionId },
       });
-      return result.data as ChatMessage[];
+
+      return {
+        sessionId,
+        messages: result.data as ChatMessage[],
+        isNewSession,
+      };
     },
     onMutate: async ({ text, sessionId }) => {
+      if (!sessionId) {
+        return { previous: undefined, sessionId: undefined };
+      }
+
       const tempUserMsg: ChatMessage = {
         info: {
           id: `temp-user-${Date.now()}`,
@@ -102,12 +132,15 @@ export const useSendMessage = (client: OpencodeClient | null) => {
 
       return { previous, sessionId };
     },
-    onSuccess: (newMessages, { sessionId }) => {
-      queryClient.setQueryData(messagesKey(sessionId), newMessages);
+    onSuccess: (result) => {
+      queryClient.setQueryData(messagesKey(result.sessionId), result.messages);
+      if (result.isNewSession) {
+        queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      }
     },
-    onError: (_err, { sessionId }, ctx) => {
-      if (ctx?.previous) {
-        queryClient.setQueryData(messagesKey(sessionId), ctx.previous);
+    onError: (_err, _params, ctx) => {
+      if (ctx?.previous && ctx?.sessionId) {
+        queryClient.setQueryData(messagesKey(ctx.sessionId), ctx.previous);
       }
     },
   });
