@@ -1,5 +1,5 @@
 import type { Provider, Session, SessionStatus } from '@opencode-ai/sdk/client';
-import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
 import { useProvidersConfig } from './useConfig';
@@ -68,7 +68,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
   const [model, setModel] = useState<SelectedModel | null>(null);
 
   const { data: sessions = [], isLoading: isLoadingSessions } = useSessions();
-  const { data: statuses = {} } = useSessionStatuses();
+  const { data: statuses = {}, refetch: refetchStatus } = useSessionStatuses();
   const {
     data: messages = [],
     isLoading: isLoadingMessages,
@@ -130,17 +130,17 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
       },
     );
 
-  const abort = () => {
+  const abort = useCallback(() => {
     if (sessionId) {
       abortSession.mutate(sessionId);
     }
-  };
+  }, [sessionId]);
 
-  const deleteSession = async () => {
+  const deleteSession = useCallback(async () => {
     if (!sessionId) return;
     await deleteSessionMutation.mutateAsync(sessionId);
     setSessionId(null);
-  };
+  }, [sessionId]);
 
   const selectSession = (id: string | null) => {
     setSessionId(id);
@@ -150,9 +150,10 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     autoStart.mutate();
   };
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     refetchMessages();
-  };
+    refetchStatus();
+  }, []);
 
   const resetError = () => {
     sendMessage.reset();
