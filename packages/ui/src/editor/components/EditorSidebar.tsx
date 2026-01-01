@@ -1,38 +1,13 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { ChatInterface } from '../../chat/components/ChatInterface';
+import { ContextBadge } from '../../chat/components/ContextBadge';
 import { DeleteSessionModal } from '../../chat/components/DeleteSessionModal';
 import { ServerStatusBanner } from '../../chat/components/ServerStatusBanner';
 import { useChat } from '../../chat/hooks/useChat';
 import type { ScopedContext } from '../../chat/hooks/useContextInjection';
 import styles from './EditorSidebar.module.css';
 import { SessionSelector } from './SessionSelector';
-
-interface ContextBadgeProps {
-  context: ScopedContext;
-}
-
-const ContextBadge = ({ context }: ContextBadgeProps) => {
-  const getContextLabel = (): { icon: string; label: string } => {
-    switch (context.type) {
-      case 'page-editor':
-        return { icon: '📄', label: context.pageTitle };
-      case 'template-editor':
-        return { icon: '🎨', label: context.templateName };
-      default:
-        return { icon: '📍', label: 'Context active' };
-    }
-  };
-
-  const { icon, label } = getContextLabel();
-
-  return (
-    <div className={styles.contextBadge}>
-      <span className={styles.contextIcon}>{icon}</span>
-      <span className={styles.contextLabel}>{label}</span>
-    </div>
-  );
-};
 
 interface EditorSidebarProps {
   context: ScopedContext | null;

@@ -5,28 +5,6 @@
   background: var(--wf-color-white);
 }
 
-.contextBadge {
-  display: flex;
-  align-items: center;
-  gap: var(--wf-spacing-xs);
-  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
-  background: var(--wf-color-bg-selected);
-  border-bottom: 1px solid var(--wf-color-border-light);
-  font-size: var(--wf-font-size-sm);
-}
-
-.contextIcon {
-  font-size: var(--wf-font-size-base);
-}
-
-.contextLabel {
-  color: var(--wf-color-text);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .chatContainer {
   flex: 1;
   display: flex;
