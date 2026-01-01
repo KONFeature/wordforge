@@ -42,18 +42,18 @@ class DeleteMedia extends AbstractAbility {
 
 	public function get_output_schema(): array {
 		return $this->get_delete_output_schema(
-			[
-				'title'    => [ 'type' => 'string' ],
-				'filename' => [ 'type' => 'string' ],
-				'url'      => [ 'type' => 'string' ],
-			],
+			array(
+				'title'    => array( 'type' => 'string' ),
+				'filename' => array( 'type' => 'string' ),
+				'url'      => array( 'type' => 'string' ),
+			),
 			false
 		);
 	}
 
 	public function execute( array $args ): array {
 		$attachment_id = (int) $args['id'];
-		$attachment = get_post( $attachment_id );
+		$attachment    = get_post( $attachment_id );
 
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
 			return $this->delete_not_found( 'Media' );
@@ -63,11 +63,11 @@ class DeleteMedia extends AbstractAbility {
 			return $this->delete_forbidden( 'this media' );
 		}
 
-		$deleted_info = [
+		$deleted_info = array(
 			'title'    => $attachment->post_title,
 			'filename' => basename( get_attached_file( $attachment_id ) ),
 			'url'      => wp_get_attachment_url( $attachment_id ),
-		];
+		);
 
 		$result = wp_delete_attachment( $attachment_id, true );
 
@@ -76,7 +76,13 @@ class DeleteMedia extends AbstractAbility {
 		}
 
 		return $this->success(
-			array_merge( [ 'id' => $attachment_id, 'deleted' => true ], $deleted_info ),
+			array_merge(
+				array(
+					'id'      => $attachment_id,
+					'deleted' => true,
+				),
+				$deleted_info
+			),
 			'Media deleted successfully.'
 		);
 	}

@@ -28,16 +28,16 @@ trait PaginationSchemaTrait {
 	 * @return array<string, array<string, mixed>>
 	 */
 	protected function get_pagination_input_schema(
-		array $orderby_options = [],
+		array $orderby_options = array(),
 		int $max_per_page = 100,
 		int $default_per_page = 20
 	): array {
-		$orderby_enum = empty( $orderby_options ) 
-			? [ 'date', 'title', 'modified', 'id' ] 
+		$orderby_enum = empty( $orderby_options )
+			? array( 'date', 'title', 'modified', 'id' )
 			: array_keys( $orderby_options );
 
-		return [
-			'per_page' => [
+		return array(
+			'per_page' => array(
 				'type'        => 'integer',
 				'description' => sprintf(
 					'Number of items to return per page. Use smaller values (10-20) for quick previews, larger values (50-%d) for comprehensive lists. Maximum %d items per request.',
@@ -47,26 +47,26 @@ trait PaginationSchemaTrait {
 				'default'     => $default_per_page,
 				'minimum'     => 1,
 				'maximum'     => $max_per_page,
-			],
-			'page' => [
+			),
+			'page'     => array(
 				'type'        => 'integer',
 				'description' => 'Page number for pagination (1-indexed). Use with "total_pages" in the response to navigate through large result sets.',
 				'default'     => 1,
 				'minimum'     => 1,
-			],
-			'orderby' => [
+			),
+			'orderby'  => array(
 				'type'        => 'string',
 				'description' => 'Sort results by field.',
 				'enum'        => $orderby_enum,
 				'default'     => $orderby_enum[0] ?? 'date',
-			],
-			'order' => [
+			),
+			'order'    => array(
 				'type'        => 'string',
 				'description' => 'Sort direction: "desc" (descending, newest/Z first), "asc" (ascending, oldest/A first).',
-				'enum'        => [ 'asc', 'desc' ],
+				'enum'        => array( 'asc', 'desc' ),
 				'default'     => 'desc',
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -80,43 +80,43 @@ trait PaginationSchemaTrait {
 		array $item_schema,
 		string $items_description = 'Array of items matching the query filters.'
 	): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [
+			'properties' => array(
+				'success' => array(
 					'type'        => 'boolean',
 					'description' => 'Whether the query executed successfully.',
-				],
-				'data' => [
+				),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'items' => [
+					'properties' => array(
+						'items'       => array(
 							'type'        => 'array',
 							'description' => $items_description,
 							'items'       => $item_schema,
-						],
-						'total' => [
+						),
+						'total'       => array(
 							'type'        => 'integer',
 							'description' => 'Total number of items matching the query across all pages.',
-						],
-						'total_pages' => [
+						),
+						'total_pages' => array(
 							'type'        => 'integer',
 							'description' => 'Total number of pages available. If greater than "page", more results are available.',
-						],
-						'page' => [
+						),
+						'page'        => array(
 							'type'        => 'integer',
 							'description' => 'Current page number (1-indexed).',
-						],
-						'per_page' => [
+						),
+						'per_page'    => array(
 							'type'        => 'integer',
 							'description' => 'Number of items per page.',
-						],
-					],
-					'required' => [ 'items', 'total', 'total_pages', 'page', 'per_page' ],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+						),
+					),
+					'required'   => array( 'items', 'total', 'total_pages', 'page', 'per_page' ),
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	/**
@@ -136,12 +136,12 @@ trait PaginationSchemaTrait {
 		string $default_orderby = 'date',
 		string $default_order = 'desc'
 	): array {
-		return [
+		return array(
 			'per_page' => min( (int) ( $args['per_page'] ?? $default_per_page ), $max_per_page ),
 			'page'     => max( (int) ( $args['page'] ?? 1 ), 1 ),
 			'orderby'  => $args['orderby'] ?? $default_orderby,
 			'order'    => strtoupper( $args['order'] ?? $default_order ),
-		];
+		);
 	}
 
 	/**
@@ -159,12 +159,14 @@ trait PaginationSchemaTrait {
 		int $total_pages,
 		array $pagination
 	): array {
-		return $this->success( [
-			'items'       => $items,
-			'total'       => $total,
-			'total_pages' => $total_pages,
-			'page'        => $pagination['page'],
-			'per_page'    => $pagination['per_page'],
-		] );
+		return $this->success(
+			array(
+				'items'       => $items,
+				'total'       => $total,
+				'total_pages' => $total_pages,
+				'page'        => $pagination['page'],
+				'per_page'    => $pagination['per_page'],
+			)
+		);
 	}
 }

@@ -9,16 +9,16 @@ class ServerConfig {
 	public static function generate( array $options, int $port ): array {
 		$agents = self::build_agents_config();
 
-		$config = [
+		$config = array(
 			'$schema'       => 'https://opencode.ai/config.json',
 			'default_agent' => 'wordpress-manager',
 			'agent'         => $agents,
-			'permission'    => [
+			'permission'    => array(
 				'edit'               => 'deny',
 				'external_directory' => 'deny',
 				'bash'               => self::get_bash_permissions(),
-			],
-		];
+			),
+		);
 
 		$provider_config = ProviderConfig::get_opencode_provider_config();
 		if ( ! empty( $provider_config ) ) {
@@ -27,47 +27,47 @@ class ServerConfig {
 
 		$mcp_config = self::get_mcp_config();
 		if ( $mcp_config ) {
-			$config['mcp'] = [
+			$config['mcp'] = array(
 				'wordforge' => $mcp_config,
-			];
+			);
 		}
 
 		return $config;
 	}
 
 	private static function build_agents_config(): array {
-		$agents = [
-			'wordpress-manager'         => [
+		$agents = array(
+			'wordpress-manager'         => array(
 				'mode'        => 'primary',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-manager' ),
 				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
 				'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
 				'color'       => '#3858E9',
-			],
-			'wordpress-content-creator' => [
+			),
+			'wordpress-content-creator' => array(
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-content-creator' ),
 				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
 				'prompt'      => AgentPrompts::get_content_creator_prompt(),
 				'color'       => '#10B981',
-			],
-			'wordpress-auditor'         => [
+			),
+			'wordpress-auditor'         => array(
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-auditor' ),
 				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
 				'prompt'      => AgentPrompts::get_auditor_prompt(),
 				'color'       => '#F59E0B',
-			],
-		];
+			),
+		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$agents['wordpress-commerce-manager'] = [
+			$agents['wordpress-commerce-manager'] = array(
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-commerce-manager' ),
 				'description' => 'WooCommerce specialist - product management, inventory, pricing',
 				'prompt'      => AgentPrompts::get_commerce_manager_prompt(),
 				'color'       => '#8B5CF6',
-			];
+			);
 		}
 
 		return $agents;
@@ -84,25 +84,25 @@ class ServerConfig {
 		$runtime         = self::get_js_runtime();
 
 		if ( file_exists( $mcp_server_path ) && $runtime ) {
-			return [
+			return array(
 				'type'        => 'local',
-				'command'     => [ $runtime, $mcp_server_path ],
-				'environment' => [
+				'command'     => array( $runtime, $mcp_server_path ),
+				'environment' => array(
 					'WORDPRESS_URL'          => $abilities_url,
 					'WORDPRESS_USERNAME'     => $app_password_data['username'],
 					'WORDPRESS_APP_PASSWORD' => $app_password_data['password'],
-				],
-			];
+				),
+			);
 		}
 
 		$mcp_url = \WordForge\get_endpoint_url();
-		return [
+		return array(
 			'type'    => 'remote',
 			'url'     => $mcp_url,
-			'headers' => [
+			'headers' => array(
 				'Authorization' => 'Basic ' . $app_password_data['auth'],
-			],
-		];
+			),
+		);
 	}
 
 	private static function get_js_runtime(): ?string {
@@ -120,7 +120,7 @@ class ServerConfig {
 	}
 
 	private static function get_bash_permissions(): array {
-		return [
+		return array(
 			'cat *'          => 'allow',
 			'head *'         => 'allow',
 			'tail *'         => 'allow',
@@ -150,6 +150,6 @@ class ServerConfig {
 			'npm ls*'        => 'allow',
 			'bun pm ls*'     => 'allow',
 			'*'              => 'deny',
-		];
+		);
 	}
 }

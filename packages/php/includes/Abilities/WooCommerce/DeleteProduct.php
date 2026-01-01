@@ -51,9 +51,9 @@ class DeleteProduct extends AbstractAbility {
 			return $this->delete_not_found( 'Product' );
 		}
 
-		$product_id = $product->get_id();
+		$product_id   = $product->get_id();
 		$product_name = $product->get_name();
-		$force = $this->is_force_delete( $args );
+		$force        = $this->is_force_delete( $args );
 
 		$result = $product->delete( $force );
 

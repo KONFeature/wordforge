@@ -43,55 +43,55 @@ class ListTemplates extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'type'  => [ 'type' => 'string' ],
-						'items' => [
+					'properties' => array(
+						'type'  => array( 'type' => 'string' ),
+						'items' => array(
 							'type'  => 'array',
-							'items' => [
+							'items' => array(
 								'type'       => 'object',
-								'properties' => [
-									'id'          => [ 'type' => 'integer' ],
-									'slug'        => [ 'type' => 'string' ],
-									'title'       => [ 'type' => 'string' ],
-									'description' => [ 'type' => 'string' ],
-									'status'      => [ 'type' => 'string' ],
-									'type'        => [ 'type' => 'string' ],
-									'modified'    => [ 'type' => 'string' ],
-									'source'      => [ 'type' => 'string' ],
-									'area'        => [ 'type' => 'string' ],
-								],
-							],
-						],
-						'total' => [ 'type' => 'integer' ],
-					],
-					'required' => [ 'type', 'items', 'total' ],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+								'properties' => array(
+									'id'          => array( 'type' => 'integer' ),
+									'slug'        => array( 'type' => 'string' ),
+									'title'       => array( 'type' => 'string' ),
+									'description' => array( 'type' => 'string' ),
+									'status'      => array( 'type' => 'string' ),
+									'type'        => array( 'type' => 'string' ),
+									'modified'    => array( 'type' => 'string' ),
+									'source'      => array( 'type' => 'string' ),
+									'area'        => array( 'type' => 'string' ),
+								),
+							),
+						),
+						'total' => array( 'type' => 'integer' ),
+					),
+					'required'   => array( 'type', 'items', 'total' ),
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'type' => [
+			'properties' => array(
+				'type' => array(
 					'type'    => 'string',
-					'enum'    => [ 'wp_template', 'wp_template_part' ],
+					'enum'    => array( 'wp_template', 'wp_template_part' ),
 					'default' => 'wp_template',
-				],
-				'area' => [
+				),
+				'area' => array(
 					'type'        => 'string',
 					'description' => 'Filter template parts by area (header, footer, sidebar, etc.).',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -106,7 +106,10 @@ class ListTemplates extends AbstractAbility {
 			self::CACHE_KEY,
 			fn() => $this->fetch_templates( $type, $area ),
 			self::CACHE_TTL,
-			[ 'type' => $type, 'area' => $area ]
+			array(
+				'type' => $type,
+				'area' => $area,
+			)
 		);
 	}
 
@@ -114,18 +117,20 @@ class ListTemplates extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function fetch_templates( string $type, ?string $area ): array {
-		$templates = get_posts( [
-			'post_type'      => $type,
-			'post_status'    => [ 'publish', 'auto-draft' ],
-			'posts_per_page' => 100,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		] );
+		$templates = get_posts(
+			array(
+				'post_type'      => $type,
+				'post_status'    => array( 'publish', 'auto-draft' ),
+				'posts_per_page' => 100,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
 
-		$items = [];
+		$items = array();
 
 		foreach ( $templates as $template ) {
-			$item = [
+			$item = array(
 				'id'          => $template->ID,
 				'slug'        => $template->post_name,
 				'title'       => $template->post_title ?: $template->post_name,
@@ -134,10 +139,10 @@ class ListTemplates extends AbstractAbility {
 				'type'        => $type,
 				'modified'    => $template->post_modified,
 				'source'      => 'auto-draft' === $template->post_status ? 'theme' : 'custom',
-			];
+			);
 
 			if ( 'wp_template_part' === $type ) {
-				$item_area = get_post_meta( $template->ID, 'wp_template_part_area', true );
+				$item_area    = get_post_meta( $template->ID, 'wp_template_part_area', true );
 				$item['area'] = $item_area ?: 'uncategorized';
 			}
 
@@ -148,10 +153,10 @@ class ListTemplates extends AbstractAbility {
 			$items[] = $item;
 		}
 
-		return [
+		return array(
 			'type'  => $type,
 			'items' => $items,
 			'total' => count( $items ),
-		];
+		);
 	}
 }

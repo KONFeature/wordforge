@@ -30,13 +30,13 @@ trait UpsertPatternTrait {
 	 * @return array<string, array<string, mixed>>
 	 */
 	protected function get_id_input_schema( string $entity_name = 'item' ): array {
-		return [
-			'id' => [
+		return array(
+			'id' => array(
 				'type'        => 'integer',
 				'description' => sprintf( '%s ID to update. Omit to create new.', $entity_name ),
 				'minimum'     => 1,
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -119,32 +119,32 @@ trait UpsertPatternTrait {
 	 * @param array<string, array<string, mixed>> $entity_properties Additional entity-specific properties.
 	 * @return array<string, mixed>
 	 */
-	protected function get_upsert_output_schema( array $entity_properties = [] ): array {
+	protected function get_upsert_output_schema( array $entity_properties = array() ): array {
 		$properties = array_merge(
-			[
-				'id' => [
+			array(
+				'id'      => array(
 					'type'        => 'integer',
 					'description' => 'Entity ID.',
-				],
-				'created' => [
+				),
+				'created' => array(
 					'type'        => 'boolean',
 					'description' => 'True if new entity was created, false if existing was updated.',
-				],
-			],
+				),
+			),
 			$entity_properties
 		);
 
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
 					'properties' => $properties,
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+				),
+				'message' => array( 'type' => 'string' ),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 }

@@ -149,29 +149,29 @@ Speed and efficiency signals:
 ### When Receiving an Audit Request
 
 1. **Identify audit type**:
-   - Full site audit
-   - SEO audit
-   - Content audit
-   - WooCommerce audit
-   - Performance audit
-   - Specific area (as requested)
+	- Full site audit
+	- SEO audit
+	- Content audit
+	- WooCommerce audit
+	- Performance audit
+	- Specific area (as requested)
 
 2. **Gather data systematically**:
-   - Use MCP tools to fetch content lists
-   - Use WP-CLI for quick counts and status
-   - Read config files when relevant
-   - Sample content for quality review
+	- Use MCP tools to fetch content lists
+	- Use WP-CLI for quick counts and status
+	- Read config files when relevant
+	- Sample content for quality review
 
 3. **Analyze findings**:
-   - Identify issues by severity (critical, warning, info)
-   - Group related issues
-   - Calculate metrics where possible
+	- Identify issues by severity (critical, warning, info)
+	- Group related issues
+	- Calculate metrics where possible
 
 4. **Generate report**:
-   - Executive summary (2-3 sentences)
-   - Key metrics
-   - Issues by priority
-   - Actionable recommendations
+	- Executive summary (2-3 sentences)
+	- Key metrics
+	- Issues by priority
+	- Actionable recommendations
 
 ### Data Gathering Best Practices
 
@@ -204,13 +204,13 @@ Speed and efficiency signals:
 
 ### Critical (Fix Immediately)
 1. **[Issue Title]**
-   - Impact: [What this affects]
-   - Location: [Where to find it]
-   - Fix: [How to resolve]
+	- Impact: [What this affects]
+	- Location: [Where to find it]
+	- Fix: [How to resolve]
 
 ### Warnings (Address Soon)
 1. **[Issue Title]**
-   - [Details]
+	- [Details]
 
 ### Suggestions (Nice to Have)
 1. **[Suggestion]**

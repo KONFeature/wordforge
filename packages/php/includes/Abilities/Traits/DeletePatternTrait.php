@@ -43,26 +43,26 @@ trait DeletePatternTrait {
 	 * @return array<string, mixed>
 	 */
 	protected function get_delete_input_schema( bool $supports_trash = true, string $entity_name = 'item' ): array {
-		$schema = [
+		$schema = array(
 			'type'       => 'object',
-			'required'   => [ 'id' ],
-			'properties' => [
-				'id' => [
+			'required'   => array( 'id' ),
+			'properties' => array(
+				'id' => array(
 					'type'        => 'integer',
 					'description' => sprintf( '%s ID to delete.', ucfirst( $entity_name ) ),
 					'minimum'     => 1,
-				],
-			],
-		];
+				),
+			),
+		);
 
 		if ( $supports_trash ) {
-			$schema['properties']['force'] = [
+			$schema['properties']['force'] = array(
 				'type'        => 'boolean',
 				'description' => sprintf(
 					'Permanent deletion flag. false (default) = move to trash (recoverable), true = permanently delete (cannot be undone). Use true with extreme caution.',
 				),
 				'default'     => false,
-			];
+			);
 		}
 
 		return $schema;
@@ -75,40 +75,40 @@ trait DeletePatternTrait {
 	 * @param bool                                $supports_trash    Whether the entity supports trash.
 	 * @return array<string, mixed>
 	 */
-	protected function get_delete_output_schema( array $entity_properties = [], bool $supports_trash = true ): array {
+	protected function get_delete_output_schema( array $entity_properties = array(), bool $supports_trash = true ): array {
 		$data_properties = array_merge(
-			[
-				'id' => [
+			array(
+				'id'      => array(
 					'type'        => 'integer',
 					'description' => 'ID of the deleted entity.',
-				],
-				'deleted' => [
+				),
+				'deleted' => array(
 					'type'        => 'boolean',
 					'description' => 'Confirmation that entity was deleted.',
-				],
-			],
+				),
+			),
 			$entity_properties
 		);
 
 		if ( $supports_trash ) {
-			$data_properties['force'] = [
+			$data_properties['force'] = array(
 				'type'        => 'boolean',
 				'description' => 'Whether permanent deletion was used (true) or entity was trashed (false).',
-			];
+			);
 		}
 
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
 					'properties' => $data_properties,
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+				),
+				'message' => array( 'type' => 'string' ),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	/**
@@ -136,16 +136,16 @@ trait DeletePatternTrait {
 		string $entity_name,
 		string $title,
 		bool $force = false,
-		array $extra_data = []
+		array $extra_data = array()
 	): array {
 		$action = $force ? 'permanently deleted' : 'moved to trash';
 
 		$data = array_merge(
-			[
+			array(
 				'id'      => $id,
 				'deleted' => true,
 				'force'   => $force,
-			],
+			),
 			$extra_data
 		);
 

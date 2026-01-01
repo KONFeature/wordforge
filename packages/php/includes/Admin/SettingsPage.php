@@ -13,21 +13,25 @@ use WordForge\OpenCode\ServerProcess;
 class SettingsPage {
 
 	public function __construct() {
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
 	}
 
 	public function register_settings(): void {
-		register_setting( 'wordforge_settings', 'wordforge_settings', [
-			'type'              => 'array',
-			'sanitize_callback' => [ $this, 'sanitize_settings' ],
-			'default'           => [
-				'mcp_enabled'             => true,
-				'mcp_namespace'           => 'wordforge',
-				'mcp_route'               => 'mcp',
-				'auto_shutdown_enabled'   => true,
-				'auto_shutdown_threshold' => 1800,
-			],
-		] );
+		register_setting(
+			'wordforge_settings',
+			'wordforge_settings',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_settings' ),
+				'default'           => array(
+					'mcp_enabled'             => true,
+					'mcp_namespace'           => 'wordforge',
+					'mcp_route'               => 'mcp',
+					'auto_shutdown_enabled'   => true,
+					'auto_shutdown_threshold' => 1800,
+				),
+			)
+		);
 	}
 
 	public function sanitize_settings( array $input ): array {
@@ -37,13 +41,13 @@ class SettingsPage {
 
 		$threshold = max( 300, min( 86400, $threshold ) );
 
-		return [
+		return array(
 			'mcp_enabled'             => ! empty( $input['mcp_enabled'] ),
 			'mcp_namespace'           => sanitize_text_field( $input['mcp_namespace'] ?? 'wordforge' ),
 			'mcp_route'               => sanitize_text_field( $input['mcp_route'] ?? 'mcp' ),
 			'auto_shutdown_enabled'   => isset( $input['auto_shutdown_enabled'] ) ? (bool) $input['auto_shutdown_enabled'] : true,
 			'auto_shutdown_threshold' => $threshold,
-		];
+		);
 	}
 
 	public function render(): void {
@@ -92,7 +96,7 @@ class SettingsPage {
 		\wp_enqueue_style(
 			'wordforge-settings',
 			\plugins_url( 'assets/js/settings.css', WORDFORGE_PLUGIN_FILE ),
-			[ 'wp-components' ],
+			array( 'wp-components' ),
 			$asset_file['version']
 		);
 
@@ -103,11 +107,11 @@ class SettingsPage {
 		$server_status = ServerProcess::get_status();
 		$abilities     = $this->get_registered_abilities();
 
-		$config = [
+		$config = array(
 			'restUrl'      => \rest_url( 'wordforge/v1' ),
 			'nonce'        => \wp_create_nonce( 'wp_rest' ),
 			'optionsNonce' => \wp_create_nonce( 'wordforge_settings-options' ),
-			'settings'     => [
+			'settings'     => array(
 				'pluginVersion'         => WORDFORGE_VERSION,
 				'binaryInstalled'       => $binary_info['is_installed'],
 				'serverRunning'         => $server_status['running'],
@@ -119,25 +123,25 @@ class SettingsPage {
 				'serverId'              => \WordForge\Mcp\ServerManager::get_server_id(),
 				'autoShutdownEnabled'   => $settings['auto_shutdown_enabled'] ?? true,
 				'autoShutdownThreshold' => $settings['auto_shutdown_threshold'] ?? 1800,
-				'platformInfo'          => [
+				'platformInfo'          => array(
 					'os'           => $binary_info['os'],
 					'arch'         => $binary_info['arch'],
 					'binary_name'  => $binary_info['binary_name'],
 					'is_installed' => $binary_info['is_installed'],
 					'install_path' => $binary_info['install_path'],
 					'version'      => $binary_info['version'] ?? null,
-				],
-			],
+				),
+			),
 			'abilities'    => $abilities,
 			'providers'    => ProviderConfig::get_providers_for_display(),
 			'agents'       => AgentConfig::get_agents_for_display(),
 			'activity'     => ActivityMonitor::get_status(),
-			'integrations' => [
+			'integrations' => array(
 				'mcpAdapter'  => $mcp_active,
 				'woocommerce' => $woo_active,
-			],
-			'i18n'            => [],
-		];
+			),
+			'i18n'         => array(),
+		);
 
 		\wp_add_inline_script(
 			'wordforge-settings',
@@ -147,50 +151,131 @@ class SettingsPage {
 	}
 
 	private function get_registered_abilities(): array {
-		return [
-			'Content'     => [
-				[ 'name' => 'wordforge/list-content', 'description' => 'List posts, pages, CPTs' ],
-				[ 'name' => 'wordforge/get-content', 'description' => 'Get single content item' ],
-				[ 'name' => 'wordforge/save-content', 'description' => 'Create or update content' ],
-				[ 'name' => 'wordforge/delete-content', 'description' => 'Delete content' ],
-			],
-			'Media'       => [
-				[ 'name' => 'wordforge/list-media', 'description' => 'List media library items' ],
-				[ 'name' => 'wordforge/get-media', 'description' => 'Get media details' ],
-				[ 'name' => 'wordforge/upload-media', 'description' => 'Upload from URL or base64' ],
-				[ 'name' => 'wordforge/update-media', 'description' => 'Update alt text, caption' ],
-				[ 'name' => 'wordforge/delete-media', 'description' => 'Delete media item' ],
-			],
-			'Taxonomy'    => [
-				[ 'name' => 'wordforge/list-terms', 'description' => 'List categories, tags, etc.' ],
-				[ 'name' => 'wordforge/save-term', 'description' => 'Create or update term' ],
-				[ 'name' => 'wordforge/delete-term', 'description' => 'Delete term' ],
-			],
-			'Blocks'      => [
-				[ 'name' => 'wordforge/get-page-blocks', 'description' => 'Get page block structure' ],
-				[ 'name' => 'wordforge/update-page-blocks', 'description' => 'Update page blocks' ],
-			],
-			'Templates'   => [
-				[ 'name' => 'wordforge/list-templates', 'description' => 'List block templates (FSE)' ],
-				[ 'name' => 'wordforge/get-template', 'description' => 'Get template with blocks' ],
-				[ 'name' => 'wordforge/update-template', 'description' => 'Update template content' ],
-			],
-			'Styles'      => [
-				[ 'name' => 'wordforge/get-global-styles', 'description' => 'Get theme.json styles' ],
-				[ 'name' => 'wordforge/update-global-styles', 'description' => 'Update global styles' ],
-				[ 'name' => 'wordforge/get-block-styles', 'description' => 'Get block style variations' ],
-			],
-			'Prompts'     => [
-				[ 'name' => 'wordforge/generate-content', 'description' => 'Generate blog posts, pages' ],
-				[ 'name' => 'wordforge/review-content', 'description' => 'Review and improve content' ],
-				[ 'name' => 'wordforge/seo-optimization', 'description' => 'Analyze content for SEO' ],
-			],
-			'WooCommerce' => [
-				[ 'name' => 'wordforge/list-products', 'description' => 'List products' ],
-				[ 'name' => 'wordforge/get-product', 'description' => 'Get product details' ],
-				[ 'name' => 'wordforge/save-product', 'description' => 'Create or update product' ],
-				[ 'name' => 'wordforge/delete-product', 'description' => 'Delete product' ],
-			],
-		];
+		return array(
+			'Content'     => array(
+				array(
+					'name'        => 'wordforge/list-content',
+					'description' => 'List posts, pages, CPTs',
+				),
+				array(
+					'name'        => 'wordforge/get-content',
+					'description' => 'Get single content item',
+				),
+				array(
+					'name'        => 'wordforge/save-content',
+					'description' => 'Create or update content',
+				),
+				array(
+					'name'        => 'wordforge/delete-content',
+					'description' => 'Delete content',
+				),
+			),
+			'Media'       => array(
+				array(
+					'name'        => 'wordforge/list-media',
+					'description' => 'List media library items',
+				),
+				array(
+					'name'        => 'wordforge/get-media',
+					'description' => 'Get media details',
+				),
+				array(
+					'name'        => 'wordforge/upload-media',
+					'description' => 'Upload from URL or base64',
+				),
+				array(
+					'name'        => 'wordforge/update-media',
+					'description' => 'Update alt text, caption',
+				),
+				array(
+					'name'        => 'wordforge/delete-media',
+					'description' => 'Delete media item',
+				),
+			),
+			'Taxonomy'    => array(
+				array(
+					'name'        => 'wordforge/list-terms',
+					'description' => 'List categories, tags, etc.',
+				),
+				array(
+					'name'        => 'wordforge/save-term',
+					'description' => 'Create or update term',
+				),
+				array(
+					'name'        => 'wordforge/delete-term',
+					'description' => 'Delete term',
+				),
+			),
+			'Blocks'      => array(
+				array(
+					'name'        => 'wordforge/get-page-blocks',
+					'description' => 'Get page block structure',
+				),
+				array(
+					'name'        => 'wordforge/update-page-blocks',
+					'description' => 'Update page blocks',
+				),
+			),
+			'Templates'   => array(
+				array(
+					'name'        => 'wordforge/list-templates',
+					'description' => 'List block templates (FSE)',
+				),
+				array(
+					'name'        => 'wordforge/get-template',
+					'description' => 'Get template with blocks',
+				),
+				array(
+					'name'        => 'wordforge/update-template',
+					'description' => 'Update template content',
+				),
+			),
+			'Styles'      => array(
+				array(
+					'name'        => 'wordforge/get-global-styles',
+					'description' => 'Get theme.json styles',
+				),
+				array(
+					'name'        => 'wordforge/update-global-styles',
+					'description' => 'Update global styles',
+				),
+				array(
+					'name'        => 'wordforge/get-block-styles',
+					'description' => 'Get block style variations',
+				),
+			),
+			'Prompts'     => array(
+				array(
+					'name'        => 'wordforge/generate-content',
+					'description' => 'Generate blog posts, pages',
+				),
+				array(
+					'name'        => 'wordforge/review-content',
+					'description' => 'Review and improve content',
+				),
+				array(
+					'name'        => 'wordforge/seo-optimization',
+					'description' => 'Analyze content for SEO',
+				),
+			),
+			'WooCommerce' => array(
+				array(
+					'name'        => 'wordforge/list-products',
+					'description' => 'List products',
+				),
+				array(
+					'name'        => 'wordforge/get-product',
+					'description' => 'Get product details',
+				),
+				array(
+					'name'        => 'wordforge/save-product',
+					'description' => 'Create or update product',
+				),
+				array(
+					'name'        => 'wordforge/delete-product',
+					'description' => 'Delete product',
+				),
+			),
+		);
 	}
 }

@@ -50,55 +50,55 @@ class ListComments extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'status'  => [
+				array(
+					'status'       => array(
 						'type'        => 'string',
 						'description' => 'Filter by comment status.',
-						'enum'        => [ 'approve', 'hold', 'spam', 'trash', 'all' ],
+						'enum'        => array( 'approve', 'hold', 'spam', 'trash', 'all' ),
 						'default'     => 'all',
-					],
-					'post_id' => [
+					),
+					'post_id'      => array(
 						'type'        => 'integer',
 						'description' => 'Filter by post ID.',
 						'minimum'     => 1,
-					],
-					'author_email' => [
+					),
+					'author_email' => array(
 						'type'        => 'string',
 						'description' => 'Filter by commenter email.',
 						'format'      => 'email',
-					],
-					'search'  => [
+					),
+					'search'       => array(
 						'type'        => 'string',
 						'description' => 'Search term to filter comments by content, author name, or email.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
-					],
-					'type'    => [
+					),
+					'type'         => array(
 						'type'        => 'string',
 						'description' => 'Filter by comment type (comment, pingback, trackback).',
-						'enum'        => [ 'comment', 'pingback', 'trackback', 'all' ],
+						'enum'        => array( 'comment', 'pingback', 'trackback', 'all' ),
 						'default'     => 'all',
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'date', 'date_gmt', 'id' ]
+					array( 'date', 'date_gmt', 'id' )
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args, 100, 20, 'date', 'desc' );
 
-		$query_args = [
+		$query_args = array(
 			'number'  => $pagination['per_page'],
 			'offset'  => ( $pagination['page'] - 1 ) * $pagination['per_page'],
 			'orderby' => $this->map_orderby( $pagination['orderby'] ),
 			'order'   => $pagination['order'],
-		];
+		);
 
 		if ( ! empty( $args['status'] ) && 'all' !== $args['status'] ) {
 			$query_args['status'] = $args['status'];
@@ -125,20 +125,20 @@ class ListComments extends AbstractAbility {
 		$count_args = $query_args;
 		unset( $count_args['number'], $count_args['offset'] );
 		$count_args['count'] = true;
-		$total = (int) get_comments( $count_args );
+		$total               = (int) get_comments( $count_args );
 
-		$items       = array_map( [ $this, 'format_comment' ], $comments );
+		$items       = array_map( array( $this, 'format_comment' ), $comments );
 		$total_pages = (int) ceil( $total / $pagination['per_page'] );
 
 		return $this->paginated_success( $items, $total, $total_pages, $pagination );
 	}
 
 	private function map_orderby( string $orderby ): string {
-		$map = [
+		$map = array(
 			'date'     => 'comment_date',
 			'date_gmt' => 'comment_date_gmt',
 			'id'       => 'comment_ID',
-		];
+		);
 		return $map[ $orderby ] ?? 'comment_date';
 	}
 
@@ -147,7 +147,7 @@ class ListComments extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_comment( \WP_Comment $comment ): array {
-		return [
+		return array(
 			'id'           => (int) $comment->comment_ID,
 			'post_id'      => (int) $comment->comment_post_ID,
 			'post_title'   => get_the_title( $comment->comment_post_ID ),
@@ -162,31 +162,70 @@ class ListComments extends AbstractAbility {
 			'type'         => $comment->comment_type ?: 'comment',
 			'parent'       => (int) $comment->comment_parent,
 			'user_id'      => (int) $comment->user_id,
-			'avatar_url'   => get_avatar_url( $comment->comment_author_email, [ 'size' => 48 ] ),
-		];
+			'avatar_url'   => get_avatar_url( $comment->comment_author_email, array( 'size' => 48 ) ),
+		);
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function get_comment_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'           => [ 'type' => 'integer', 'description' => 'Unique comment ID' ],
-				'post_id'      => [ 'type' => 'integer', 'description' => 'Parent post ID' ],
-				'post_title'   => [ 'type' => 'string', 'description' => 'Parent post title' ],
-				'author'       => [ 'type' => 'string', 'description' => 'Comment author name' ],
-				'author_email' => [ 'type' => 'string', 'description' => 'Author email' ],
-				'author_url'   => [ 'type' => 'string', 'description' => 'Author website' ],
-				'date'         => [ 'type' => 'string', 'description' => 'Comment date' ],
-				'content'      => [ 'type' => 'string', 'description' => 'Comment content' ],
-				'status'       => [ 'type' => 'string', 'description' => 'Moderation status' ],
-				'type'         => [ 'type' => 'string', 'description' => 'Comment type' ],
-				'parent'       => [ 'type' => 'integer', 'description' => 'Parent comment ID' ],
-				'user_id'      => [ 'type' => 'integer', 'description' => 'Registered user ID if logged in' ],
-				'avatar_url'   => [ 'type' => 'string', 'description' => 'Author avatar URL' ],
-			],
-		];
+			'properties' => array(
+				'id'           => array(
+					'type'        => 'integer',
+					'description' => 'Unique comment ID',
+				),
+				'post_id'      => array(
+					'type'        => 'integer',
+					'description' => 'Parent post ID',
+				),
+				'post_title'   => array(
+					'type'        => 'string',
+					'description' => 'Parent post title',
+				),
+				'author'       => array(
+					'type'        => 'string',
+					'description' => 'Comment author name',
+				),
+				'author_email' => array(
+					'type'        => 'string',
+					'description' => 'Author email',
+				),
+				'author_url'   => array(
+					'type'        => 'string',
+					'description' => 'Author website',
+				),
+				'date'         => array(
+					'type'        => 'string',
+					'description' => 'Comment date',
+				),
+				'content'      => array(
+					'type'        => 'string',
+					'description' => 'Comment content',
+				),
+				'status'       => array(
+					'type'        => 'string',
+					'description' => 'Moderation status',
+				),
+				'type'         => array(
+					'type'        => 'string',
+					'description' => 'Comment type',
+				),
+				'parent'       => array(
+					'type'        => 'integer',
+					'description' => 'Parent comment ID',
+				),
+				'user_id'      => array(
+					'type'        => 'integer',
+					'description' => 'Registered user ID if logged in',
+				),
+				'avatar_url'   => array(
+					'type'        => 'string',
+					'description' => 'Author avatar URL',
+				),
+			),
+		);
 	}
 }

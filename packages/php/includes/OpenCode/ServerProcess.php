@@ -69,21 +69,21 @@ class ServerProcess {
 	 * @param array{mcp_auth_token?: string} $options
 	 * @return array{success: bool, url?: string, port?: int, error?: string}
 	 */
-	public static function start( array $options = [] ): array {
+	public static function start( array $options = array() ): array {
 		if ( self::is_running() ) {
-			return [
+			return array(
 				'success' => true,
 				'url'     => self::get_server_url(),
 				'port'    => self::get_port(),
 				'status'  => 'already_running',
-			];
+			);
 		}
 
 		if ( ! BinaryManager::is_installed() ) {
-			return [
+			return array(
 				'success' => false,
 				'error'   => 'OpenCode binary not installed',
-			];
+			);
 		}
 
 		$port   = ServerPaths::find_available_port();
@@ -104,10 +104,10 @@ class ServerProcess {
 		$pid = self::spawn_server( $binary, $port, $state_dir, $config_dir, $log_file );
 
 		if ( $pid <= 0 ) {
-			return [
+			return array(
 				'success' => false,
 				'error'   => 'Failed to start OpenCode server',
-			];
+			);
 		}
 
 		file_put_contents( ServerPaths::get_pid_file(), (string) $pid );
@@ -117,22 +117,22 @@ class ServerProcess {
 
 		if ( ! $health['healthy'] ) {
 			self::stop();
-			return [
+			return array(
 				'success' => false,
 				'error'   => $health['error'] ?? 'Server failed health check',
-			];
+			);
 		}
 
 		self::register_mcp( $port );
 		ActivityMonitor::record_activity();
 
-		return [
+		return array(
 			'success' => true,
 			'url'     => "http://127.0.0.1:{$port}",
 			'port'    => $port,
 			'version' => $health['version'] ?? null,
 			'status'  => 'started',
-		];
+		);
 	}
 
 	public static function stop(): bool {
@@ -169,14 +169,14 @@ class ServerProcess {
 	public static function get_status(): array {
 		$running = self::is_running();
 
-		return [
+		return array(
 			'running' => $running,
 			'pid'     => self::get_pid(),
 			'port'    => self::get_port(),
 			'url'     => $running ? self::get_server_url() : null,
 			'binary'  => BinaryManager::is_installed(),
 			'version' => BinaryManager::get_installed_version(),
-		];
+		);
 	}
 
 	public static function revoke_app_password(): bool {
@@ -216,34 +216,51 @@ class ServerProcess {
 		$url        = sprintf( self::HEALTH_CHECK_URL, $port );
 		$start      = time();
 		$last_error = '';
+		$attempts   = 0;
+		$max_attempts = $timeout_seconds * 4;
 
-		while ( ( time() - $start ) < $timeout_seconds ) {
-			$response = wp_remote_get( $url, [ 'timeout' => 2 ] );
+		while ( $attempts < $max_attempts && ( time() - $start ) < $timeout_seconds ) {
+			++$attempts;
+
+			$response = wp_remote_get(
+				$url,
+				array(
+					'timeout'   => 2,
+					'sslverify' => false,
+					'blocking'  => true,
+				)
+			);
 
 			if ( ! is_wp_error( $response ) ) {
 				$code = wp_remote_retrieve_response_code( $response );
 
 				if ( 200 === $code ) {
-					$body = json_decode( wp_remote_retrieve_body( $response ), true );
+					$body_raw = wp_remote_retrieve_body( $response );
+					$body     = json_decode( $body_raw, true );
+					unset( $body_raw );
 
 					if ( ! empty( $body['healthy'] ) ) {
-						return [
+						$version = $body['version'] ?? null;
+						unset( $body, $response );
+						return array(
 							'healthy' => true,
-							'version' => $body['version'] ?? null,
-						];
+							'version' => $version,
+						);
 					}
+					unset( $body );
 				}
 			} else {
 				$last_error = $response->get_error_message();
 			}
 
+			unset( $response );
 			usleep( 250000 );
 		}
 
-		return [
+		return array(
 			'healthy' => false,
 			'error'   => $last_error ?: 'Health check timed out',
-		];
+		);
 	}
 
 	private static function register_mcp( int $port ): void {
@@ -255,14 +272,16 @@ class ServerProcess {
 
 		$response = wp_remote_post(
 			"http://127.0.0.1:{$port}/mcp/add",
-			[
-				'headers' => [ 'Content-Type' => 'application/json' ],
-				'body'    => wp_json_encode( [
-					'name'   => 'wordforge',
-					'config' => $mcp_config,
-				] ),
+			array(
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode(
+					array(
+						'name'   => 'wordforge',
+						'config' => $mcp_config,
+					)
+				),
 				'timeout' => 5,
-			]
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {

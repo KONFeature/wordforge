@@ -41,58 +41,58 @@ class ListTerms extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'taxonomy' => [ 'type' => 'string' ],
-						'items'    => [
+					'properties' => array(
+						'taxonomy' => array( 'type' => 'string' ),
+						'items'    => array(
 							'type'  => 'array',
 							'items' => $this->get_term_item_schema(),
-						],
-						'total' => [ 'type' => 'integer' ],
-					],
-					'required' => [ 'taxonomy', 'items', 'total' ],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+						),
+						'total'    => array( 'type' => 'integer' ),
+					),
+					'required'   => array( 'taxonomy', 'items', 'total' ),
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'taxonomy' ],
+			'required'   => array( 'taxonomy' ),
 			'properties' => array_merge(
-				[
-					'taxonomy' => [
+				array(
+					'taxonomy'   => array(
 						'type'        => 'string',
 						'description' => 'Taxonomy name (category, post_tag, product_cat, or custom taxonomy).',
-					],
-					'search' => [
+					),
+					'search'     => array(
 						'type'        => 'string',
 						'description' => 'Search term name.',
-					],
-					'parent' => [
+					),
+					'parent'     => array(
 						'type'        => 'integer',
 						'description' => 'Parent term ID (0 for top-level only).',
-					],
-					'hide_empty' => [
+					),
+					'hide_empty' => array(
 						'type'        => 'boolean',
 						'description' => 'Hide terms with no posts.',
 						'default'     => false,
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'name', 'slug', 'term_id', 'count', 'parent' ],
+					array( 'name', 'slug', 'term_id', 'count', 'parent' ),
 					500,
 					100,
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -107,13 +107,13 @@ class ListTerms extends AbstractAbility {
 
 		$pagination = $this->normalize_pagination_args( $args, 500, 100, 'name', 'asc' );
 
-		$query_args = [
+		$query_args = array(
 			'taxonomy'   => $taxonomy,
 			'hide_empty' => $args['hide_empty'] ?? false,
 			'number'     => $pagination['per_page'],
 			'orderby'    => $pagination['orderby'],
 			'order'      => $pagination['order'],
-		];
+		);
 
 		if ( ! empty( $args['search'] ) ) {
 			$query_args['search'] = sanitize_text_field( $args['search'] );
@@ -131,15 +131,17 @@ class ListTerms extends AbstractAbility {
 
 		$items = array_map( fn( \WP_Term $term ) => $this->format_term( $term ), $terms );
 
-		return $this->success( [
-			'taxonomy' => $taxonomy,
-			'items'    => $items,
-			'total'    => count( $items ),
-		] );
+		return $this->success(
+			array(
+				'taxonomy' => $taxonomy,
+				'items'    => $items,
+				'total'    => count( $items ),
+			)
+		);
 	}
 
 	protected function format_term( \WP_Term $term ): array {
-		return [
+		return array(
 			'id'          => $term->term_id,
 			'name'        => $term->name,
 			'slug'        => $term->slug,
@@ -147,24 +149,24 @@ class ListTerms extends AbstractAbility {
 			'parent'      => $term->parent,
 			'count'       => $term->count,
 			'taxonomy'    => $term->taxonomy,
-		];
+		);
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function get_term_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'          => [ 'type' => 'integer' ],
-				'name'        => [ 'type' => 'string' ],
-				'slug'        => [ 'type' => 'string' ],
-				'description' => [ 'type' => 'string' ],
-				'parent'      => [ 'type' => 'integer' ],
-				'count'       => [ 'type' => 'integer' ],
-				'taxonomy'    => [ 'type' => 'string' ],
-			],
-		];
+			'properties' => array(
+				'id'          => array( 'type' => 'integer' ),
+				'name'        => array( 'type' => 'string' ),
+				'slug'        => array( 'type' => 'string' ),
+				'description' => array( 'type' => 'string' ),
+				'parent'      => array( 'type' => 'integer' ),
+				'count'       => array( 'type' => 'integer' ),
+				'taxonomy'    => array( 'type' => 'string' ),
+			),
+		);
 	}
 }

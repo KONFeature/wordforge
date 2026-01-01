@@ -37,28 +37,28 @@ class DeleteTerm extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		$schema = $this->get_delete_input_schema( false, 'term' );
-		$schema['required'] = [ 'id', 'taxonomy' ];
-		$schema['properties']['taxonomy'] = [
+		$schema                           = $this->get_delete_input_schema( false, 'term' );
+		$schema['required']               = array( 'id', 'taxonomy' );
+		$schema['properties']['taxonomy'] = array(
 			'type'        => 'string',
 			'description' => 'Taxonomy name.',
-		];
+		);
 		return $schema;
 	}
 
 	public function get_output_schema(): array {
 		return $this->get_delete_output_schema(
-			[
-				'name'     => [ 'type' => 'string' ],
-				'slug'     => [ 'type' => 'string' ],
-				'taxonomy' => [ 'type' => 'string' ],
-			],
+			array(
+				'name'     => array( 'type' => 'string' ),
+				'slug'     => array( 'type' => 'string' ),
+				'taxonomy' => array( 'type' => 'string' ),
+			),
 			false
 		);
 	}
 
 	public function execute( array $args ): array {
-		$term_id = (int) $args['id'];
+		$term_id  = (int) $args['id'];
 		$taxonomy = $args['taxonomy'];
 
 		if ( ! taxonomy_exists( $taxonomy ) ) {
@@ -73,11 +73,11 @@ class DeleteTerm extends AbstractAbility {
 			return $this->delete_not_found( 'Term' );
 		}
 
-		$deleted_info = [
+		$deleted_info = array(
 			'name'     => $term->name,
 			'slug'     => $term->slug,
 			'taxonomy' => $term->taxonomy,
-		];
+		);
 
 		$result = wp_delete_term( $term_id, $taxonomy );
 
@@ -90,7 +90,13 @@ class DeleteTerm extends AbstractAbility {
 		}
 
 		return $this->success(
-			array_merge( [ 'id' => $term_id, 'deleted' => true ], $deleted_info ),
+			array_merge(
+				array(
+					'id'      => $term_id,
+					'deleted' => true,
+				),
+				$deleted_info
+			),
 			'Term deleted successfully.'
 		);
 	}

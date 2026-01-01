@@ -13,7 +13,7 @@ use WordForge\Abilities\AbstractAbility;
 
 class GetSettings extends AbstractAbility {
 
-	private const ALLOWED_OPTIONS = [
+	private const ALLOWED_OPTIONS = array(
 		'blogname',
 		'blogdescription',
 		'siteurl',
@@ -63,7 +63,7 @@ class GetSettings extends AbstractAbility {
 		'medium_size_h',
 		'large_size_w',
 		'large_size_h',
-	];
+	);
 
 	public function get_category(): string {
 		return 'wordforge-settings';
@@ -92,26 +92,26 @@ class GetSettings extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'options' => [
+			'properties' => array(
+				'options' => array(
 					'type'        => 'array',
-					'items'       => [ 'type' => 'string' ],
+					'items'       => array( 'type' => 'string' ),
 					'description' => 'Specific option names to retrieve. If empty, returns all allowed options.',
-				],
-				'group'   => [
+				),
+				'group'   => array(
 					'type'        => 'string',
 					'description' => 'Get options by group for convenience.',
-					'enum'        => [ 'general', 'reading', 'discussion', 'media', 'permalinks', 'all' ],
+					'enum'        => array( 'general', 'reading', 'discussion', 'media', 'permalinks', 'all' ),
 					'default'     => 'all',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
-		$requested = $args['options'] ?? [];
+		$requested = $args['options'] ?? array();
 		$group     = $args['group'] ?? 'all';
 
 		if ( ! empty( $requested ) ) {
@@ -120,51 +120,87 @@ class GetSettings extends AbstractAbility {
 			$options_to_get = $this->get_options_by_group( $group );
 		}
 
-		$settings = [];
+		$settings = array();
 		foreach ( $options_to_get as $option ) {
 			$settings[ $option ] = get_option( $option );
 		}
 
-		return $this->success( [
-			'settings' => $settings,
-			'groups'   => $this->categorize_options( $settings ),
-		] );
+		return $this->success(
+			array(
+				'settings' => $settings,
+				'groups'   => $this->categorize_options( $settings ),
+			)
+		);
 	}
 
 	private function get_options_by_group( string $group ): array {
-		$groups = [
-			'general'    => [
-				'blogname', 'blogdescription', 'siteurl', 'home', 'admin_email',
-				'users_can_register', 'default_role', 'timezone_string',
-				'date_format', 'time_format', 'start_of_week', 'WPLANG',
-			],
-			'reading'    => [
-				'posts_per_page', 'posts_per_rss', 'rss_use_excerpt',
-				'show_on_front', 'page_on_front', 'page_for_posts', 'blog_public',
-			],
-			'discussion' => [
-				'default_pingback_flag', 'default_ping_status', 'default_comment_status',
-				'require_name_email', 'comment_registration', 'close_comments_for_old_posts',
-				'close_comments_days_old', 'thread_comments', 'thread_comments_depth',
-				'page_comments', 'comments_per_page', 'default_comments_page',
-				'comment_order', 'moderation_notify', 'comments_notify',
-				'comment_moderation', 'comment_previously_approved',
-				'show_avatars', 'avatar_rating', 'avatar_default',
-			],
-			'media'      => [
-				'uploads_use_yearmonth_folders', 'thumbnail_size_w', 'thumbnail_size_h',
-				'medium_size_w', 'medium_size_h', 'large_size_w', 'large_size_h',
-			],
-			'permalinks' => [
-				'permalink_structure', 'category_base', 'tag_base',
-			],
-		];
+		$groups = array(
+			'general'    => array(
+				'blogname',
+				'blogdescription',
+				'siteurl',
+				'home',
+				'admin_email',
+				'users_can_register',
+				'default_role',
+				'timezone_string',
+				'date_format',
+				'time_format',
+				'start_of_week',
+				'WPLANG',
+			),
+			'reading'    => array(
+				'posts_per_page',
+				'posts_per_rss',
+				'rss_use_excerpt',
+				'show_on_front',
+				'page_on_front',
+				'page_for_posts',
+				'blog_public',
+			),
+			'discussion' => array(
+				'default_pingback_flag',
+				'default_ping_status',
+				'default_comment_status',
+				'require_name_email',
+				'comment_registration',
+				'close_comments_for_old_posts',
+				'close_comments_days_old',
+				'thread_comments',
+				'thread_comments_depth',
+				'page_comments',
+				'comments_per_page',
+				'default_comments_page',
+				'comment_order',
+				'moderation_notify',
+				'comments_notify',
+				'comment_moderation',
+				'comment_previously_approved',
+				'show_avatars',
+				'avatar_rating',
+				'avatar_default',
+			),
+			'media'      => array(
+				'uploads_use_yearmonth_folders',
+				'thumbnail_size_w',
+				'thumbnail_size_h',
+				'medium_size_w',
+				'medium_size_h',
+				'large_size_w',
+				'large_size_h',
+			),
+			'permalinks' => array(
+				'permalink_structure',
+				'category_base',
+				'tag_base',
+			),
+		);
 
 		if ( 'all' === $group ) {
 			return self::ALLOWED_OPTIONS;
 		}
 
-		return $groups[ $group ] ?? [];
+		return $groups[ $group ] ?? array();
 	}
 
 	/**
@@ -172,13 +208,13 @@ class GetSettings extends AbstractAbility {
 	 * @return array<string, array<string, mixed>>
 	 */
 	private function categorize_options( array $settings ): array {
-		$categorized = [
-			'general'    => [],
-			'reading'    => [],
-			'discussion' => [],
-			'media'      => [],
-			'permalinks' => [],
-		];
+		$categorized = array(
+			'general'    => array(),
+			'reading'    => array(),
+			'discussion' => array(),
+			'media'      => array(),
+			'permalinks' => array(),
+		);
 
 		foreach ( $settings as $key => $value ) {
 			foreach ( $categorized as $group => &$group_settings ) {

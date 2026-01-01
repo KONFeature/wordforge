@@ -40,77 +40,77 @@ class UploadMedia extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'id'        => [ 'type' => 'integer' ],
-						'title'     => [ 'type' => 'string' ],
-						'filename'  => [ 'type' => 'string' ],
-						'url'       => [ 'type' => 'string' ],
-						'mime_type' => [ 'type' => 'string' ],
-						'alt'       => [ 'type' => 'string' ],
-						'parent'    => [ 'type' => 'integer' ],
-					],
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+					'properties' => array(
+						'id'        => array( 'type' => 'integer' ),
+						'title'     => array( 'type' => 'string' ),
+						'filename'  => array( 'type' => 'string' ),
+						'url'       => array( 'type' => 'string' ),
+						'mime_type' => array( 'type' => 'string' ),
+						'alt'       => array( 'type' => 'string' ),
+						'parent'    => array( 'type' => 'integer' ),
+					),
+				),
+				'message' => array( 'type' => 'string' ),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'filename' ],
-			'properties' => [
-				'url' => [
+			'required'   => array( 'filename' ),
+			'properties' => array(
+				'url'         => array(
 					'type'        => 'string',
 					'format'      => 'uri',
 					'description' => 'URL to download file from. Must be publicly accessible. Provide "url" OR "base64", not both.',
 					'pattern'     => '^https?://',
-				],
-				'base64' => [
+				),
+				'base64'      => array(
 					'type'        => 'string',
 					'description' => 'Base64-encoded file content WITHOUT data URI prefix. Provide "url" OR "base64", not both.',
-				],
-				'filename' => [
+				),
+				'filename'    => array(
 					'type'        => 'string',
 					'description' => 'Filename with extension, e.g., "photo.jpg". WordPress sanitizes and adds numbers if duplicate.',
 					'pattern'     => '^[^/\\\\?%*:|"<>]+\\.[a-zA-Z0-9]+$',
 					'minLength'   => 5,
 					'maxLength'   => 255,
-				],
-				'title' => [
+				),
+				'title'       => array(
 					'type'        => 'string',
 					'description' => 'Media title shown in library. Auto-generated from filename if omitted.',
 					'maxLength'   => 200,
-				],
-				'alt' => [
+				),
+				'alt'         => array(
 					'type'        => 'string',
 					'description' => 'CRITICAL: Alt text for images (SEO/accessibility). Describe content, not filename.',
 					'maxLength'   => 500,
-				],
-				'caption' => [
+				),
+				'caption'     => array(
 					'type'        => 'string',
 					'description' => 'Caption displayed below image when inserted. Used for credits or context.',
 					'maxLength'   => 500,
-				],
-				'description' => [
+				),
+				'description' => array(
 					'type'        => 'string',
 					'description' => 'Longer description visible in media library.',
 					'maxLength'   => 2000,
-				],
-				'parent_id' => [
+				),
+				'parent_id'   => array(
 					'type'        => 'integer',
 					'description' => 'Post/page ID to attach media to. Creates parent-child relationship.',
 					'minimum'     => 1,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -146,15 +146,15 @@ class UploadMedia extends AbstractAbility {
 		}
 
 		// Create attachment post.
-		$attachment_data = [
+		$attachment_data = array(
 			'post_mime_type' => $filetype['type'],
 			'post_title'     => $args['title'] ?? pathinfo( $filename, PATHINFO_FILENAME ),
 			'post_content'   => $args['description'] ?? '',
 			'post_excerpt'   => $args['caption'] ?? '',
 			'post_status'    => 'inherit',
-		];
+		);
 
-		$parent_id = $args['parent_id'] ?? 0;
+		$parent_id     = $args['parent_id'] ?? 0;
 		$attachment_id = wp_insert_attachment( $attachment_data, $upload['file'], $parent_id );
 
 		if ( is_wp_error( $attachment_id ) ) {
@@ -174,15 +174,18 @@ class UploadMedia extends AbstractAbility {
 
 		$attachment = get_post( $attachment_id );
 
-		return $this->success( [
-			'id'        => $attachment_id,
-			'title'     => $attachment->post_title,
-			'filename'  => basename( $upload['file'] ),
-			'url'       => $upload['url'],
-			'mime_type' => $filetype['type'],
-			'alt'       => $args['alt'] ?? '',
-			'parent'    => $parent_id,
-		], 'Media uploaded successfully.' );
+		return $this->success(
+			array(
+				'id'        => $attachment_id,
+				'title'     => $attachment->post_title,
+				'filename'  => basename( $upload['file'] ),
+				'url'       => $upload['url'],
+				'mime_type' => $filetype['type'],
+				'alt'       => $args['alt'] ?? '',
+				'parent'    => $parent_id,
+			),
+			'Media uploaded successfully.'
+		);
 	}
 
 	/**
@@ -192,9 +195,12 @@ class UploadMedia extends AbstractAbility {
 	 * @return string|false File contents or false on failure.
 	 */
 	private function download_from_url( string $url ) {
-		$response = wp_remote_get( $url, [
-			'timeout' => 30,
-		] );
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout' => 30,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			return false;

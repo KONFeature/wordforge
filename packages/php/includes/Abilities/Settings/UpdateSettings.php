@@ -13,7 +13,7 @@ use WordForge\Abilities\AbstractAbility;
 
 class UpdateSettings extends AbstractAbility {
 
-	private const WRITABLE_OPTIONS = [
+	private const WRITABLE_OPTIONS = array(
 		'blogname'                     => 'string',
 		'blogdescription'              => 'string',
 		'admin_email'                  => 'email',
@@ -56,7 +56,7 @@ class UpdateSettings extends AbstractAbility {
 		'medium_size_h'                => 'int',
 		'large_size_w'                 => 'int',
 		'large_size_h'                 => 'int',
-	];
+	);
 
 	public function get_category(): string {
 		return 'wordforge-settings';
@@ -84,46 +84,46 @@ class UpdateSettings extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'settings' ],
-			'properties' => [
-				'settings' => [
+			'required'   => array( 'settings' ),
+			'properties' => array(
+				'settings' => array(
 					'type'                 => 'object',
 					'description'          => 'Key-value pairs of settings to update.',
 					'additionalProperties' => true,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
-		$settings = $args['settings'] ?? [];
+		$settings = $args['settings'] ?? array();
 
 		if ( empty( $settings ) ) {
 			return $this->error( 'No settings provided.', 'empty_settings' );
 		}
 
-		$updated  = [];
-		$skipped  = [];
-		$previous = [];
+		$updated  = array();
+		$skipped  = array();
+		$previous = array();
 
 		foreach ( $settings as $key => $value ) {
 			if ( ! isset( self::WRITABLE_OPTIONS[ $key ] ) ) {
-				$skipped[] = [
+				$skipped[] = array(
 					'key'    => $key,
 					'reason' => 'Option not allowed',
-				];
+				);
 				continue;
 			}
 
 			$sanitized = $this->sanitize_value( $value, self::WRITABLE_OPTIONS[ $key ] );
 
 			if ( null === $sanitized ) {
-				$skipped[] = [
+				$skipped[] = array(
 					'key'    => $key,
 					'reason' => 'Invalid value type',
-				];
+				);
 				continue;
 			}
 
@@ -133,10 +133,10 @@ class UpdateSettings extends AbstractAbility {
 			if ( $result || $previous[ $key ] === $sanitized ) {
 				$updated[ $key ] = $sanitized;
 			} else {
-				$skipped[] = [
+				$skipped[] = array(
 					'key'    => $key,
 					'reason' => 'Update failed',
-				];
+				);
 			}
 		}
 
@@ -146,11 +146,11 @@ class UpdateSettings extends AbstractAbility {
 		}
 
 		return $this->success(
-			[
+			array(
 				'updated'  => $updated,
 				'previous' => $previous,
 				'skipped'  => $skipped,
-			],
+			),
 			$message
 		);
 	}

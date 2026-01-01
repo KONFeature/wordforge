@@ -7,7 +7,7 @@ namespace WordForge\Admin;
 class EditorSidebarManager {
 
 	public function __construct() {
-		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_assets' ] );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
 	}
 
 	public function enqueue_editor_assets(): void {
@@ -43,14 +43,14 @@ class EditorSidebarManager {
 		wp_enqueue_style(
 			'wordforge-editor-sidebar',
 			plugins_url( 'assets/js/editor-sidebar.css', WORDFORGE_PLUGIN_FILE ),
-			[ 'wp-components' ],
+			array( 'wp-components' ),
 			$asset_file['version']
 		);
 
-		$config = [
+		$config = array(
 			'proxyUrl' => rest_url( 'wordforge/v1/opencode/proxy' ),
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
-		];
+		);
 
 		wp_add_inline_script(
 			'wordforge-editor-sidebar',

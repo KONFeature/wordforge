@@ -17,29 +17,94 @@ namespace WordForge\OpenCode;
 class ProviderConfig {
 
 	/**
-	 * Supported providers with their metadata for API key configuration.
-	 * Model lists are fetched from OpenCode at runtime, not hardcoded here.
+	 * @var array<string, array{id: string, name: string, help_url: string, help_text: string, priority: int}>
 	 */
-	public const PROVIDERS = [
-		'openai'    => [
-			'id'        => 'openai',
-			'name'      => 'OpenAI',
-			'help_url'  => 'https://platform.openai.com/api-keys',
-			'help_text' => 'Sign up at platform.openai.com, then create an API key.',
-		],
-		'anthropic' => [
+	public const PROVIDERS = array(
+		'anthropic'  => array(
 			'id'        => 'anthropic',
 			'name'      => 'Anthropic',
 			'help_url'  => 'https://console.anthropic.com/',
 			'help_text' => 'Sign up at console.anthropic.com, then create an API key.',
-		],
-		'google'    => [
+			'priority'  => 1,
+		),
+		'google'     => array(
 			'id'        => 'google',
 			'name'      => 'Google AI',
 			'help_url'  => 'https://aistudio.google.com/',
 			'help_text' => 'Sign in at aistudio.google.com, then click "Get API Key".',
-		],
-	];
+			'priority'  => 2,
+		),
+		'openai'     => array(
+			'id'        => 'openai',
+			'name'      => 'OpenAI',
+			'help_url'  => 'https://platform.openai.com/api-keys',
+			'help_text' => 'Sign up at platform.openai.com, then create an API key.',
+			'priority'  => 3,
+		),
+		'openrouter' => array(
+			'id'        => 'openrouter',
+			'name'      => 'OpenRouter',
+			'help_url'  => 'https://openrouter.ai/keys',
+			'help_text' => 'Sign up at openrouter.ai, then create an API key.',
+			'priority'  => 4,
+		),
+		'groq'       => array(
+			'id'        => 'groq',
+			'name'      => 'Groq',
+			'help_url'  => 'https://console.groq.com/keys',
+			'help_text' => 'Sign up at console.groq.com, then create an API key.',
+			'priority'  => 5,
+		),
+		'mistral'    => array(
+			'id'        => 'mistral',
+			'name'      => 'Mistral AI',
+			'help_url'  => 'https://console.mistral.ai/api-keys/',
+			'help_text' => 'Sign up at console.mistral.ai, then create an API key.',
+			'priority'  => 6,
+		),
+		'xai'        => array(
+			'id'        => 'xai',
+			'name'      => 'xAI (Grok)',
+			'help_url'  => 'https://console.x.ai/',
+			'help_text' => 'Sign up at console.x.ai, then create an API key.',
+			'priority'  => 7,
+		),
+		'deepseek'   => array(
+			'id'        => 'deepseek',
+			'name'      => 'DeepSeek',
+			'help_url'  => 'https://platform.deepseek.com/api_keys',
+			'help_text' => 'Sign up at platform.deepseek.com, then create an API key.',
+			'priority'  => 8,
+		),
+		'together'   => array(
+			'id'        => 'together',
+			'name'      => 'Together AI',
+			'help_url'  => 'https://api.together.ai/settings/api-keys',
+			'help_text' => 'Sign up at together.ai, then create an API key.',
+			'priority'  => 9,
+		),
+		'fireworks'  => array(
+			'id'        => 'fireworks',
+			'name'      => 'Fireworks AI',
+			'help_url'  => 'https://fireworks.ai/account/api-keys',
+			'help_text' => 'Sign up at fireworks.ai, then create an API key.',
+			'priority'  => 10,
+		),
+		'perplexity' => array(
+			'id'        => 'perplexity',
+			'name'      => 'Perplexity',
+			'help_url'  => 'https://www.perplexity.ai/settings/api',
+			'help_text' => 'Sign up at perplexity.ai, then create an API key.',
+			'priority'  => 11,
+		),
+		'cohere'     => array(
+			'id'        => 'cohere',
+			'name'      => 'Cohere',
+			'help_url'  => 'https://dashboard.cohere.com/api-keys',
+			'help_text' => 'Sign up at cohere.com, then create an API key.',
+			'priority'  => 12,
+		),
+	);
 
 	private const OPTION_KEY = 'wordforge_provider_keys';
 
@@ -112,18 +177,18 @@ class ProviderConfig {
 	 * @return array<string, array{api_key: string}> Provider configurations with decrypted keys.
 	 */
 	public static function get_all_providers(): array {
-		$stored = get_option( self::OPTION_KEY, [] );
+		$stored = get_option( self::OPTION_KEY, array() );
 
 		if ( ! is_array( $stored ) ) {
-			return [];
+			return array();
 		}
 
-		$providers = [];
+		$providers = array();
 		foreach ( $stored as $provider_id => $config ) {
 			if ( isset( $config['api_key'] ) && ! empty( $config['api_key'] ) ) {
-				$providers[ $provider_id ] = [
+				$providers[ $provider_id ] = array(
 					'api_key' => self::decrypt_api_key( $config['api_key'] ),
-				];
+				);
 			}
 		}
 
@@ -131,55 +196,60 @@ class ProviderConfig {
 	}
 
 	/**
-	 * Get provider configuration for display (with masked keys).
-	 *
-	 * @return array Provider list with metadata and masked keys.
+	 * @return array<array{id: string, name: string, configured: bool, api_key_masked: ?string, help_url: string, help_text: string, priority: int}>
 	 */
 	public static function get_providers_for_display(): array {
-		$stored   = get_option( self::OPTION_KEY, [] );
-		$result   = [];
+		$stored    = get_option( self::OPTION_KEY, array() );
+		$providers = self::PROVIDERS;
 
-		foreach ( self::PROVIDERS as $provider_id => $meta ) {
-			$has_key     = isset( $stored[ $provider_id ]['api_key'] ) && ! empty( $stored[ $provider_id ]['api_key'] );
-			$decrypted   = $has_key ? self::decrypt_api_key( $stored[ $provider_id ]['api_key'] ) : '';
+		uasort(
+			$providers,
+			fn( $a, $b ) => ( $a['priority'] ?? 99 ) <=> ( $b['priority'] ?? 99 )
+		);
 
-			$result[] = [
+		$result = array();
+
+		foreach ( $providers as $provider_id => $meta ) {
+			$has_key   = isset( $stored[ $provider_id ]['api_key'] ) && ! empty( $stored[ $provider_id ]['api_key'] );
+			$decrypted = $has_key ? self::decrypt_api_key( $stored[ $provider_id ]['api_key'] ) : '';
+
+			$result[] = array(
 				'id'             => $provider_id,
 				'name'           => $meta['name'],
 				'configured'     => $has_key && ! empty( $decrypted ),
 				'api_key_masked' => $has_key && ! empty( $decrypted ) ? self::mask_api_key( $decrypted ) : null,
 				'help_url'       => $meta['help_url'],
 				'help_text'      => $meta['help_text'],
-			];
+				'priority'       => $meta['priority'] ?? 99,
+			);
 		}
 
 		return $result;
 	}
 
 	/**
-	 * Save an API key for a provider.
-	 *
-	 * @param string $provider_id The provider ID (openai, anthropic, google).
+	 * @param string $provider_id The provider ID.
 	 * @param string $api_key     The API key to store.
 	 * @return bool Whether the save was successful.
 	 */
 	public static function save_provider_key( string $provider_id, string $api_key ): bool {
-		if ( ! isset( self::PROVIDERS[ $provider_id ] ) ) {
+		$provider_id = sanitize_key( $provider_id );
+		if ( empty( $provider_id ) ) {
 			return false;
 		}
 
-		$stored = get_option( self::OPTION_KEY, [] );
+		$stored = get_option( self::OPTION_KEY, array() );
 
 		if ( ! is_array( $stored ) ) {
-			$stored = [];
+			$stored = array();
 		}
 
 		if ( empty( $api_key ) ) {
 			unset( $stored[ $provider_id ] );
 		} else {
-			$stored[ $provider_id ] = [
+			$stored[ $provider_id ] = array(
 				'api_key' => self::encrypt_api_key( $api_key ),
-			];
+			);
 		}
 
 		return update_option( self::OPTION_KEY, $stored, false );
@@ -224,19 +294,19 @@ class ProviderConfig {
 	 * @return array Provider configuration for opencode.json.
 	 */
 	public static function get_opencode_provider_config(): array {
-		$providers  = self::get_all_providers();
-		$config     = [];
+		$providers = self::get_all_providers();
+		$config    = array();
 
 		foreach ( $providers as $provider_id => $provider_config ) {
 			if ( empty( $provider_config['api_key'] ) ) {
 				continue;
 			}
 
-			$config[ $provider_id ] = [
-				'options' => [
+			$config[ $provider_id ] = array(
+				'options' => array(
 					'apiKey' => $provider_config['api_key'],
-				],
-			];
+				),
+			);
 		}
 
 		return $config;

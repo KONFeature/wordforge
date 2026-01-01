@@ -48,68 +48,68 @@ class ListProducts extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'status' => [
+				array(
+					'status'   => array(
 						'type'    => 'string',
-						'enum'    => [ 'publish', 'draft', 'pending', 'private', 'trash', 'any' ],
+						'enum'    => array( 'publish', 'draft', 'pending', 'private', 'trash', 'any' ),
 						'default' => 'any',
-					],
-					'type' => [
+					),
+					'type'     => array(
 						'type'    => 'string',
-						'enum'    => [ 'simple', 'variable', 'grouped', 'external', 'any' ],
+						'enum'    => array( 'simple', 'variable', 'grouped', 'external', 'any' ),
 						'default' => 'any',
-					],
-					'category' => [
+					),
+					'category' => array(
 						'type'        => 'string',
 						'description' => 'Product category slug.',
-					],
-					'tag' => [
+					),
+					'tag'      => array(
 						'type'        => 'string',
 						'description' => 'Product tag slug.',
-					],
-					'sku' => [
+					),
+					'sku'      => array(
 						'type'        => 'string',
 						'description' => 'Filter by SKU.',
-					],
-					'featured' => [
+					),
+					'featured' => array(
 						'type' => 'boolean',
-					],
-					'on_sale' => [
+					),
+					'on_sale'  => array(
 						'type' => 'boolean',
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'date', 'title', 'price', 'popularity', 'rating' ]
+					array( 'date', 'title', 'price', 'popularity', 'rating' )
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args );
 
-		$query_args = [
+		$query_args = array(
 			'status'   => $args['status'] ?? 'any',
 			'limit'    => $pagination['per_page'],
 			'page'     => $pagination['page'],
 			'orderby'  => $pagination['orderby'],
 			'order'    => $pagination['order'],
 			'paginate' => true,
-		];
+		);
 
 		if ( ! empty( $args['type'] ) && 'any' !== $args['type'] ) {
 			$query_args['type'] = $args['type'];
 		}
 
 		if ( ! empty( $args['category'] ) ) {
-			$query_args['category'] = [ $args['category'] ];
+			$query_args['category'] = array( $args['category'] );
 		}
 
 		if ( ! empty( $args['tag'] ) ) {
-			$query_args['tag'] = [ $args['tag'] ];
+			$query_args['tag'] = array( $args['tag'] );
 		}
 
 		if ( ! empty( $args['sku'] ) ) {
@@ -126,13 +126,13 @@ class ListProducts extends AbstractAbility {
 
 		$results = wc_get_products( $query_args );
 
-		$items = array_map( [ $this, 'format_product' ], $results->products );
+		$items = array_map( array( $this, 'format_product' ), $results->products );
 
 		return $this->paginated_success( $items, $results->total, $results->max_num_pages, $pagination );
 	}
 
 	protected function format_product( \WC_Product $product ): array {
-		return [
+		return array(
 			'id'                => $product->get_id(),
 			'name'              => $product->get_name(),
 			'slug'              => $product->get_slug(),
@@ -151,13 +151,13 @@ class ListProducts extends AbstractAbility {
 			'tags'              => $this->get_term_names( $product, 'product_tag' ),
 			'image'             => $product->get_image_id() ? wp_get_attachment_url( $product->get_image_id() ) : null,
 			'permalink'         => $product->get_permalink(),
-		];
+		);
 	}
 
 	private function get_term_names( \WC_Product $product, string $taxonomy ): array {
 		$terms = get_the_terms( $product->get_id(), $taxonomy );
 		if ( ! $terms || is_wp_error( $terms ) ) {
-			return [];
+			return array();
 		}
 		return array_map( fn( $term ) => $term->name, $terms );
 	}
@@ -166,28 +166,34 @@ class ListProducts extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function get_product_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'                => [ 'type' => 'integer' ],
-				'name'              => [ 'type' => 'string' ],
-				'slug'              => [ 'type' => 'string' ],
-				'type'              => [ 'type' => 'string' ],
-				'status'            => [ 'type' => 'string' ],
-				'sku'               => [ 'type' => 'string' ],
-				'price'             => [ 'type' => 'string' ],
-				'regular_price'     => [ 'type' => 'string' ],
-				'sale_price'        => [ 'type' => 'string' ],
-				'on_sale'           => [ 'type' => 'boolean' ],
-				'stock_status'      => [ 'type' => 'string' ],
-				'stock_quantity'    => [ 'type' => [ 'integer', 'null' ] ],
-				'featured'          => [ 'type' => 'boolean' ],
-				'short_description' => [ 'type' => 'string' ],
-				'categories'        => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
-				'tags'              => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
-				'image'             => [ 'type' => [ 'string', 'null' ] ],
-				'permalink'         => [ 'type' => 'string' ],
-			],
-		];
+			'properties' => array(
+				'id'                => array( 'type' => 'integer' ),
+				'name'              => array( 'type' => 'string' ),
+				'slug'              => array( 'type' => 'string' ),
+				'type'              => array( 'type' => 'string' ),
+				'status'            => array( 'type' => 'string' ),
+				'sku'               => array( 'type' => 'string' ),
+				'price'             => array( 'type' => 'string' ),
+				'regular_price'     => array( 'type' => 'string' ),
+				'sale_price'        => array( 'type' => 'string' ),
+				'on_sale'           => array( 'type' => 'boolean' ),
+				'stock_status'      => array( 'type' => 'string' ),
+				'stock_quantity'    => array( 'type' => array( 'integer', 'null' ) ),
+				'featured'          => array( 'type' => 'boolean' ),
+				'short_description' => array( 'type' => 'string' ),
+				'categories'        => array(
+					'type'  => 'array',
+					'items' => array( 'type' => 'string' ),
+				),
+				'tags'              => array(
+					'type'  => 'array',
+					'items' => array( 'type' => 'string' ),
+				),
+				'image'             => array( 'type' => array( 'string', 'null' ) ),
+				'permalink'         => array( 'type' => 'string' ),
+			),
+		);
 	}
 }

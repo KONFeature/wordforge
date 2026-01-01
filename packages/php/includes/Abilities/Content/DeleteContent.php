@@ -48,7 +48,7 @@ class DeleteContent extends AbstractAbility {
 
 	public function execute( array $args ): array {
 		$post_id = (int) $args['id'];
-		$force = $this->is_force_delete( $args );
+		$force   = $this->is_force_delete( $args );
 
 		$post = get_post( $post_id );
 
@@ -61,7 +61,7 @@ class DeleteContent extends AbstractAbility {
 		}
 
 		$title = $post->post_title;
-		$type = $post->post_type;
+		$type  = $post->post_type;
 
 		$result = wp_delete_post( $post_id, $force );
 

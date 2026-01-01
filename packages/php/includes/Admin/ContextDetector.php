@@ -86,9 +86,9 @@ class ContextDetector {
 			return null;
 		}
 
-		$categories = wp_get_post_terms( $post_id, 'product_cat', [ 'fields' => 'names' ] );
+		$categories = wp_get_post_terms( $post_id, 'product_cat', array( 'fields' => 'names' ) );
 
-		return [
+		return array(
 			'type'        => 'product-editor',
 			'productId'   => $post_id,
 			'productName' => $product->get_name(),
@@ -96,8 +96,8 @@ class ContextDetector {
 			'price'       => $product->get_price(),
 			'stockStatus' => $product->get_stock_status(),
 			'sku'         => $product->get_sku(),
-			'categories'  => is_array( $categories ) ? $categories : [],
-		];
+			'categories'  => is_array( $categories ) ? $categories : array(),
+		);
 	}
 
 	private static function get_product_list_context(): ?array {
@@ -110,30 +110,30 @@ class ContextDetector {
 		$draft  = isset( $counts->draft ) ? (int) $counts->draft : 0;
 
 		$categories = get_terms(
-			[
+			array(
 				'taxonomy'   => 'product_cat',
 				'hide_empty' => false,
 				'fields'     => 'all',
-			]
+			)
 		);
 
-		$category_list = [];
+		$category_list = array();
 		if ( is_array( $categories ) ) {
 			foreach ( $categories as $cat ) {
-				$category_list[] = [
+				$category_list[] = array(
 					'id'    => $cat->term_id,
 					'name'  => $cat->name,
 					'count' => $cat->count,
-				];
+				);
 			}
 		}
 
-		return [
+		return array(
 			'type'              => 'product-list',
 			'totalProducts'     => $total,
 			'draftProducts'     => $draft,
 			'productCategories' => $category_list,
-		];
+		);
 	}
 
 	private static function get_post_list_context(): array {
@@ -142,31 +142,31 @@ class ContextDetector {
 		$draft  = isset( $counts->draft ) ? (int) $counts->draft : 0;
 
 		$categories = get_terms(
-			[
+			array(
 				'taxonomy'   => 'category',
 				'hide_empty' => false,
 				'fields'     => 'all',
-			]
+			)
 		);
 
-		$category_list = [];
+		$category_list = array();
 		if ( is_array( $categories ) ) {
 			foreach ( $categories as $cat ) {
-				$category_list[] = [
+				$category_list[] = array(
 					'id'    => $cat->term_id,
 					'name'  => $cat->name,
 					'count' => $cat->count,
-				];
+				);
 			}
 		}
 
-		return [
+		return array(
 			'type'       => 'post-list',
 			'postType'   => 'post',
 			'totalPosts' => $total,
 			'draftPosts' => $draft,
 			'categories' => $category_list,
-		];
+		);
 	}
 
 	private static function get_page_list_context(): array {
@@ -174,12 +174,12 @@ class ContextDetector {
 		$total  = isset( $counts->publish ) ? (int) $counts->publish : 0;
 		$draft  = isset( $counts->draft ) ? (int) $counts->draft : 0;
 
-		return [
+		return array(
 			'type'       => 'page-list',
 			'postType'   => 'page',
 			'totalPosts' => $total,
 			'draftPosts' => $draft,
-		];
+		);
 	}
 
 	private static function get_media_list_context(): array {
@@ -213,13 +213,13 @@ class ContextDetector {
 			}
 		}
 
-		return [
+		return array(
 			'type'       => 'media-list',
 			'totalMedia' => $total,
 			'images'     => $image_count,
 			'videos'     => $video_count,
 			'audio'      => $audio_count,
 			'documents'  => $doc_count,
-		];
+		);
 	}
 }

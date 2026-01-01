@@ -39,33 +39,36 @@ class ModerateComment extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'action' ],
-			'oneOf'      => [
-				[ 'required' => [ 'id' ] ],
-				[ 'required' => [ 'ids' ] ],
-			],
-			'properties' => [
-				'id'     => [
+			'required'   => array( 'action' ),
+			'oneOf'      => array(
+				array( 'required' => array( 'id' ) ),
+				array( 'required' => array( 'ids' ) ),
+			),
+			'properties' => array(
+				'id'     => array(
 					'type'        => 'integer',
 					'description' => 'Single comment ID to moderate.',
 					'minimum'     => 1,
-				],
-				'ids'    => [
+				),
+				'ids'    => array(
 					'type'        => 'array',
-					'items'       => [ 'type' => 'integer', 'minimum' => 1 ],
+					'items'       => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+					),
 					'description' => 'Array of comment IDs for bulk moderation.',
 					'minItems'    => 1,
 					'maxItems'    => 100,
-				],
-				'action' => [
+				),
+				'action' => array(
 					'type'        => 'string',
 					'description' => 'Moderation action to perform.',
-					'enum'        => [ 'approve', 'unapprove', 'spam', 'unspam', 'trash', 'untrash', 'delete' ],
-				],
-			],
-		];
+					'enum'        => array( 'approve', 'unapprove', 'spam', 'unspam', 'trash', 'untrash', 'delete' ),
+				),
+			),
+		);
 	}
 
 	protected function is_destructive(): bool {
@@ -74,21 +77,21 @@ class ModerateComment extends AbstractAbility {
 
 	public function execute( array $args ): array {
 		$action = $args['action'];
-		$ids    = ! empty( $args['ids'] ) ? array_map( 'absint', $args['ids'] ) : [ absint( $args['id'] ) ];
+		$ids    = ! empty( $args['ids'] ) ? array_map( 'absint', $args['ids'] ) : array( absint( $args['id'] ) );
 
-		$results = [
-			'success' => [],
-			'failed'  => [],
-		];
+		$results = array(
+			'success' => array(),
+			'failed'  => array(),
+		);
 
 		foreach ( $ids as $comment_id ) {
 			$comment = get_comment( $comment_id );
 
 			if ( ! $comment ) {
-				$results['failed'][] = [
+				$results['failed'][] = array(
 					'id'     => $comment_id,
 					'reason' => 'Comment not found',
-				];
+				);
 				continue;
 			}
 
@@ -97,10 +100,10 @@ class ModerateComment extends AbstractAbility {
 			if ( $success ) {
 				$results['success'][] = $comment_id;
 			} else {
-				$results['failed'][] = [
+				$results['failed'][] = array(
 					'id'     => $comment_id,
 					'reason' => 'Action failed',
-				];
+				);
 			}
 		}
 
@@ -146,7 +149,7 @@ class ModerateComment extends AbstractAbility {
 	}
 
 	private function get_action_past_tense( string $action ): string {
-		$map = [
+		$map = array(
 			'approve'   => 'approved',
 			'unapprove' => 'unapproved',
 			'spam'      => 'marked as spam',
@@ -154,7 +157,7 @@ class ModerateComment extends AbstractAbility {
 			'trash'     => 'trashed',
 			'untrash'   => 'restored',
 			'delete'    => 'permanently deleted',
-		];
+		);
 		return $map[ $action ] ?? $action;
 	}
 }

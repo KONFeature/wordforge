@@ -39,22 +39,22 @@ class ReplyToComment extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'parent_id', 'content' ],
-			'properties' => [
-				'parent_id' => [
+			'required'   => array( 'parent_id', 'content' ),
+			'properties' => array(
+				'parent_id' => array(
 					'type'        => 'integer',
 					'description' => 'Parent comment ID to reply to.',
 					'minimum'     => 1,
-				],
-				'content'   => [
+				),
+				'content'   => array(
 					'type'        => 'string',
 					'description' => 'Reply content (supports HTML).',
 					'minLength'   => 1,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -67,7 +67,7 @@ class ReplyToComment extends AbstractAbility {
 
 		$current_user = wp_get_current_user();
 
-		$comment_data = [
+		$comment_data = array(
 			'comment_post_ID'      => $parent->comment_post_ID,
 			'comment_content'      => wp_kses_post( $args['content'] ),
 			'comment_parent'       => $parent_id,
@@ -76,7 +76,7 @@ class ReplyToComment extends AbstractAbility {
 			'comment_author_url'   => $current_user->user_url,
 			'user_id'              => $current_user->ID,
 			'comment_approved'     => 1,
-		];
+		);
 
 		$comment_id = wp_insert_comment( $comment_data );
 
@@ -87,7 +87,7 @@ class ReplyToComment extends AbstractAbility {
 		$comment = get_comment( $comment_id );
 
 		return $this->success(
-			[
+			array(
 				'id'         => $comment_id,
 				'post_id'    => (int) $parent->comment_post_ID,
 				'post_title' => get_the_title( $parent->comment_post_ID ),
@@ -95,7 +95,7 @@ class ReplyToComment extends AbstractAbility {
 				'content'    => $comment->comment_content,
 				'author'     => $comment->comment_author,
 				'date'       => $comment->comment_date,
-			],
+			),
 			'Reply posted successfully.'
 		);
 	}

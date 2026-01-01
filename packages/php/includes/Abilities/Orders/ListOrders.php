@@ -49,36 +49,36 @@ class ListOrders extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'status'      => [
+				array(
+					'status'      => array(
 						'type'        => 'string',
 						'description' => 'Filter by order status (pending, processing, on-hold, completed, cancelled, refunded, failed, or any).',
 						'default'     => 'any',
-					],
-					'customer_id' => [
+					),
+					'customer_id' => array(
 						'type'        => 'integer',
 						'description' => 'Filter by customer user ID.',
 						'minimum'     => 1,
-					],
-					'date_after'  => [
+					),
+					'date_after'  => array(
 						'type'        => 'string',
 						'description' => 'Filter orders created after this date (YYYY-MM-DD).',
 						'format'      => 'date',
-					],
-					'date_before' => [
+					),
+					'date_before' => array(
 						'type'        => 'string',
 						'description' => 'Filter orders created before this date (YYYY-MM-DD).',
 						'format'      => 'date',
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'date', 'id', 'total' ]
+					array( 'date', 'id', 'total' )
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -88,13 +88,13 @@ class ListOrders extends AbstractAbility {
 
 		$pagination = $this->normalize_pagination_args( $args );
 
-		$query_args = [
+		$query_args = array(
 			'limit'    => $pagination['per_page'],
 			'page'     => $pagination['page'],
 			'orderby'  => $pagination['orderby'],
 			'order'    => $pagination['order'],
 			'paginate' => true,
-		];
+		);
 
 		if ( ! empty( $args['status'] ) && 'any' !== $args['status'] ) {
 			$query_args['status'] = $args['status'];
@@ -119,7 +119,7 @@ class ListOrders extends AbstractAbility {
 
 		$results = wc_get_orders( $query_args );
 
-		$items = array_map( [ $this, 'format_order' ], $results->orders );
+		$items = array_map( array( $this, 'format_order' ), $results->orders );
 
 		return $this->paginated_success( $items, $results->total, $results->max_num_pages, $pagination );
 	}
@@ -129,7 +129,7 @@ class ListOrders extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_order( \WC_Order $order ): array {
-		return [
+		return array(
 			'id'              => $order->get_id(),
 			'number'          => $order->get_order_number(),
 			'status'          => $order->get_status(),
@@ -143,29 +143,65 @@ class ListOrders extends AbstractAbility {
 			'items_count'     => $order->get_item_count(),
 			'payment_method'  => $order->get_payment_method_title(),
 			'shipping_method' => implode( ', ', array_map( fn( $s ) => $s->get_method_title(), $order->get_shipping_methods() ) ),
-		];
+		);
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function get_order_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'              => [ 'type' => 'integer', 'description' => 'Order ID' ],
-				'number'          => [ 'type' => 'string', 'description' => 'Order number' ],
-				'status'          => [ 'type' => 'string', 'description' => 'Order status' ],
-				'date_created'    => [ 'type' => 'string', 'description' => 'Date created' ],
-				'total'           => [ 'type' => 'string', 'description' => 'Order total' ],
-				'currency'        => [ 'type' => 'string', 'description' => 'Currency code' ],
-				'customer_id'     => [ 'type' => 'integer', 'description' => 'Customer user ID' ],
-				'customer_email'  => [ 'type' => 'string', 'description' => 'Customer email' ],
-				'customer_name'   => [ 'type' => 'string', 'description' => 'Customer name' ],
-				'items_count'     => [ 'type' => 'integer', 'description' => 'Number of items' ],
-				'payment_method'  => [ 'type' => 'string', 'description' => 'Payment method' ],
-				'shipping_method' => [ 'type' => 'string', 'description' => 'Shipping method' ],
-			],
-		];
+			'properties' => array(
+				'id'              => array(
+					'type'        => 'integer',
+					'description' => 'Order ID',
+				),
+				'number'          => array(
+					'type'        => 'string',
+					'description' => 'Order number',
+				),
+				'status'          => array(
+					'type'        => 'string',
+					'description' => 'Order status',
+				),
+				'date_created'    => array(
+					'type'        => 'string',
+					'description' => 'Date created',
+				),
+				'total'           => array(
+					'type'        => 'string',
+					'description' => 'Order total',
+				),
+				'currency'        => array(
+					'type'        => 'string',
+					'description' => 'Currency code',
+				),
+				'customer_id'     => array(
+					'type'        => 'integer',
+					'description' => 'Customer user ID',
+				),
+				'customer_email'  => array(
+					'type'        => 'string',
+					'description' => 'Customer email',
+				),
+				'customer_name'   => array(
+					'type'        => 'string',
+					'description' => 'Customer name',
+				),
+				'items_count'     => array(
+					'type'        => 'integer',
+					'description' => 'Number of items',
+				),
+				'payment_method'  => array(
+					'type'        => 'string',
+					'description' => 'Payment method',
+				),
+				'shipping_method' => array(
+					'type'        => 'string',
+					'description' => 'Shipping method',
+				),
+			),
+		);
 	}
 }

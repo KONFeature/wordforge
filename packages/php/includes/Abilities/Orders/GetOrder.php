@@ -39,22 +39,22 @@ class GetOrder extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'id' ],
-			'properties' => [
-				'id'            => [
+			'required'   => array( 'id' ),
+			'properties' => array(
+				'id'            => array(
 					'type'        => 'integer',
 					'description' => 'Order ID to retrieve.',
 					'minimum'     => 1,
-				],
-				'include_notes' => [
+				),
+				'include_notes' => array(
 					'type'        => 'boolean',
 					'description' => 'Include order notes in the response.',
 					'default'     => false,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -82,7 +82,7 @@ class GetOrder extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_order( \WC_Order $order ): array {
-		return [
+		return array(
 			'id'               => $order->get_id(),
 			'number'           => $order->get_order_number(),
 			'status'           => $order->get_status(),
@@ -107,17 +107,17 @@ class GetOrder extends AbstractAbility {
 			'shipping_methods' => $this->format_shipping_methods( $order ),
 			'coupons'          => $this->format_coupons( $order ),
 			'refunds'          => $this->format_refunds( $order ),
-		];
+		);
 	}
 
 	/**
 	 * @param \WC_Order $order
-	 * @param string $type
+	 * @param string    $type
 	 * @return array<string, string>
 	 */
 	private function format_address( \WC_Order $order, string $type ): array {
 		$getter = "get_{$type}_";
-		return [
+		return array(
 			'first_name' => $order->{$getter . 'first_name'}(),
 			'last_name'  => $order->{$getter . 'last_name'}(),
 			'company'    => $order->{$getter . 'company'}(),
@@ -129,7 +129,7 @@ class GetOrder extends AbstractAbility {
 			'country'    => $order->{$getter . 'country'}(),
 			'email'      => 'billing' === $type ? $order->get_billing_email() : '',
 			'phone'      => 'billing' === $type ? $order->get_billing_phone() : '',
-		];
+		);
 	}
 
 	/**
@@ -137,10 +137,10 @@ class GetOrder extends AbstractAbility {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function format_line_items( \WC_Order $order ): array {
-		$items = [];
+		$items = array();
 		foreach ( $order->get_items() as $item ) {
 			$product = $item->get_product();
-			$items[] = [
+			$items[] = array(
 				'id'           => $item->get_id(),
 				'name'         => $item->get_name(),
 				'product_id'   => $item->get_product_id(),
@@ -149,7 +149,7 @@ class GetOrder extends AbstractAbility {
 				'subtotal'     => $item->get_subtotal(),
 				'total'        => $item->get_total(),
 				'sku'          => $product ? $product->get_sku() : '',
-			];
+			);
 		}
 		return $items;
 	}
@@ -159,13 +159,13 @@ class GetOrder extends AbstractAbility {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function format_shipping_methods( \WC_Order $order ): array {
-		$methods = [];
+		$methods = array();
 		foreach ( $order->get_shipping_methods() as $method ) {
-			$methods[] = [
+			$methods[] = array(
 				'id'     => $method->get_id(),
 				'method' => $method->get_method_title(),
 				'total'  => $method->get_total(),
-			];
+			);
 		}
 		return $methods;
 	}
@@ -175,12 +175,12 @@ class GetOrder extends AbstractAbility {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function format_coupons( \WC_Order $order ): array {
-		$coupons = [];
+		$coupons = array();
 		foreach ( $order->get_coupons() as $coupon ) {
-			$coupons[] = [
+			$coupons[] = array(
 				'code'     => $coupon->get_code(),
 				'discount' => $coupon->get_discount(),
-			];
+			);
 		}
 		return $coupons;
 	}
@@ -190,14 +190,14 @@ class GetOrder extends AbstractAbility {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function format_refunds( \WC_Order $order ): array {
-		$refunds = [];
+		$refunds = array();
 		foreach ( $order->get_refunds() as $refund ) {
-			$refunds[] = [
+			$refunds[] = array(
 				'id'     => $refund->get_id(),
 				'amount' => $refund->get_amount(),
 				'reason' => $refund->get_reason(),
 				'date'   => $refund->get_date_created()?->format( 'Y-m-d H:i:s' ),
-			];
+			);
 		}
 		return $refunds;
 	}
@@ -207,13 +207,16 @@ class GetOrder extends AbstractAbility {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function get_order_notes( int $order_id ): array {
-		$notes = wc_get_order_notes( [ 'order_id' => $order_id ] );
-		return array_map( fn( $note ) => [
-			'id'            => $note->id,
-			'content'       => $note->content,
-			'date'          => $note->date_created->format( 'Y-m-d H:i:s' ),
-			'customer_note' => $note->customer_note,
-			'added_by'      => $note->added_by,
-		], $notes );
+		$notes = wc_get_order_notes( array( 'order_id' => $order_id ) );
+		return array_map(
+			fn( $note ) => array(
+				'id'            => $note->id,
+				'content'       => $note->content,
+				'date'          => $note->date_created->format( 'Y-m-d H:i:s' ),
+				'customer_note' => $note->customer_note,
+				'added_by'      => $note->added_by,
+			),
+			$notes
+		);
 	}
 }

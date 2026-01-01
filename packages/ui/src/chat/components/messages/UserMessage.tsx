@@ -1,3 +1,4 @@
+import { memo, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import {
   extractContextFromXml,
@@ -13,7 +14,7 @@ interface UserMessageProps {
   message: ChatMessage;
 }
 
-export const UserMessage = ({ message }: UserMessageProps) => {
+export const UserMessage = memo(({ message }: UserMessageProps) => {
   const time = new Date(message.info.time.created * 1000).toLocaleTimeString(
     [],
     { hour: '2-digit', minute: '2-digit' },
@@ -40,4 +41,4 @@ export const UserMessage = ({ message }: UserMessageProps) => {
       ))}
     </div>
   );
-};
+});

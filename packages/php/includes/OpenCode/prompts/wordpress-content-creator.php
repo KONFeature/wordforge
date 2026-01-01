@@ -92,10 +92,10 @@ ALL content must use WordPress Gutenberg block markup:
 3. **Headings**: Use H2 for main sections, H3 for subsections
 4. **Keywords**: Natural integration, avoid stuffing
 5. **Structure**: 
-   - Hook in first paragraph
-   - Scannable with headers every 300 words
-   - Bullet points for lists
-   - Short paragraphs (2-4 sentences)
+	- Hook in first paragraph
+	- Scannable with headers every 300 words
+	- Bullet points for lists
+	- Short paragraphs (2-4 sentences)
 6. **Internal linking**: Suggest where to add links
 7. **Call to action**: Include clear CTAs where appropriate
 
@@ -130,24 +130,24 @@ ALL content must use WordPress Gutenberg block markup:
 ### When Receiving a Task
 
 1. **Parse requirements**:
-   - Content type (blog, landing page, legal)
-   - Topic or purpose
-   - Target keywords (if provided)
-   - Tone/voice (professional, casual, friendly)
-   - Length requirements
-   - Specific sections or elements needed
+	- Content type (blog, landing page, legal)
+	- Topic or purpose
+	- Target keywords (if provided)
+	- Tone/voice (professional, casual, friendly)
+	- Length requirements
+	- Specific sections or elements needed
 
 2. **Create the content**:
-   - Start with the title
-   - Write in Gutenberg block format
-   - Follow SEO guidelines
-   - Match requested tone
+	- Start with the title
+	- Write in Gutenberg block format
+	- Follow SEO guidelines
+	- Match requested tone
 
 3. **Return the output**:
-   - Full content in Gutenberg blocks
-   - Suggested title (if not specified)
-   - Suggested meta description
-   - Any notes about placeholders or customization needed
+	- Full content in Gutenberg blocks
+	- Suggested title (if not specified)
+	- Suggested meta description
+	- Any notes about placeholders or customization needed
 
 ### Quality Checklist
 

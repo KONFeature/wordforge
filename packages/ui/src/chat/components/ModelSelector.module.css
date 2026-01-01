@@ -7,46 +7,137 @@
   padding: 2px var(--wf-spacing-sm);
   background: var(--wf-color-bg-code);
   border-radius: var(--wf-radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  max-width: 200px;
 }
 
 .triggerIcon {
-  margin-right: var(--wf-spacing-xs);
+  flex-shrink: 0;
+}
+
+.triggerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .triggerArrow {
-  margin-left: var(--wf-spacing-xs);
   opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .popoverContent {
-  max-height: 300px;
+  width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.searchContainer {
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  border-bottom: 1px solid var(--wf-color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wf-spacing-xs);
+}
+
+.searchInput {
+  margin: 0;
+}
+
+.searchInput input {
+  font-size: var(--wf-font-size-md) !important;
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm) !important;
+}
+
+.modelStats {
+  font-size: var(--wf-font-size-xs);
+  color: var(--wf-color-text-muted);
+  text-align: right;
+}
+
+.providerList {
+  max-height: 350px;
   overflow-y: auto;
-  min-width: 250px;
-  padding: var(--wf-spacing-sm) 0;
+  overscroll-behavior: contain;
 }
 
 .emptyState {
-  padding: var(--wf-spacing-md) var(--wf-spacing-lg);
+  padding: var(--wf-spacing-xl);
   color: var(--wf-color-text-muted);
   font-size: var(--wf-font-size-md);
+  text-align: center;
+}
+
+.providerGroup {
+  border-bottom: 1px solid var(--wf-color-border-light);
+}
+
+.providerGroup:last-child {
+  border-bottom: none;
 }
 
 .providerHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
   padding: var(--wf-spacing-sm) var(--wf-spacing-md);
-  font-size: var(--wf-font-size-sm);
+  border: none;
+  background: var(--wf-color-bg-alt);
+  cursor: pointer;
+  font-size: var(--wf-font-size-md);
+  font-weight: 600;
+  color: var(--wf-color-text);
+  transition: background var(--wf-transition-fast);
+}
+
+.providerHeader:hover {
+  background: var(--wf-color-bg-code);
+}
+
+.providerName {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+}
+
+.modelCount {
+  font-weight: 400;
   color: var(--wf-color-text-muted);
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: var(--wf-font-size-sm);
+}
+
+.activeIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--wf-radius-circle);
+  background: var(--wf-color-primary);
+  margin-right: var(--wf-spacing-sm);
+}
+
+.expandIcon {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-sm);
+}
+
+.modelList {
+  background: var(--wf-color-white);
 }
 
 .modelButton {
   width: 100%;
   text-align: left;
   padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  padding-left: var(--wf-spacing-xl);
   border: none;
   background: none;
   cursor: pointer;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   transition: background var(--wf-transition-fast);
 }
 
@@ -58,34 +149,63 @@
   background: var(--wf-color-bg-selected);
 }
 
-.modelName {
-  font-weight: 500;
+.modelInfo {
+  flex: 1;
+  min-width: 0;
 }
 
-.modelId {
+.modelName {
+  font-weight: 500;
+  font-size: var(--wf-font-size-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modelMeta {
   font-size: var(--wf-font-size-xs);
   color: var(--wf-color-text-muted);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
 }
 
-.selectedIndicator {
+.checkmark {
   color: var(--wf-color-success);
-  margin-left: auto;
-  padding-left: var(--wf-spacing-sm);
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
 .statusDeprecated {
-  margin-left: var(--wf-spacing-xs);
   padding: 1px var(--wf-spacing-xs);
   background: var(--wf-color-error-bg);
+  color: var(--wf-color-error-text);
   border-radius: 2px;
   font-size: 9px;
+  text-transform: uppercase;
 }
 
 .statusPreview {
-  margin-left: var(--wf-spacing-xs);
   padding: 1px var(--wf-spacing-xs);
   background: var(--wf-color-warning-bg);
+  color: var(--wf-color-warning-text);
   border-radius: 2px;
   font-size: 9px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .popoverContent {
+    width: 100%;
+    max-width: none;
+  }
+
+  .providerList {
+    max-height: 280px;
+  }
+
+  .trigger {
+    max-width: 150px;
+  }
 }

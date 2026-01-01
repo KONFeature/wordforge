@@ -73,41 +73,41 @@ class GetUser extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'oneOf'      => [
-				[ 'required' => [ 'id' ] ],
-				[ 'required' => [ 'login' ] ],
-				[ 'required' => [ 'email' ] ],
-			],
-			'properties' => [
-				'id'           => [
+			'oneOf'      => array(
+				array( 'required' => array( 'id' ) ),
+				array( 'required' => array( 'login' ) ),
+				array( 'required' => array( 'email' ) ),
+			),
+			'properties' => array(
+				'id'           => array(
 					'type'        => 'integer',
 					'description' => 'User ID to retrieve.',
 					'minimum'     => 1,
-				],
-				'login'        => [
+				),
+				'login'        => array(
 					'type'        => 'string',
 					'description' => 'Username (login) to look up.',
 					'minLength'   => 1,
-				],
-				'email'        => [
+				),
+				'email'        => array(
 					'type'        => 'string',
 					'description' => 'Email address to look up.',
 					'format'      => 'email',
-				],
-				'include_meta' => [
+				),
+				'include_meta' => array(
 					'type'        => 'boolean',
 					'description' => 'Include user metadata (custom fields) in the response.',
 					'default'     => false,
-				],
-				'include_caps' => [
+				),
+				'include_caps' => array(
 					'type'        => 'boolean',
 					'description' => 'Include detailed capability list in the response.',
 					'default'     => false,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	/**
@@ -168,7 +168,7 @@ class GetUser extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_user( \WP_User $user ): array {
-		return [
+		return array(
 			'id'           => $user->ID,
 			'login'        => $user->user_login,
 			'email'        => $user->user_email,
@@ -180,10 +180,10 @@ class GetUser extends AbstractAbility {
 			'roles'        => $user->roles,
 			'registered'   => $user->user_registered,
 			'url'          => $user->user_url,
-			'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 96 ] ),
+			'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
 			'post_count'   => count_user_posts( $user->ID ),
 			'locale'       => get_user_locale( $user->ID ),
-		];
+		);
 	}
 
 	/**
@@ -194,10 +194,10 @@ class GetUser extends AbstractAbility {
 	 */
 	private function get_user_meta( int $user_id ): array {
 		$all_meta = get_user_meta( $user_id );
-		$filtered = [];
+		$filtered = array();
 
 		// Keys to exclude (sensitive or internal WordPress data).
-		$excluded_keys = [
+		$excluded_keys = array(
 			'wp_capabilities',
 			'wp_user_level',
 			'session_tokens',
@@ -214,7 +214,7 @@ class GetUser extends AbstractAbility {
 			'metaboxhidden_dashboard',
 			'closedpostboxes_dashboard',
 			'managenav-menuscolumnshidden',
-		];
+		);
 
 		foreach ( $all_meta as $key => $value ) {
 			// Skip internal WordPress keys.

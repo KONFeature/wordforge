@@ -43,30 +43,30 @@ class GetBlockStyles extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'                 => 'object',
 					'description'          => 'Block styles by block type',
 					'additionalProperties' => true,
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'block_type' => [
+			'properties' => array(
+				'block_type' => array(
 					'type'        => 'string',
 					'description' => 'Filter by block type (e.g., core/button).',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -76,7 +76,7 @@ class GetBlockStyles extends AbstractAbility {
 			self::CACHE_KEY,
 			fn() => $this->fetch_block_styles( $block_type ),
 			self::CACHE_TTL,
-			[ 'block_type' => $block_type ]
+			array( 'block_type' => $block_type )
 		);
 	}
 
@@ -88,23 +88,26 @@ class GetBlockStyles extends AbstractAbility {
 
 		if ( $block_type ) {
 			$styles = $registry->get_registered_styles_for_block( $block_type );
-			return [
+			return array(
 				'block_type' => $block_type,
 				'styles'     => $styles,
-			];
+			);
 		}
 
 		$all_styles = $registry->get_all_registered();
-		$formatted = [];
+		$formatted  = array();
 
 		foreach ( $all_styles as $type => $styles ) {
-			$formatted[ $type ] = array_map( fn( $style ) => [
-				'name'         => $style['name'],
-				'label'        => $style['label'] ?? $style['name'],
-				'is_default'   => $style['is_default'] ?? false,
-				'inline_style' => $style['inline_style'] ?? null,
-				'style_handle' => $style['style_handle'] ?? null,
-			], $styles );
+			$formatted[ $type ] = array_map(
+				fn( $style ) => array(
+					'name'         => $style['name'],
+					'label'        => $style['label'] ?? $style['name'],
+					'is_default'   => $style['is_default'] ?? false,
+					'inline_style' => $style['inline_style'] ?? null,
+					'style_handle' => $style['style_handle'] ?? null,
+				),
+				$styles
+			);
 		}
 
 		return $formatted;

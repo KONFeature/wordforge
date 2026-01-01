@@ -88,36 +88,36 @@ class ListUsers extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'role'   => [
+				array(
+					'role'    => array(
 						'type'        => 'string',
 						'description' => 'Filter by user role slug (e.g., "administrator", "editor", "author", "subscriber").',
-					],
-					'search' => [
+					),
+					'search'  => array(
 						'type'        => 'string',
 						'description' => 'Search users by name, email, or username. Searches across display name, user login, email, and nicename.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
-					],
-					'include' => [
+					),
+					'include' => array(
 						'type'        => 'array',
-						'items'       => [ 'type' => 'integer' ],
+						'items'       => array( 'type' => 'integer' ),
 						'description' => 'Array of specific user IDs to include.',
-					],
-					'exclude' => [
+					),
+					'exclude' => array(
 						'type'        => 'array',
-						'items'       => [ 'type' => 'integer' ],
+						'items'       => array( 'type' => 'integer' ),
 						'description' => 'Array of user IDs to exclude from results.',
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'registered', 'display_name', 'login', 'email', 'id' ]
+					array( 'registered', 'display_name', 'login', 'email', 'id' )
 				)
 			),
-		];
+		);
 	}
 
 	/**
@@ -129,12 +129,12 @@ class ListUsers extends AbstractAbility {
 	public function execute( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args );
 
-		$query_args = [
+		$query_args = array(
 			'number'  => $pagination['per_page'],
 			'paged'   => $pagination['page'],
 			'orderby' => $this->map_orderby( $pagination['orderby'] ),
 			'order'   => $pagination['order'],
-		];
+		);
 
 		if ( ! empty( $args['role'] ) ) {
 			$query_args['role'] = sanitize_text_field( $args['role'] );
@@ -142,7 +142,7 @@ class ListUsers extends AbstractAbility {
 
 		if ( ! empty( $args['search'] ) ) {
 			$query_args['search']         = '*' . sanitize_text_field( $args['search'] ) . '*';
-			$query_args['search_columns'] = [ 'user_login', 'user_email', 'user_nicename', 'display_name' ];
+			$query_args['search_columns'] = array( 'user_login', 'user_email', 'user_nicename', 'display_name' );
 		}
 
 		if ( ! empty( $args['include'] ) ) {
@@ -173,13 +173,13 @@ class ListUsers extends AbstractAbility {
 	 * @return string
 	 */
 	private function map_orderby( string $orderby ): string {
-		$map = [
+		$map = array(
 			'registered'   => 'registered',
 			'display_name' => 'display_name',
 			'login'        => 'login',
 			'email'        => 'email',
 			'id'           => 'ID',
-		];
+		);
 
 		return $map[ $orderby ] ?? 'registered';
 	}
@@ -191,7 +191,7 @@ class ListUsers extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_user( \WP_User $user ): array {
-		return [
+		return array(
 			'id'           => $user->ID,
 			'login'        => $user->user_login,
 			'email'        => $user->user_email,
@@ -202,9 +202,9 @@ class ListUsers extends AbstractAbility {
 			'roles'        => $user->roles,
 			'registered'   => $user->user_registered,
 			'url'          => $user->user_url,
-			'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 96 ] ),
+			'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
 			'post_count'   => count_user_posts( $user->ID ),
-		];
+		);
 	}
 
 	/**
@@ -213,22 +213,59 @@ class ListUsers extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function get_user_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'           => [ 'type' => 'integer', 'description' => 'Unique user ID' ],
-				'login'        => [ 'type' => 'string', 'description' => 'User login/username' ],
-				'email'        => [ 'type' => 'string', 'description' => 'User email address' ],
-				'display_name' => [ 'type' => 'string', 'description' => 'Public display name' ],
-				'first_name'   => [ 'type' => 'string', 'description' => 'First name' ],
-				'last_name'    => [ 'type' => 'string', 'description' => 'Last name' ],
-				'nickname'     => [ 'type' => 'string', 'description' => 'User nickname' ],
-				'roles'        => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'description' => 'Assigned roles' ],
-				'registered'   => [ 'type' => 'string', 'description' => 'Registration date' ],
-				'url'          => [ 'type' => 'string', 'description' => 'User website URL' ],
-				'avatar_url'   => [ 'type' => 'string', 'description' => 'Avatar image URL' ],
-				'post_count'   => [ 'type' => 'integer', 'description' => 'Number of published posts' ],
-			],
-		];
+			'properties' => array(
+				'id'           => array(
+					'type'        => 'integer',
+					'description' => 'Unique user ID',
+				),
+				'login'        => array(
+					'type'        => 'string',
+					'description' => 'User login/username',
+				),
+				'email'        => array(
+					'type'        => 'string',
+					'description' => 'User email address',
+				),
+				'display_name' => array(
+					'type'        => 'string',
+					'description' => 'Public display name',
+				),
+				'first_name'   => array(
+					'type'        => 'string',
+					'description' => 'First name',
+				),
+				'last_name'    => array(
+					'type'        => 'string',
+					'description' => 'Last name',
+				),
+				'nickname'     => array(
+					'type'        => 'string',
+					'description' => 'User nickname',
+				),
+				'roles'        => array(
+					'type'        => 'array',
+					'items'       => array( 'type' => 'string' ),
+					'description' => 'Assigned roles',
+				),
+				'registered'   => array(
+					'type'        => 'string',
+					'description' => 'Registration date',
+				),
+				'url'          => array(
+					'type'        => 'string',
+					'description' => 'User website URL',
+				),
+				'avatar_url'   => array(
+					'type'        => 'string',
+					'description' => 'Avatar image URL',
+				),
+				'post_count'   => array(
+					'type'        => 'integer',
+					'description' => 'Number of published posts',
+				),
+			),
+		);
 	}
 }

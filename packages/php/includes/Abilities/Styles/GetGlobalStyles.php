@@ -43,32 +43,32 @@ class GetGlobalStyles extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'                 => 'object',
 					'description'          => 'Global styles configuration (theme.json format)',
 					'additionalProperties' => true,
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'section' => [
+			'properties' => array(
+				'section' => array(
 					'type'        => 'string',
 					'description' => 'Specific section to retrieve.',
-					'enum'        => [ 'all', 'settings', 'styles', 'customTemplates', 'templateParts' ],
+					'enum'        => array( 'all', 'settings', 'styles', 'customTemplates', 'templateParts' ),
 					'default'     => 'all',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -78,7 +78,7 @@ class GetGlobalStyles extends AbstractAbility {
 			self::CACHE_KEY,
 			fn() => $this->fetch_styles( $section ),
 			self::CACHE_TTL,
-			[ 'section' => $section ]
+			array( 'section' => $section )
 		);
 	}
 
@@ -87,10 +87,10 @@ class GetGlobalStyles extends AbstractAbility {
 	 */
 	private function fetch_styles( string $section ): array {
 		$theme_json = \WP_Theme_JSON_Resolver::get_merged_data();
-		$data = $theme_json->get_raw_data();
+		$data       = $theme_json->get_raw_data();
 
 		if ( 'all' !== $section && isset( $data[ $section ] ) ) {
-			return [ $section => $data[ $section ] ];
+			return array( $section => $data[ $section ] );
 		}
 
 		return $data;

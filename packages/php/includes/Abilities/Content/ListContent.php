@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace WordForge\Abilities\Content;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\CacheableTrait;
 use WordForge\Abilities\Traits\PaginationSchemaTrait;
 
 class ListContent extends AbstractAbility {
 
+	use CacheableTrait;
 	use PaginationSchemaTrait;
 
 	public function get_category(): string {
@@ -46,48 +48,48 @@ class ListContent extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'post_type' => [
+				array(
+					'post_type' => array(
 						'type'        => 'string',
 						'description' => 'Content type to list: "post" for blog posts, "page" for pages, or any registered custom post type slug.',
 						'default'     => 'post',
-					],
-					'status' => [
+					),
+					'status'    => array(
 						'type'        => 'string',
 						'description' => 'Filter by publication status.',
-						'enum'        => [ 'publish', 'draft', 'pending', 'private', 'trash', 'any' ],
+						'enum'        => array( 'publish', 'draft', 'pending', 'private', 'trash', 'any' ),
 						'default'     => 'any',
-					],
-					'search' => [
+					),
+					'search'    => array(
 						'type'        => 'string',
 						'description' => 'Search term to filter content by title, content, or excerpt.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
-					],
-					'author' => [
+					),
+					'author'    => array(
 						'type'        => 'integer',
 						'description' => 'Filter by author user ID.',
 						'minimum'     => 1,
-					],
-					'category' => [
+					),
+					'category'  => array(
 						'type'        => 'string',
 						'description' => 'Filter posts by category slug.',
 						'pattern'     => '^[a-z0-9-]+$',
-					],
-					'tag' => [
+					),
+					'tag'       => array(
 						'type'        => 'string',
 						'description' => 'Filter posts by tag slug.',
 						'pattern'     => '^[a-z0-9-]+$',
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'date', 'title', 'modified', 'menu_order', 'id' ]
+					array( 'date', 'title', 'modified', 'menu_order', 'id' )
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -101,15 +103,32 @@ class ListContent extends AbstractAbility {
 		}
 
 		$pagination = $this->normalize_pagination_args( $args );
+		$cache_args = array_merge( $args, $pagination );
 
-		$query_args = [
+		return $this->cached_success(
+			'list_content',
+			fn() => $this->fetch_content( $args, $pagination ),
+			120,
+			$cache_args
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $args       Input arguments.
+	 * @param array<string, mixed> $pagination Normalized pagination args.
+	 * @return array<string, mixed>
+	 */
+	private function fetch_content( array $args, array $pagination ): array {
+		$post_type = $args['post_type'] ?? 'post';
+
+		$query_args = array(
 			'post_type'      => $post_type,
 			'post_status'    => $args['status'] ?? 'any',
 			'posts_per_page' => $pagination['per_page'],
 			'paged'          => $pagination['page'],
 			'orderby'        => $pagination['orderby'],
 			'order'          => $pagination['order'],
-		];
+		);
 
 		if ( ! empty( $args['search'] ) ) {
 			$query_args['s'] = sanitize_text_field( $args['search'] );
@@ -134,29 +153,86 @@ class ListContent extends AbstractAbility {
 			$query->posts
 		);
 
-		return $this->paginated_success( $items, $query->found_posts, $query->max_num_pages, $pagination );
+		return array(
+			'items'      => $items,
+			'total'      => $query->found_posts,
+			'pages'      => $query->max_num_pages,
+			'pagination' => $pagination,
+		);
+	}
+
+	/**
+	 * @param mixed $data Cached data.
+	 * @return array<string, mixed>
+	 */
+	protected function success( mixed $data, string $message = '' ): array {
+		if ( is_array( $data ) && isset( $data['items'], $data['pagination'] ) ) {
+			return $this->paginated_success(
+				$data['items'],
+				$data['total'],
+				$data['pages'],
+				$data['pagination']
+			);
+		}
+		return parent::success( $data, $message );
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function get_content_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'             => [ 'type' => 'integer', 'description' => 'Unique post ID' ],
-				'title'          => [ 'type' => 'string', 'description' => 'Content title' ],
-				'slug'           => [ 'type' => 'string', 'description' => 'URL slug' ],
-				'status'         => [ 'type' => 'string', 'description' => 'Publication status' ],
-				'type'           => [ 'type' => 'string', 'description' => 'Post type' ],
-				'content'        => [ 'type' => 'string', 'description' => 'Full content body' ],
-				'excerpt'        => [ 'type' => 'string', 'description' => 'Content excerpt' ],
-				'author'         => [ 'type' => 'integer', 'description' => 'Author user ID' ],
-				'date'           => [ 'type' => 'string', 'description' => 'Publication date' ],
-				'modified'       => [ 'type' => 'string', 'description' => 'Last modified date' ],
-				'permalink'      => [ 'type' => 'string', 'description' => 'Full URL to view content' ],
-				'featured_image' => [ 'type' => [ 'integer', 'null' ], 'description' => 'Featured image attachment ID' ],
-			],
-		];
+			'properties' => array(
+				'id'             => array(
+					'type'        => 'integer',
+					'description' => 'Unique post ID',
+				),
+				'title'          => array(
+					'type'        => 'string',
+					'description' => 'Content title',
+				),
+				'slug'           => array(
+					'type'        => 'string',
+					'description' => 'URL slug',
+				),
+				'status'         => array(
+					'type'        => 'string',
+					'description' => 'Publication status',
+				),
+				'type'           => array(
+					'type'        => 'string',
+					'description' => 'Post type',
+				),
+				'content'        => array(
+					'type'        => 'string',
+					'description' => 'Full content body',
+				),
+				'excerpt'        => array(
+					'type'        => 'string',
+					'description' => 'Content excerpt',
+				),
+				'author'         => array(
+					'type'        => 'integer',
+					'description' => 'Author user ID',
+				),
+				'date'           => array(
+					'type'        => 'string',
+					'description' => 'Publication date',
+				),
+				'modified'       => array(
+					'type'        => 'string',
+					'description' => 'Last modified date',
+				),
+				'permalink'      => array(
+					'type'        => 'string',
+					'description' => 'Full URL to view content',
+				),
+				'featured_image' => array(
+					'type'        => array( 'integer', 'null' ),
+					'description' => 'Featured image attachment ID',
+				),
+			),
+		);
 	}
 }

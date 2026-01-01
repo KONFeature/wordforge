@@ -48,17 +48,17 @@ class ServerPaths {
 			}
 
 			fclose( $socket );
-			$port++;
+			++$port;
 		}
 
 		return self::DEFAULT_PORT + wp_rand( 100, 999 );
 	}
 
 	public static function cleanup_state_files(): void {
-		$files = [
+		$files = array(
 			self::get_pid_file(),
 			self::get_port_file(),
-		];
+		);
 
 		foreach ( $files as $file ) {
 			if ( file_exists( $file ) ) {

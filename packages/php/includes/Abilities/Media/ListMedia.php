@@ -47,50 +47,50 @@ class ListMedia extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
-				[
-					'mime_type' => [
+				array(
+					'mime_type'  => array(
 						'type'        => 'string',
 						'description' => 'Filter by MIME type (image, video, audio, application, or specific like image/jpeg).',
-					],
-					'search' => [
+					),
+					'search'     => array(
 						'type'        => 'string',
 						'description' => 'Search term to filter media by title or filename.',
-					],
-					'author' => [
+					),
+					'author'     => array(
 						'type'        => 'integer',
 						'description' => 'Filter by author ID.',
-					],
-					'parent' => [
+					),
+					'parent'     => array(
 						'type'        => 'integer',
 						'description' => 'Filter by parent post ID (attached to).',
-					],
-					'unattached' => [
+					),
+					'unattached' => array(
 						'type'        => 'boolean',
 						'description' => 'Only show unattached media.',
 						'default'     => false,
-					],
-				],
+					),
+				),
 				$this->get_pagination_input_schema(
-					[ 'date', 'title', 'modified', 'id' ]
+					array( 'date', 'title', 'modified', 'id' )
 				)
 			),
-		];
+		);
 	}
 
 	public function execute( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args );
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
 			'posts_per_page' => $pagination['per_page'],
 			'paged'          => $pagination['page'],
 			'orderby'        => $pagination['orderby'],
 			'order'          => $pagination['order'],
-		];
+		);
 
 		if ( ! empty( $args['mime_type'] ) ) {
 			$query_args['post_mime_type'] = $args['mime_type'];
@@ -125,7 +125,7 @@ class ListMedia extends AbstractAbility {
 	protected function format_attachment( \WP_Post $attachment ): array {
 		$metadata = wp_get_attachment_metadata( $attachment->ID );
 
-		return [
+		return array(
 			'id'          => $attachment->ID,
 			'title'       => $attachment->post_title,
 			'filename'    => basename( get_attached_file( $attachment->ID ) ),
@@ -141,32 +141,32 @@ class ListMedia extends AbstractAbility {
 			'width'       => $metadata['width'] ?? null,
 			'height'      => $metadata['height'] ?? null,
 			'filesize'    => $metadata['filesize'] ?? null,
-		];
+		);
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function get_media_item_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'id'          => [ 'type' => 'integer' ],
-				'title'       => [ 'type' => 'string' ],
-				'filename'    => [ 'type' => 'string' ],
-				'url'         => [ 'type' => 'string' ],
-				'alt'         => [ 'type' => 'string' ],
-				'caption'     => [ 'type' => 'string' ],
-				'description' => [ 'type' => 'string' ],
-				'mime_type'   => [ 'type' => 'string' ],
-				'date'        => [ 'type' => 'string' ],
-				'modified'    => [ 'type' => 'string' ],
-				'author'      => [ 'type' => 'integer' ],
-				'parent'      => [ 'type' => 'integer' ],
-				'width'       => [ 'type' => [ 'integer', 'null' ] ],
-				'height'      => [ 'type' => [ 'integer', 'null' ] ],
-				'filesize'    => [ 'type' => [ 'integer', 'null' ] ],
-			],
-		];
+			'properties' => array(
+				'id'          => array( 'type' => 'integer' ),
+				'title'       => array( 'type' => 'string' ),
+				'filename'    => array( 'type' => 'string' ),
+				'url'         => array( 'type' => 'string' ),
+				'alt'         => array( 'type' => 'string' ),
+				'caption'     => array( 'type' => 'string' ),
+				'description' => array( 'type' => 'string' ),
+				'mime_type'   => array( 'type' => 'string' ),
+				'date'        => array( 'type' => 'string' ),
+				'modified'    => array( 'type' => 'string' ),
+				'author'      => array( 'type' => 'integer' ),
+				'parent'      => array( 'type' => 'integer' ),
+				'width'       => array( 'type' => array( 'integer', 'null' ) ),
+				'height'      => array( 'type' => array( 'integer', 'null' ) ),
+				'filesize'    => array( 'type' => array( 'integer', 'null' ) ),
+			),
+		);
 	}
 }

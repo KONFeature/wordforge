@@ -39,27 +39,27 @@ class UpdateOrderStatus extends AbstractAbility {
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'id', 'status' ],
-			'properties' => [
-				'id'     => [
+			'required'   => array( 'id', 'status' ),
+			'properties' => array(
+				'id'     => array(
 					'type'        => 'integer',
 					'description' => 'Order ID to update.',
 					'minimum'     => 1,
-				],
-				'status' => [
+				),
+				'status' => array(
 					'type'        => 'string',
 					'description' => 'New order status.',
-					'enum'        => [ 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed' ],
-				],
-				'note'   => [
+					'enum'        => array( 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed' ),
+				),
+				'note'   => array(
 					'type'        => 'string',
 					'description' => 'Optional note to add explaining the status change.',
 					'maxLength'   => 1000,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -78,12 +78,12 @@ class UpdateOrderStatus extends AbstractAbility {
 
 		if ( $previous_status === $new_status ) {
 			return $this->success(
-				[
+				array(
 					'id'              => $order->get_id(),
 					'previous_status' => $previous_status,
 					'new_status'      => $new_status,
 					'changed'         => false,
-				],
+				),
 				'Order already has this status.'
 			);
 		}
@@ -93,14 +93,14 @@ class UpdateOrderStatus extends AbstractAbility {
 		$order->update_status( $new_status, $note );
 
 		return $this->success(
-			[
+			array(
 				'id'              => $order->get_id(),
 				'number'          => $order->get_order_number(),
 				'previous_status' => $previous_status,
 				'new_status'      => $order->get_status(),
 				'changed'         => true,
 				'note_added'      => ! empty( $note ),
-			],
+			),
 			sprintf( 'Order #%s status changed from %s to %s.', $order->get_order_number(), $previous_status, $new_status )
 		);
 	}

@@ -10,8 +10,8 @@ use WordForge\OpenCode\ServerProcess;
 class WidgetManager {
 
 	public function __construct() {
-		add_action( 'admin_enqueue_scripts', [ $this, 'maybe_enqueue_widget' ] );
-		add_action( 'admin_footer', [ $this, 'render_widget_container' ] );
+		add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_widget' ) );
+		add_action( 'admin_footer', array( $this, 'render_widget_container' ) );
 	}
 
 	public function maybe_enqueue_widget( string $hook ): void {
@@ -43,7 +43,7 @@ class WidgetManager {
 				return true;
 			}
 
-			if ( in_array( $post_type, [ 'post', 'page' ], true ) ) {
+			if ( in_array( $post_type, array( 'post', 'page' ), true ) ) {
 				return true;
 			}
 
@@ -83,7 +83,7 @@ class WidgetManager {
 			return true;
 		}
 
-		if ( in_array( $screen->id, [ 'edit-post', 'edit-page', 'upload' ], true ) ) {
+		if ( in_array( $screen->id, array( 'edit-post', 'edit-page', 'upload' ), true ) ) {
 			return true;
 		}
 
@@ -123,17 +123,17 @@ class WidgetManager {
 		wp_enqueue_style(
 			'wordforge-chat-widget',
 			plugins_url( 'assets/js/chat-widget.css', WORDFORGE_PLUGIN_FILE ),
-			[ 'wp-components' ],
+			array( 'wp-components' ),
 			$asset_file['version']
 		);
 
-		$context       = ContextDetector::get_context( $hook );
+		$context = ContextDetector::get_context( $hook );
 
-		$config = [
-			'proxyUrl'     => rest_url( 'wordforge/v1/opencode/proxy' ),
-			'nonce'        => wp_create_nonce( 'wp_rest' ),
-			'context'      => $context,
-		];
+		$config = array(
+			'proxyUrl' => rest_url( 'wordforge/v1/opencode/proxy' ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+			'context'  => $context,
+		);
 
 		wp_add_inline_script(
 			'wordforge-chat-widget',

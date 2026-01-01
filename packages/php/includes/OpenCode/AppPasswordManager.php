@@ -19,11 +19,11 @@ class AppPasswordManager {
 
 		$stored = get_option( self::OPTION_KEY );
 		if ( self::is_valid_stored( $stored, $user->ID ) ) {
-			return [
+			return array(
 				'username' => $user->user_login,
 				'password' => $stored['password'],
 				'auth'     => $stored['auth'],
-			];
+			);
 		}
 
 		return self::create_new( $user );
@@ -66,7 +66,7 @@ class AppPasswordManager {
 
 		$result = \WP_Application_Passwords::create_new_application_password(
 			$user->ID,
-			[ 'name' => 'WordForge OpenCode' ]
+			array( 'name' => 'WordForge OpenCode' )
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -78,17 +78,21 @@ class AppPasswordManager {
 
 		$auth = base64_encode( $user->user_login . ':' . $password );
 
-		update_option( self::OPTION_KEY, [
-			'user_id'  => $user->ID,
-			'uuid'     => $item['uuid'],
-			'auth'     => $auth,
-			'password' => $password,
-		], false );
+		update_option(
+			self::OPTION_KEY,
+			array(
+				'user_id'  => $user->ID,
+				'uuid'     => $item['uuid'],
+				'auth'     => $auth,
+				'password' => $password,
+			),
+			false
+		);
 
-		return [
+		return array(
 			'username' => $user->user_login,
 			'password' => $password,
 			'auth'     => $auth,
-		];
+		);
 	}
 }

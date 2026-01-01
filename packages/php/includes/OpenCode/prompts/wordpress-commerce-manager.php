@@ -50,28 +50,28 @@ You are a specialized WooCommerce subagent for WordPress sites.
 
 ```json
 {
-  "name": "Product Name",
-  "type": "simple|variable|grouped|external",
-  "status": "publish|draft|pending|private",
-  "description": "Full HTML description",
-  "short_description": "Brief summary",
-  "sku": "UNIQUE-SKU",
-  "regular_price": "29.99",
-  "sale_price": "19.99",
-  "stock_status": "instock|outofstock|onbackorder",
-  "manage_stock": true,
-  "stock_quantity": 100,
-  "categories": ["category-slug"],
-  "tags": ["tag-slug"],
-  "images": [{"src": "url", "alt": "description"}],
-  "attributes": [
-    {
-      "name": "Color",
-      "options": ["Red", "Blue", "Green"],
-      "visible": true,
-      "variation": true
-    }
-  ]
+	"name": "Product Name",
+	"type": "simple|variable|grouped|external",
+	"status": "publish|draft|pending|private",
+	"description": "Full HTML description",
+	"short_description": "Brief summary",
+	"sku": "UNIQUE-SKU",
+	"regular_price": "29.99",
+	"sale_price": "19.99",
+	"stock_status": "instock|outofstock|onbackorder",
+	"manage_stock": true,
+	"stock_quantity": 100,
+	"categories": ["category-slug"],
+	"tags": ["tag-slug"],
+	"images": [{"src": "url", "alt": "description"}],
+	"attributes": [
+	{
+		"name": "Color",
+		"options": ["Red", "Blue", "Green"],
+		"visible": true,
+		"variation": true
+	}
+	]
 }
 ```
 
@@ -87,21 +87,21 @@ You are a specialized WooCommerce subagent for WordPress sites.
 ### Product Creation Workflow
 
 1. **Parse requirements**:
-   - Product type (simple, variable, grouped, external)
-   - Name and descriptions
-   - Pricing (regular, sale)
-   - Inventory settings
-   - Categories and tags
-   - Attributes (for variable products)
+	- Product type (simple, variable, grouped, external)
+	- Name and descriptions
+	- Pricing (regular, sale)
+	- Inventory settings
+	- Categories and tags
+	- Attributes (for variable products)
 
 2. **Prepare product data**:
-   - Generate SEO-friendly descriptions if not provided
-   - Set appropriate stock status
-   - Validate required fields
+	- Generate SEO-friendly descriptions if not provided
+	- Set appropriate stock status
+	- Validate required fields
 
 3. **Execute via MCP tools**:
-   - Use `wordforge/save-product` to create/update
-   - Return the created product data
+	- Use `wordforge/save-product` to create/update
+	- Return the created product data
 
 ### Bulk Operations
 
@@ -140,64 +140,64 @@ For products with variations:
 ### Simple Physical Product
 ```json
 {
-  "name": "Product Name",
-  "type": "simple",
-  "status": "publish",
-  "regular_price": "29.99",
-  "manage_stock": true,
-  "stock_quantity": 50,
-  "stock_status": "instock",
-  "description": "<!-- wp:paragraph --><p>Full description here.</p><!-- /wp:paragraph -->",
-  "short_description": "Brief product summary for listings."
+	"name": "Product Name",
+	"type": "simple",
+	"status": "publish",
+	"regular_price": "29.99",
+	"manage_stock": true,
+	"stock_quantity": 50,
+	"stock_status": "instock",
+	"description": "<!-- wp:paragraph --><p>Full description here.</p><!-- /wp:paragraph -->",
+	"short_description": "Brief product summary for listings."
 }
 ```
 
 ### Digital Product
 ```json
 {
-  "name": "Digital Download",
-  "type": "simple",
-  "status": "publish",
-  "regular_price": "9.99",
-  "virtual": true,
-  "downloadable": true,
-  "manage_stock": false
+	"name": "Digital Download",
+	"type": "simple",
+	"status": "publish",
+	"regular_price": "9.99",
+	"virtual": true,
+	"downloadable": true,
+	"manage_stock": false
 }
 ```
 
 ### Variable Product (Parent)
 ```json
 {
-  "name": "T-Shirt",
-  "type": "variable",
-  "status": "publish",
-  "description": "Available in multiple sizes and colors.",
-  "attributes": [
-    {
-      "name": "Size",
-      "options": ["S", "M", "L", "XL"],
-      "visible": true,
-      "variation": true
-    },
-    {
-      "name": "Color", 
-      "options": ["Black", "White", "Navy"],
-      "visible": true,
-      "variation": true
-    }
-  ]
+	"name": "T-Shirt",
+	"type": "variable",
+	"status": "publish",
+	"description": "Available in multiple sizes and colors.",
+	"attributes": [
+	{
+		"name": "Size",
+		"options": ["S", "M", "L", "XL"],
+		"visible": true,
+		"variation": true
+	},
+	{
+		"name": "Color", 
+		"options": ["Black", "White", "Navy"],
+		"visible": true,
+		"variation": true
+	}
+	]
 }
 ```
 
 ### External/Affiliate Product
 ```json
 {
-  "name": "Affiliate Product",
-  "type": "external",
-  "status": "publish",
-  "regular_price": "49.99",
-  "external_url": "https://affiliate-link.com",
-  "button_text": "Buy on Amazon"
+	"name": "Affiliate Product",
+	"type": "external",
+	"status": "publish",
+	"regular_price": "49.99",
+	"external_url": "https://affiliate-link.com",
+	"button_text": "Buy on Amazon"
 }
 ```
 </Product_Templates>

@@ -10,8 +10,8 @@ class MenuManager {
 	public const CHAT_SLUG = 'wordforge-chat';
 
 	public function __construct() {
-		add_action( 'admin_menu', [ $this, 'register_menu' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_shared_assets' ] );
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_shared_assets' ) );
 	}
 
 	public function register_menu(): void {
@@ -20,7 +20,7 @@ class MenuManager {
 			__( 'WordForge (IA)', 'wordforge' ),
 			'manage_options',
 			self::MENU_SLUG,
-			[ $this, 'render_settings_page' ],
+			array( $this, 'render_settings_page' ),
 			'dashicons-hammer',
 			30
 		);
@@ -32,7 +32,7 @@ class MenuManager {
 			__( 'Settings', 'wordforge' ),
 			'manage_options',
 			self::MENU_SLUG,
-			[ $this, 'render_settings_page' ]
+			array( $this, 'render_settings_page' )
 		);
 
 		add_submenu_page(
@@ -41,7 +41,7 @@ class MenuManager {
 			__( 'Chat', 'wordforge' ),
 			'manage_options',
 			self::CHAT_SLUG,
-			[ $this, 'render_chat_page' ]
+			array( $this, 'render_chat_page' )
 		);
 	}
 
@@ -66,10 +66,10 @@ class MenuManager {
 	private function is_wordforge_page( string $hook ): bool {
 		return in_array(
 			$hook,
-			[
+			array(
 				'toplevel_page_' . self::MENU_SLUG,
 				'wordforge-ia_page_' . self::CHAT_SLUG,
-			],
+			),
 			true
 		);
 	}
