@@ -92,6 +92,7 @@ function init(): void {
 	new Admin\SettingsPage();
 	new Admin\OpenCodeController();
 	new Admin\WidgetManager();
+	new Admin\EditorSidebarManager();
 
     OpenCode\ActivityMonitor::schedule_cron();
 

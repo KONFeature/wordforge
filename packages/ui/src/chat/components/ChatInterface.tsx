@@ -11,9 +11,14 @@ import { ServerStatusBanner } from './ServerStatusBanner';
 interface ChatInterfaceProps {
   chat: ChatState;
   context?: ScopedContext | null;
+  compact?: boolean;
 }
 
-export const ChatInterface = ({ chat, context = null }: ChatInterfaceProps) => {
+export const ChatInterface = ({
+  chat,
+  context = null,
+  compact = false,
+}: ChatInterfaceProps) => {
   const hasSession = !!chat.sessionId;
   const hasMessages = chat.messages.length > 0;
   const showQuickActions = context && !hasMessages;
@@ -81,6 +86,7 @@ export const ChatInterface = ({ chat, context = null }: ChatInterfaceProps) => {
             ? __('Type your message...', 'wordforge')
             : __('Start a chat by typing here...', 'wordforge')
         }
+        compact={compact}
       />
     </div>
   );

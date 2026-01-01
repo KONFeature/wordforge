@@ -40,6 +40,10 @@ export interface WordForgeChatConfig {
     [key: string]: string;
   };
 }
+export interface WordForgeEditorConfig {
+  proxyUrl: string;
+  nonce: string;
+}
 
 export interface ProviderInfo {
   id: string;
@@ -114,6 +118,7 @@ export interface ChatMessage {
 declare global {
   interface Window {
     wordforgeChat?: WordForgeChatConfig;
+    wordforgeEditor?: WordForgeEditorConfig;
     wordforgeSettings?: WordForgeSettingsConfig;
   }
 }

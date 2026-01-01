@@ -19,6 +19,7 @@ interface InputAreaProps {
   selectedModel: SelectedModel | null;
   onSelectModel: (model: SelectedModel) => void;
   placeholder?: string;
+  compact?: boolean;
 }
 
 export const InputArea = ({
@@ -30,6 +31,7 @@ export const InputArea = ({
   selectedModel,
   onSelectModel,
   placeholder,
+  compact = false,
 }: InputAreaProps) => {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -54,10 +56,14 @@ export const InputArea = ({
     }
   };
 
+  const rootClassName = compact
+    ? `${styles.root} ${styles.compactRoot}`
+    : styles.root;
+
   return (
-    <div className={styles.root}>
+    <div className={rootClassName}>
       <div className={styles.container}>
-        <div className={styles.inputRow}>
+        <div className={compact ? styles.compactInputRow : styles.inputRow}>
           <textarea
             ref={textareaRef}
             value={text}
@@ -68,13 +74,40 @@ export const InputArea = ({
             disabled={disabled && !isBusy}
             className={styles.textarea}
           />
-          <div className={styles.actions}>
+          {!compact && (
+            <div className={styles.actions}>
+              {isBusy ? (
+                <Button
+                  variant="secondary"
+                  onClick={onAbort}
+                  icon="controls-pause"
+                  className={styles.actionButton}
+                >
+                  {__('Stop', 'wordforge')}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={handleSend}
+                  disabled={!text.trim() || disabled}
+                  icon="arrow-right-alt"
+                  className={styles.actionButton}
+                >
+                  {__('Send', 'wordforge')}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {compact ? (
+          <div className={styles.compactButtonRow}>
             {isBusy ? (
               <Button
                 variant="secondary"
                 onClick={onAbort}
                 icon="controls-pause"
-                className={styles.actionButton}
+                className={styles.compactActionButton}
               >
                 {__('Stop', 'wordforge')}
               </Button>
@@ -84,27 +117,33 @@ export const InputArea = ({
                 onClick={handleSend}
                 disabled={!text.trim() || disabled}
                 icon="arrow-right-alt"
-                className={styles.actionButton}
+                className={styles.compactActionButton}
               >
                 {__('Send', 'wordforge')}
               </Button>
             )}
+            <ModelSelector
+              providers={providers}
+              selectedModel={selectedModel}
+              onSelectModel={onSelectModel}
+              disabled={disabled || isBusy}
+            />
           </div>
-        </div>
-
-        <div className={styles.modelRow}>
-          <ModelSelector
-            providers={providers}
-            selectedModel={selectedModel}
-            onSelectModel={onSelectModel}
-            disabled={disabled || isBusy}
-          />
-          {selectedModel && (
-            <span className={styles.modelHint}>
-              {__('Model will be used for next message', 'wordforge')}
-            </span>
-          )}
-        </div>
+        ) : (
+          <div className={styles.modelRow}>
+            <ModelSelector
+              providers={providers}
+              selectedModel={selectedModel}
+              onSelectModel={onSelectModel}
+              disabled={disabled || isBusy}
+            />
+            {selectedModel && (
+              <span className={styles.modelHint}>
+                {__('Model will be used for next message', 'wordforge')}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

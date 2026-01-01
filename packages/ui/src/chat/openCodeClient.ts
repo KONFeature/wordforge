@@ -1,6 +1,7 @@
 import { createOpencodeClient } from '@opencode-ai/sdk/client';
 
-const config = window.wordforgeChat ?? window.wordforgeWidget;
+const config =
+  window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
 if (!config) {
   throw new Error('CLient not configured');
 }

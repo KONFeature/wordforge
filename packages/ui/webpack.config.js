@@ -7,6 +7,7 @@ module.exports = {
     chat: './src/chat/index.tsx',
     settings: './src/settings/index.tsx',
     'chat-widget': './src/widget/index.tsx',
+    'editor-sidebar': './src/editor/index.tsx',
   },
   resolve: {
     ...defaultConfig.resolve,
