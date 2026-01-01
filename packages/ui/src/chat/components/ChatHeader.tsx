@@ -63,7 +63,7 @@ export const ChatHeader = ({
               }
               onClick={onToggleSessions}
               className={styles.menuButton}
-              isSmall
+              size="small"
             />
           )}
           <span className={styles.title}>{title}</span>
@@ -82,13 +82,13 @@ export const ChatHeader = ({
                 icon="update"
                 label={__('Refresh', 'wordforge')}
                 onClick={onRefresh}
-                isSmall
+                size="small"
               />
               <Button
                 icon="trash"
                 label={__('Delete Session', 'wordforge')}
                 onClick={onDelete}
-                isSmall
+                size="small"
                 isDestructive
               />
             </>

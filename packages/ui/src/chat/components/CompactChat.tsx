@@ -1,4 +1,3 @@
-import type { OpencodeClient } from '@opencode-ai/sdk/client';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useChat } from '../hooks/useChat';
@@ -48,13 +47,11 @@ const ContextBadge = ({ context }: ContextBadgeProps) => {
 };
 
 interface CompactChatProps {
-  client: OpencodeClient;
   context?: ScopedContext | null;
   defaultSessionsCollapsed?: boolean;
 }
 
 export const CompactChat = ({
-  client,
   context,
   defaultSessionsCollapsed = true,
 }: CompactChatProps) => {
@@ -63,7 +60,7 @@ export const CompactChat = ({
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const chat = useChat(client, { context });
+  const chat = useChat({ context });
 
   const handleDeleteSession = async () => {
     await chat.deleteSession();

@@ -1,35 +1,31 @@
-import type {
-  OpencodeClient,
-  Session,
-  SessionStatus,
-} from '@opencode-ai/sdk/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { opencodeClient } from '../openCodeClient';
 
 export const SESSIONS_KEY = ['sessions'] as const;
 export const STATUSES_KEY = ['session-statuses'] as const;
 
-export const useSessions = (client: OpencodeClient | null) => {
-  return useQuery({
+export const useSessions = () =>
+  useQuery({
     queryKey: SESSIONS_KEY,
     queryFn: async () => {
-      const result = await client!.session.list();
+      const result = await opencodeClient.session.list();
       const sessions = Array.isArray(result.data) ? result.data : [];
       return sessions.sort((a, b) => b.time.updated - a.time.updated);
     },
-    enabled: !!client,
+    enabled: !!opencodeClient,
   });
-};
 
-export const useSessionStatuses = (client: OpencodeClient | null) => {
-  return useQuery({
+export const useSessionStatuses = () =>
+  useQuery({
     queryKey: STATUSES_KEY,
     queryFn: async () => {
-      const result = await client!.session.status();
+      const result = await opencodeClient.session.status();
       return (
         result.data && typeof result.data === 'object' ? result.data : {}
       ) as Record<string, SessionStatus>;
     },
-    enabled: !!client,
+    enabled: !!opencodeClient,
     refetchInterval: (query) => {
       const statuses = query.state.data;
       if (!statuses) return false;
@@ -39,37 +35,30 @@ export const useSessionStatuses = (client: OpencodeClient | null) => {
       return hasBusy ? 2000 : false;
     },
   });
-};
 
-export const useCreateSession = (client: OpencodeClient | null) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+export const useCreateSession = () =>
+  useMutation({
     mutationFn: async () => {
-      const result = await client!.session.create({ body: {} });
+      const result = await opencodeClient.session.create({ body: {} });
       return result.data!;
     },
-    onSuccess: (newSession) => {
+    onSuccess: (newSession, _var, _result, { client: queryClient }) => {
       queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
         old ? [newSession, ...old] : [newSession],
       );
     },
   });
-};
 
-export const useDeleteSession = (client: OpencodeClient | null) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+export const useDeleteSession = () =>
+  useMutation({
     mutationFn: async (sessionId: string) => {
-      await client!.session.delete({ path: { id: sessionId } });
+      await opencodeClient.session.delete({ path: { id: sessionId } });
       return sessionId;
     },
-    onSuccess: (deletedId) => {
+    onSuccess: (deletedId, _var, _result, { client: queryClient }) => {
       queryClient.setQueryData<Session[]>(
         SESSIONS_KEY,
         (old) => old?.filter((s) => s.id !== deletedId) ?? [],
       );
     },
   });
-};

@@ -1,5 +1,4 @@
 import type {
-  OpencodeClient,
   Session,
   SessionPromptData,
   SessionStatus,
@@ -7,6 +6,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
+import { opencodeClient } from '../openCodeClient';
 import {
   type ScopedContext,
   formatContextXml,
@@ -17,21 +17,18 @@ import { SESSIONS_KEY, STATUSES_KEY } from './useSessions';
 export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
 
-export const useMessages = (
-  client: OpencodeClient | null,
-  sessionId: string | null,
-) => {
+export const useMessages = (sessionId: string | null) => {
   const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: messagesKey(sessionId!),
     queryFn: async () => {
-      const result = await client!.session.messages({
+      const result = await opencodeClient.session.messages({
         path: { id: sessionId! },
       });
       return (result.data || []) as ChatMessage[];
     },
-    enabled: !!client && !!sessionId,
+    enabled: !!opencodeClient && !!sessionId,
     refetchInterval: () => {
       if (!sessionId) return false;
       const statuses =
@@ -56,8 +53,8 @@ export interface SendMessageResult {
   isNewSession: boolean;
 }
 
-export const useSendMessage = (client: OpencodeClient | null) => {
-  return useMutation({
+export const useSendMessage = () =>
+  useMutation({
     mutationFn: async (
       {
         text,
@@ -86,7 +83,7 @@ export const useSendMessage = (client: OpencodeClient | null) => {
       };
 
       if (!sessionId) {
-        const createResult = await client!.session.create({ body: {} });
+        const createResult = await opencodeClient.session.create({ body: {} });
         const newSession = createResult.data!;
         sessionId = newSession.id;
         isNewSession = true;
@@ -120,7 +117,10 @@ export const useSendMessage = (client: OpencodeClient | null) => {
         tempUserMsg,
       ]);
 
-      await client!.session.promptAsync({ path: { id: sessionId }, body });
+      await opencodeClient.session.promptAsync({
+        path: { id: sessionId },
+        body,
+      });
 
       return {
         sessionId,
@@ -143,12 +143,10 @@ export const useSendMessage = (client: OpencodeClient | null) => {
       await Promise.allSettled(promises);
     },
   });
-};
 
-export const useAbortSession = (client: OpencodeClient | null) => {
-  return useMutation({
+export const useAbortSession = () =>
+  useMutation({
     mutationFn: async (sessionId: string) => {
-      await client!.session.abort({ path: { id: sessionId } });
+      await opencodeClient.session.abort({ path: { id: sessionId } });
     },
   });
-};

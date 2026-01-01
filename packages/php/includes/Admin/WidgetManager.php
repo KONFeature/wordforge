@@ -19,10 +19,6 @@ class WidgetManager {
 			return;
 		}
 
-		if ( ! $this->is_opencode_ready() ) {
-			return;
-		}
-
 		$this->enqueue_widget_assets( $hook );
 	}
 
@@ -33,10 +29,6 @@ class WidgetManager {
 		}
 
 		if ( ! $this->should_show_widget_for_screen( $screen ) ) {
-			return;
-		}
-
-		if ( ! $this->is_opencode_ready() ) {
 			return;
 		}
 
@@ -98,12 +90,6 @@ class WidgetManager {
 		return false;
 	}
 
-	private function is_opencode_ready(): bool {
-		$binary_info   = BinaryManager::get_platform_info();
-		$server_status = ServerProcess::get_status();
-		return $binary_info['is_installed'] && $server_status['running'];
-	}
-
 	private function enqueue_widget_assets( string $hook ): void {
 		$asset_path = WORDFORGE_PLUGIN_DIR . 'assets/js/chat-widget.asset.php';
 		if ( ! file_exists( $asset_path ) ) {
@@ -130,13 +116,11 @@ class WidgetManager {
 		);
 
 		$context       = ContextDetector::get_context( $hook );
-		$server_status = ServerProcess::get_status();
 
 		$config = [
 			'proxyUrl'     => rest_url( 'wordforge/v1/opencode/proxy' ),
 			'nonce'        => wp_create_nonce( 'wp_rest' ),
 			'context'      => $context,
-			'serverStatus' => $server_status,
 		];
 
 		wp_add_inline_script(

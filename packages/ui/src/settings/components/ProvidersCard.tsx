@@ -128,14 +128,14 @@ export const ProvidersCard = ({
                     <div className={styles.actions}>
                       <Button
                         variant="secondary"
-                        isSmall
+                        size="small"
                         onClick={() => setEditingProvider(provider.id)}
                       >
                         {__('Change', 'wordforge')}
                       </Button>
                       <Button
                         variant="secondary"
-                        isSmall
+                        size="small"
                         isDestructive
                         onClick={() => handleRemove(provider.id)}
                         isBusy={
@@ -182,7 +182,7 @@ export const ProvidersCard = ({
                     <div className={styles.actions}>
                       <Button
                         variant="primary"
-                        isSmall
+                        size="small"
                         onClick={() => handleSave(provider.id)}
                         disabled={!apiKeyInputs[provider.id]}
                         isBusy={
@@ -195,7 +195,7 @@ export const ProvidersCard = ({
                       {editingProvider === provider.id && (
                         <Button
                           variant="secondary"
-                          isSmall
+                          size="small"
                           onClick={() => {
                             setEditingProvider(null);
                             setApiKeyInputs((prev) => ({

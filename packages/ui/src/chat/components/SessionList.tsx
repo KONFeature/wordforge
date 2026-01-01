@@ -126,7 +126,7 @@ export const SessionList = ({
           label={__('New Session', 'wordforge')}
           onClick={onCreateSession}
           disabled={isCreating}
-          isSmall
+          size="small"
         />
       </div>
 

@@ -47,7 +47,7 @@ export const ModelSelector = ({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        isSmall
+        size="small"
         className={styles.trigger}
       >
         <span className={styles.triggerIcon}>🤖</span>

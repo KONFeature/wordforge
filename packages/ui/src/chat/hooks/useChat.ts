@@ -1,9 +1,4 @@
-import type {
-  OpencodeClient,
-  Provider,
-  Session,
-  SessionStatus,
-} from '@opencode-ai/sdk/client';
+import type { Provider, Session, SessionStatus } from '@opencode-ai/sdk/client';
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
@@ -66,31 +61,27 @@ interface UseChatOptions {
   initialSessionId?: string | null;
 }
 
-export const useChat = (
-  client: OpencodeClient | null,
-  options: UseChatOptions = {},
-): ChatState => {
+export const useChat = (options: UseChatOptions = {}): ChatState => {
   const { context = null, initialSessionId = null } = options;
 
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
   const [model, setModel] = useState<SelectedModel | null>(null);
 
-  const { data: sessions = [], isLoading: isLoadingSessions } =
-    useSessions(client);
-  const { data: statuses = {} } = useSessionStatuses(client);
+  const { data: sessions = [], isLoading: isLoadingSessions } = useSessions();
+  const { data: statuses = {} } = useSessionStatuses();
   const {
     data: messages = [],
     isLoading: isLoadingMessages,
     refetch: refetchMessages,
-  } = useMessages(client, sessionId);
-  const { data: configData } = useProvidersConfig(client);
+  } = useMessages(sessionId);
+  const { data: configData } = useProvidersConfig();
 
   const { data: serverStatus } = useServerStatus();
   const autoStart = useAutoStartServer();
 
-  const sendMessage = useSendMessage(client);
-  const abortSession = useAbortSession(client);
-  const deleteSessionMutation = useDeleteSession(client);
+  const sendMessage = useSendMessage();
+  const abortSession = useAbortSession();
+  const deleteSessionMutation = useDeleteSession();
 
   useEffect(() => {
     if (configData?.defaultModel && !model) {

@@ -8,13 +8,10 @@ import { DeleteSessionModal } from './components/DeleteSessionModal';
 import { SessionList } from './components/SessionList';
 import { useChat } from './hooks/useChat';
 import { useMcpStatus } from './hooks/useConfig';
-import { useOpencodeClient } from './useOpencodeClient';
 
 export const ChatApp = () => {
-  const config = window.wordforgeChat;
-  const client = config ? useOpencodeClient(config) : null;
-  const chat = useChat(client);
-  const { data: mcpStatus = {} } = useMcpStatus(client);
+  const chat = useChat();
+  const { data: mcpStatus = {} } = useMcpStatus();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -22,14 +19,6 @@ export const ChatApp = () => {
     await chat.deleteSession();
     setShowDeleteModal(false);
   };
-
-  if (!config) {
-    return (
-      <div className={styles.configMissing}>
-        WordForge Configuration Missing
-      </div>
-    );
-  }
 
   return (
     <div className={styles.root}>

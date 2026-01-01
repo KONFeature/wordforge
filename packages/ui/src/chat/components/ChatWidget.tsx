@@ -1,4 +1,3 @@
-import type { OpencodeClient } from '@opencode-ai/sdk/client';
 import { Button, Spinner } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -9,16 +8,10 @@ import { CompactChat } from './CompactChat';
 const STORAGE_KEY = 'wordforge_widget_open';
 
 interface ChatWidgetProps {
-  client: OpencodeClient | null;
   context?: ScopedContext | null;
-  isReady?: boolean;
 }
 
-export const ChatWidget = ({
-  client,
-  context,
-  isReady = true,
-}: ChatWidgetProps) => {
+export const ChatWidget = ({ context }: ChatWidgetProps) => {
   const [isOpen, setIsOpen] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -108,7 +101,7 @@ export const ChatWidget = ({
             setIsMinimized(false);
           }}
           label={__('Close', 'wordforge')}
-          isSmall
+          size="small"
         />
       </div>
     );
@@ -126,7 +119,7 @@ export const ChatWidget = ({
             icon="minus"
             label={__('Minimize', 'wordforge')}
             onClick={() => setIsMinimized(true)}
-            isSmall
+            size="small"
           />
           <Button
             icon="no-alt"
@@ -135,29 +128,13 @@ export const ChatWidget = ({
               setIsOpen(false);
               setIsMinimized(false);
             }}
-            isSmall
+            size="small"
           />
         </div>
       </div>
 
       <div className={styles.widgetBody}>
-        {!isReady ? (
-          <div className={styles.notReady}>
-            <Spinner />
-            <p>{__('Connecting to OpenCode...', 'wordforge')}</p>
-          </div>
-        ) : !client ? (
-          <div className={styles.notReady}>
-            <p>
-              {__(
-                'OpenCode is not available. Please check settings.',
-                'wordforge',
-              )}
-            </p>
-          </div>
-        ) : (
-          <CompactChat client={client} context={context} />
-        )}
+        <CompactChat context={context} />
       </div>
     </div>
   );
