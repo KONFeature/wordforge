@@ -5,7 +5,9 @@ import type { ChatState } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';
 import styles from './ChatInterface.module.css';
 import { InputArea } from './InputArea';
+import type { ChatMessage } from './MessageList';
 import { QuickActions } from './QuickActions';
+import { SearchBar } from './SearchBar';
 import { ServerStatusBanner } from './ServerStatusBanner';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 
@@ -13,12 +15,26 @@ interface ChatInterfaceProps {
   chat: ChatState;
   context?: ScopedContext | null;
   compact?: boolean;
+  showSearch?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  onClearSearch?: () => void;
+  searchMatchCount?: number;
+  isSearching?: boolean;
+  filteredMessages?: ChatMessage[];
 }
 
 export const ChatInterface = ({
   chat,
   context = null,
   compact = false,
+  showSearch = false,
+  searchQuery = '',
+  onSearchChange,
+  onClearSearch,
+  searchMatchCount = 0,
+  isSearching = false,
+  filteredMessages,
 }: ChatInterfaceProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -39,6 +55,8 @@ export const ChatInterface = ({
   const hasSession = !!chat.sessionId;
   const hasMessages = chat.messages.length > 0;
   const showQuickActions = context && !hasMessages;
+  const displayMessages =
+    isSearching && filteredMessages ? filteredMessages : chat.messages;
 
   if (!chat.isServerReady && chat.serverStatus) {
     return (
@@ -55,14 +73,24 @@ export const ChatInterface = ({
 
   return (
     <div className={styles.root} ref={containerRef}>
+      {showSearch && onSearchChange && onClearSearch && (
+        <SearchBar
+          value={searchQuery}
+          onChange={onSearchChange}
+          onClear={onClearSearch}
+          matchCount={searchMatchCount}
+          isSearching={isSearching}
+        />
+      )}
+
       {hasSession && (
         <VirtualizedMessageList
-          messages={chat.messages}
+          messages={displayMessages}
           isLoading={chat.isLoadingMessages}
-          isThinking={chat.isBusy}
+          isThinking={chat.isBusy && !isSearching}
           isBusy={chat.isBusy}
           onOpenSession={chat.selectSession}
-          height={containerHeight}
+          height={containerHeight - (showSearch ? 50 : 0)}
         />
       )}
 

@@ -8,12 +8,18 @@ import { DeleteSessionModal } from './components/DeleteSessionModal';
 import { SessionList } from './components/SessionList';
 import { useChat } from './hooks/useChat';
 import { useMcpStatus } from './hooks/useConfig';
+import { useExport } from './hooks/useExport';
+import { useMessageSearch } from './hooks/useMessageSearch';
 
 export const ChatApp = () => {
   const chat = useChat();
   const { data: mcpStatus = {} } = useMcpStatus();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const search = useMessageSearch(chat.messages);
+  const { exportConversation } = useExport(chat.session, chat.messages);
 
   const handleDeleteSession = async () => {
     await chat.deleteSession();
@@ -38,6 +44,7 @@ export const ChatApp = () => {
             title={chat.session?.title || __('Select a session', 'wordforge')}
             isBusy={chat.isBusy}
             hasSession={!!chat.sessionId}
+            hasMessages={chat.messages.length > 0}
             parentSession={
               chat.parentSession
                 ? { id: chat.parentSession.id, title: chat.parentSession.title }
@@ -50,9 +57,21 @@ export const ChatApp = () => {
                 ? () => chat.selectSession(chat.parentSession!.id)
                 : undefined
             }
+            onToggleSearch={() => setShowSearch(!showSearch)}
+            onExport={exportConversation}
+            showSearch={showSearch}
           />
 
-          <ChatInterface chat={chat} />
+          <ChatInterface
+            chat={chat}
+            showSearch={showSearch}
+            searchQuery={search.searchQuery}
+            onSearchChange={search.setSearchQuery}
+            onClearSearch={search.clearSearch}
+            searchMatchCount={search.matchCount}
+            isSearching={search.isSearching}
+            filteredMessages={search.filteredMessages}
+          />
         </div>
 
         <DeleteSessionModal

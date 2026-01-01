@@ -1,6 +1,8 @@
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import type { ExportFormat } from '../hooks/useExport';
 import styles from './ChatHeader.module.css';
+import { ExportMenu } from './ExportMenu';
 
 interface ParentSessionInfo {
   id: string;
@@ -11,26 +13,34 @@ interface ChatHeaderProps {
   title: string;
   isBusy: boolean;
   hasSession: boolean;
+  hasMessages: boolean;
   compact?: boolean;
   parentSession?: ParentSessionInfo | null;
   onRefresh: () => void;
   onDelete: () => void;
   onToggleSessions?: () => void;
   onBackToParent?: () => void;
+  onToggleSearch?: () => void;
+  onExport?: (format: ExportFormat) => void;
   sessionsCollapsed?: boolean;
+  showSearch?: boolean;
 }
 
 export const ChatHeader = ({
   title,
   isBusy,
   hasSession,
+  hasMessages,
   compact = false,
   parentSession,
   onRefresh,
   onDelete,
   onToggleSessions,
   onBackToParent,
+  onToggleSearch,
+  onExport,
   sessionsCollapsed,
+  showSearch,
 }: ChatHeaderProps) => {
   const rootClass = compact ? `${styles.root} ${styles.compact}` : styles.root;
 
@@ -78,6 +88,18 @@ export const ChatHeader = ({
         <div className={styles.right}>
           {hasSession && (
             <>
+              {onToggleSearch && hasMessages && (
+                <Button
+                  icon="search"
+                  label={__('Search messages', 'wordforge')}
+                  onClick={onToggleSearch}
+                  size="small"
+                  isPressed={showSearch}
+                />
+              )}
+              {onExport && hasMessages && (
+                <ExportMenu onExport={onExport} disabled={isBusy} />
+              )}
               <Button
                 icon="update"
                 label={__('Refresh', 'wordforge')}

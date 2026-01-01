@@ -1,0 +1,48 @@
+.root {
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  background: var(--wf-color-surface);
+  border-bottom: 1px solid var(--wf-color-border);
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  background: var(--wf-color-background);
+  border: 1px solid var(--wf-color-border);
+  border-radius: var(--wf-radius-sm);
+  padding: 0 var(--wf-spacing-sm);
+}
+
+.icon {
+  color: var(--wf-color-text-muted);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+}
+
+.input .components-text-control__input {
+  border: none !important;
+  background: transparent !important;
+  padding: var(--wf-spacing-xs) 0 !important;
+  box-shadow: none !important;
+}
+
+.input .components-text-control__input:focus {
+  box-shadow: none !important;
+}
+
+.count {
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+  white-space: nowrap;
+}
+
+.clearButton {
+  padding: 0 !important;
+  min-width: 24px !important;
+  height: 24px !important;
+}
