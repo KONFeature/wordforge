@@ -1,98 +1,66 @@
 <?php
+/**
+ * @package WordForge
+ */
 
 declare(strict_types=1);
 
 namespace WordForge\Abilities\WooCommerce;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\DeletePatternTrait;
 
 class DeleteProduct extends AbstractAbility {
 
-    public function get_category(): string {
-        return 'wordforge-woocommerce';
-    }
+	use DeletePatternTrait;
 
-    protected function is_destructive(): bool {
-        return true;
-    }
+	public function get_category(): string {
+		return 'wordforge-woocommerce';
+	}
 
-    public function get_title(): string {
-        return __( 'Delete Product', 'wordforge' );
-    }
+	public function get_title(): string {
+		return __( 'Delete Product', 'wordforge' );
+	}
 
-    public function get_description(): string {
-        return __(
-            'Delete a WooCommerce product from the store. By default, products are moved to trash (recoverable). Use force=true for permanent ' .
-            'deletion (cannot be undone). Permanently deleting a product removes all associated data including order history references. ' .
-            'WARNING: Deleting products that have been ordered may affect order records and reporting. For variable products, also deletes ' .
-            'all variations. Use with caution.',
-            'wordforge'
-        );
-    }
+	public function get_description(): string {
+		return __(
+			'Delete a WooCommerce product from the store. By default, products are moved to trash (recoverable). Use force=true for permanent ' .
+			'deletion (cannot be undone). Permanently deleting a product removes all associated data including order history references. ' .
+			'WARNING: Deleting products that have been ordered may affect order records and reporting. For variable products, also deletes ' .
+			'all variations. Use with caution.',
+			'wordforge'
+		);
+	}
 
-    public function get_capability(): string {
-        return 'delete_products';
-    }
+	public function get_capability(): string {
+		return 'delete_products';
+	}
 
-    public function get_output_schema(): array {
-        return [
-            'type'       => 'object',
-            'properties' => [
-                'success' => [ 'type' => 'boolean' ],
-                'data'    => [
-                    'type'       => 'object',
-                    'properties' => [
-                        'id'      => [ 'type' => 'integer' ],
-                        'deleted' => [ 'type' => 'boolean' ],
-                        'force'   => [ 'type' => 'boolean' ],
-                    ],
-                ],
-                'message' => [ 'type' => 'string' ],
-            ],
-            'required' => [ 'success', 'data' ],
-        ];
-    }
+	public function get_input_schema(): array {
+		return $this->get_delete_input_schema( true, 'product' );
+	}
 
-    public function get_input_schema(): array {
-        return [
-            'type'       => 'object',
-            'required'   => [ 'id' ],
-            'properties' => [
-                'id' => [
-                    'type' => 'integer',
-                ],
-                'force' => [
-                    'type'        => 'boolean',
-                    'description' => 'Permanently delete instead of moving to trash.',
-                    'default'     => false,
-                ],
-            ],
-        ];
-    }
+	public function get_output_schema(): array {
+		return $this->get_delete_output_schema();
+	}
 
-    public function execute( array $args ): array {
-        $product = wc_get_product( (int) $args['id'] );
+	public function execute( array $args ): array {
+		$product = wc_get_product( (int) $args['id'] );
 
-        if ( ! $product ) {
-            return $this->error( 'Product not found.', 'not_found' );
-        }
+		if ( ! $product ) {
+			return $this->delete_not_found( 'Product' );
+		}
 
-        $product_id = $product->get_id();
-        $product_name = $product->get_name();
-        $force = (bool) ( $args['force'] ?? false );
+		$product_id = $product->get_id();
+		$product_name = $product->get_name();
+		$force = $this->is_force_delete( $args );
 
-        $result = $product->delete( $force );
+		$result = $product->delete( $force );
 
-        if ( ! $result ) {
-            return $this->error( 'Failed to delete product.', 'delete_failed' );
-        }
+		if ( ! $result ) {
+			return $this->delete_failed( 'product' );
+		}
 
-        $action = $force ? 'permanently deleted' : 'moved to trash';
-
-        return $this->success( [
-            'id'      => $product_id,
-            'deleted' => true,
-            'force'   => $force,
-        ], sprintf( 'Product "%s" %s.', $product_name, $action ) );
-    }
+		return $this->delete_success( $product_id, 'product', $product_name, $force );
+	}
 }

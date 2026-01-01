@@ -16,12 +16,24 @@ class EditorSidebarManager {
 			return;
 		}
 
-		$asset_file = include $asset_path;
+		$asset_file   = include $asset_path;
+		$vendor_asset = include WORDFORGE_PLUGIN_DIR . 'assets/js/wordforge-vendor.asset.php';
+
+		wp_register_script(
+			'wordforge-vendor',
+			plugins_url( 'assets/js/wordforge-vendor.js', WORDFORGE_PLUGIN_FILE ),
+			$vendor_asset['dependencies'],
+			$vendor_asset['version'],
+			true
+		);
+
+		$dependencies   = $asset_file['dependencies'];
+		$dependencies[] = 'wordforge-vendor';
 
 		wp_enqueue_script(
 			'wordforge-editor-sidebar',
 			plugins_url( 'assets/js/editor-sidebar.js', WORDFORGE_PLUGIN_FILE ),
-			$asset_file['dependencies'],
+			$dependencies,
 			$asset_file['version'],
 			true
 		);

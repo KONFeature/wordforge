@@ -1,19 +1,21 @@
 <?php
+/**
+ * @package WordForge
+ */
 
 declare(strict_types=1);
 
 namespace WordForge\Abilities\Taxonomy;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\DeletePatternTrait;
 
 class DeleteTerm extends AbstractAbility {
 
+	use DeletePatternTrait;
+
 	public function get_category(): string {
 		return 'wordforge-taxonomy';
-	}
-
-	protected function is_destructive(): bool {
-		return true;
 	}
 
 	public function get_title(): string {
@@ -34,41 +36,25 @@ class DeleteTerm extends AbstractAbility {
 		return 'manage_categories';
 	}
 
-	public function get_output_schema(): array {
-		return [
-			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
-					'type'       => 'object',
-					'properties' => [
-						'id'       => [ 'type' => 'integer' ],
-						'name'     => [ 'type' => 'string' ],
-						'slug'     => [ 'type' => 'string' ],
-						'taxonomy' => [ 'type' => 'string' ],
-					],
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
+	public function get_input_schema(): array {
+		$schema = $this->get_delete_input_schema( false, 'term' );
+		$schema['required'] = [ 'id', 'taxonomy' ];
+		$schema['properties']['taxonomy'] = [
+			'type'        => 'string',
+			'description' => 'Taxonomy name.',
 		];
+		return $schema;
 	}
 
-	public function get_input_schema(): array {
-		return [
-			'type'       => 'object',
-			'required'   => [ 'id', 'taxonomy' ],
-			'properties' => [
-				'id' => [
-					'type'        => 'integer',
-					'description' => 'Term ID to delete.',
-				],
-				'taxonomy' => [
-					'type'        => 'string',
-					'description' => 'Taxonomy name.',
-				],
+	public function get_output_schema(): array {
+		return $this->get_delete_output_schema(
+			[
+				'name'     => [ 'type' => 'string' ],
+				'slug'     => [ 'type' => 'string' ],
+				'taxonomy' => [ 'type' => 'string' ],
 			],
-		];
+			false
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -84,11 +70,10 @@ class DeleteTerm extends AbstractAbility {
 
 		$term = get_term( $term_id, $taxonomy );
 		if ( ! $term || is_wp_error( $term ) ) {
-			return $this->error( 'Term not found.', 'not_found' );
+			return $this->delete_not_found( 'Term' );
 		}
 
 		$deleted_info = [
-			'id'       => $term->term_id,
 			'name'     => $term->name,
 			'slug'     => $term->slug,
 			'taxonomy' => $term->taxonomy,
@@ -101,9 +86,12 @@ class DeleteTerm extends AbstractAbility {
 		}
 
 		if ( false === $result ) {
-			return $this->error( 'Failed to delete term.', 'delete_failed' );
+			return $this->delete_failed( 'term' );
 		}
 
-		return $this->success( $deleted_info, 'Term deleted successfully.' );
+		return $this->success(
+			array_merge( [ 'id' => $term_id, 'deleted' => true ], $deleted_info ),
+			'Term deleted successfully.'
+		);
 	}
 }

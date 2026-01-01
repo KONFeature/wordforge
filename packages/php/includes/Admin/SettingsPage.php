@@ -65,12 +65,24 @@ class SettingsPage {
 	}
 
 	private function enqueue_assets(): void {
-		$asset_file = include WORDFORGE_PLUGIN_DIR . 'assets/js/settings.asset.php';
+		$asset_file   = include WORDFORGE_PLUGIN_DIR . 'assets/js/settings.asset.php';
+		$vendor_asset = include WORDFORGE_PLUGIN_DIR . 'assets/js/wordforge-vendor.asset.php';
+
+		\wp_register_script(
+			'wordforge-vendor',
+			\plugins_url( 'assets/js/wordforge-vendor.js', WORDFORGE_PLUGIN_FILE ),
+			$vendor_asset['dependencies'],
+			$vendor_asset['version'],
+			true
+		);
+
+		$dependencies   = $asset_file['dependencies'];
+		$dependencies[] = 'wordforge-vendor';
 
 		\wp_enqueue_script(
 			'wordforge-settings',
 			\plugins_url( 'assets/js/settings.js', WORDFORGE_PLUGIN_FILE ),
-			$asset_file['dependencies'],
+			$dependencies,
 			$asset_file['version'],
 			true
 		);

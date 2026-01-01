@@ -1,12 +1,13 @@
 import { Notice } from '@wordpress/components';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { ChatState } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';
 import styles from './ChatInterface.module.css';
 import { InputArea } from './InputArea';
-import { MessageList } from './MessageList';
 import { QuickActions } from './QuickActions';
 import { ServerStatusBanner } from './ServerStatusBanner';
+import { VirtualizedMessageList } from './VirtualizedMessageList';
 
 interface ChatInterfaceProps {
   chat: ChatState;
@@ -19,6 +20,22 @@ export const ChatInterface = ({
   context = null,
   compact = false,
 }: ChatInterfaceProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(600);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerHeight(Math.max(300, rect.height - 100));
+      }
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
   const hasSession = !!chat.sessionId;
   const hasMessages = chat.messages.length > 0;
   const showQuickActions = context && !hasMessages;
@@ -37,14 +54,15 @@ export const ChatInterface = ({
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} ref={containerRef}>
       {hasSession && (
-        <MessageList
+        <VirtualizedMessageList
           messages={chat.messages}
           isLoading={chat.isLoadingMessages}
           isThinking={chat.isBusy}
           isBusy={chat.isBusy}
           onOpenSession={chat.selectSession}
+          height={containerHeight}
         />
       )}
 

@@ -10,146 +10,65 @@ declare(strict_types=1);
 namespace WordForge\Abilities\Content;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\DeletePatternTrait;
 
-/**
- * Ability to delete content.
- */
 class DeleteContent extends AbstractAbility {
 
-    public function get_category(): string {
-        return 'wordforge-content';
-    }
+	use DeletePatternTrait;
 
-    protected function is_destructive(): bool {
-        return true;
-    }
+	public function get_category(): string {
+		return 'wordforge-content';
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get_title(): string {
-        return __( 'Delete Content', 'wordforge' );
-    }
+	public function get_title(): string {
+		return __( 'Delete Content', 'wordforge' );
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get_description(): string {
-        return __(
-            'Delete WordPress content (post, page, or custom post type). By default, content is moved to trash (soft delete) ' .
-            'where it can be restored later. Use force=true for permanent deletion (cannot be undone). Permanently deleting ' .
-            'content also removes all associated metadata, comments, and revisions. Use with caution, especially with force=true. ' .
-            'This is a destructive operation that requires delete_posts capability.',
-            'wordforge'
-        );
-    }
+	public function get_description(): string {
+		return __(
+			'Delete WordPress content (post, page, or custom post type). By default, content is moved to trash (soft delete) ' .
+			'where it can be restored later. Use force=true for permanent deletion (cannot be undone). Permanently deleting ' .
+			'content also removes all associated metadata, comments, and revisions. Use with caution, especially with force=true. ' .
+			'This is a destructive operation that requires delete_posts capability.',
+			'wordforge'
+		);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get_capability(): string {
-        return 'delete_posts';
-    }
+	public function get_capability(): string {
+		return 'delete_posts';
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get_input_schema(): array {
-        return [
-            'type'       => 'object',
-            'required'   => [ 'id' ],
-            'properties' => [
-                'id' => [
-                    'type'        => 'integer',
-                    'description' => 'Post ID of the content to delete. Required to identify which content to remove.',
-                    'minimum'     => 1,
-                ],
-                'force' => [
-                    'type'        => 'boolean',
-                    'description' => 'Permanent deletion flag. false (default) = move to trash (recoverable), true = permanently delete (cannot be undone, removes all metadata, comments, and revisions). Use true with extreme caution.',
-                    'default'     => false,
-                ],
-            ],
-        ];
-    }
+	public function get_input_schema(): array {
+		return $this->get_delete_input_schema( true, 'content' );
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get_output_schema(): array {
-        return [
-            'type'       => 'object',
-            'properties' => [
-                'success' => [
-                    'type'        => 'boolean',
-                    'description' => 'Whether the deletion was successful.',
-                ],
-                'data' => [
-                    'type'        => 'object',
-                    'description' => 'Deletion confirmation details.',
-                    'properties'  => [
-                        'id' => [
-                            'type'        => 'integer',
-                            'description' => 'ID of the deleted content.',
-                        ],
-                        'deleted' => [
-                            'type'        => 'boolean',
-                            'description' => 'Confirmation that content was deleted (always true on success).',
-                        ],
-                        'force' => [
-                            'type'        => 'boolean',
-                            'description' => 'Whether permanent deletion was used (true) or content was trashed (false).',
-                        ],
-                    ],
-                ],
-                'message' => [
-                    'type'        => 'string',
-                    'description' => 'Human-readable message indicating the deletion action taken.',
-                ],
-            ],
-            'required'   => [ 'success', 'data' ],
-        ];
-    }
+	public function get_output_schema(): array {
+		return $this->get_delete_output_schema();
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function execute( array $args ): array {
-        $post_id = (int) $args['id'];
-        $force = (bool) ( $args['force'] ?? false );
+	public function execute( array $args ): array {
+		$post_id = (int) $args['id'];
+		$force = $this->is_force_delete( $args );
 
-        $post = get_post( $post_id );
+		$post = get_post( $post_id );
 
-        if ( ! $post ) {
-            return $this->error( 'Content not found.', 'not_found' );
-        }
+		if ( ! $post ) {
+			return $this->delete_not_found( 'Content' );
+		}
 
-        // Check capability.
-        if ( ! current_user_can( 'delete_post', $post_id ) ) {
-            return $this->error(
-                'You do not have permission to delete this content.',
-                'forbidden'
-            );
-        }
+		if ( ! current_user_can( 'delete_post', $post_id ) ) {
+			return $this->delete_forbidden( 'this content' );
+		}
 
-        $title = $post->post_title;
-        $type = $post->post_type;
+		$title = $post->post_title;
+		$type = $post->post_type;
 
-        $result = wp_delete_post( $post_id, $force );
+		$result = wp_delete_post( $post_id, $force );
 
-        if ( ! $result ) {
-            return $this->error( 'Failed to delete content.', 'delete_failed' );
-        }
+		if ( ! $result ) {
+			return $this->delete_failed( 'content' );
+		}
 
-        $action = $force ? 'permanently deleted' : 'moved to trash';
-
-        return $this->success(
-            [
-                'id'      => $post_id,
-                'deleted' => true,
-                'force'   => $force,
-            ],
-            sprintf( '%s "%s" %s.', ucfirst( $type ), $title, $action )
-        );
-    }
+		return $this->delete_success( $post_id, $type, $title, $force );
+	}
 }

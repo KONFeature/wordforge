@@ -1,12 +1,18 @@
 <?php
+/**
+ * @package WordForge
+ */
 
 declare(strict_types=1);
 
 namespace WordForge\Abilities\Taxonomy;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\PaginationSchemaTrait;
 
 class ListTerms extends AbstractAbility {
+
+	use PaginationSchemaTrait;
 
 	public function get_category(): string {
 		return 'wordforge-taxonomy';
@@ -38,37 +44,16 @@ class ListTerms extends AbstractAbility {
 		return [
 			'type'       => 'object',
 			'properties' => [
-				'success' => [
-					'type'        => 'boolean',
-					'description' => 'Whether the query executed successfully.',
-				],
-				'data' => [
+				'success' => [ 'type' => 'boolean' ],
+				'data'    => [
 					'type'       => 'object',
 					'properties' => [
-						'taxonomy' => [
-							'type'        => 'string',
-							'description' => 'Taxonomy name.',
+						'taxonomy' => [ 'type' => 'string' ],
+						'items'    => [
+							'type'  => 'array',
+							'items' => $this->get_term_item_schema(),
 						],
-						'items' => [
-							'type'        => 'array',
-							'description' => 'Array of terms.',
-							'items'       => [
-								'type'       => 'object',
-								'properties' => [
-									'id'          => [ 'type' => 'integer' ],
-									'name'        => [ 'type' => 'string' ],
-									'slug'        => [ 'type' => 'string' ],
-									'description' => [ 'type' => 'string' ],
-									'parent'      => [ 'type' => 'integer' ],
-									'count'       => [ 'type' => 'integer' ],
-									'taxonomy'    => [ 'type' => 'string' ],
-								],
-							],
-						],
-						'total' => [
-							'type'        => 'integer',
-							'description' => 'Total number of terms.',
-						],
+						'total' => [ 'type' => 'integer' ],
 					],
 					'required' => [ 'taxonomy', 'items', 'total' ],
 				],
@@ -81,44 +66,32 @@ class ListTerms extends AbstractAbility {
 		return [
 			'type'       => 'object',
 			'required'   => [ 'taxonomy' ],
-			'properties' => [
-				'taxonomy' => [
-					'type'        => 'string',
-					'description' => 'Taxonomy name (category, post_tag, product_cat, or custom taxonomy).',
+			'properties' => array_merge(
+				[
+					'taxonomy' => [
+						'type'        => 'string',
+						'description' => 'Taxonomy name (category, post_tag, product_cat, or custom taxonomy).',
+					],
+					'search' => [
+						'type'        => 'string',
+						'description' => 'Search term name.',
+					],
+					'parent' => [
+						'type'        => 'integer',
+						'description' => 'Parent term ID (0 for top-level only).',
+					],
+					'hide_empty' => [
+						'type'        => 'boolean',
+						'description' => 'Hide terms with no posts.',
+						'default'     => false,
+					],
 				],
-				'search' => [
-					'type'        => 'string',
-					'description' => 'Search term name.',
-				],
-				'parent' => [
-					'type'        => 'integer',
-					'description' => 'Parent term ID (0 for top-level only).',
-				],
-				'hide_empty' => [
-					'type'        => 'boolean',
-					'description' => 'Hide terms with no posts.',
-					'default'     => false,
-				],
-				'per_page' => [
-					'type'        => 'integer',
-					'description' => 'Number of terms to return.',
-					'default'     => 100,
-					'minimum'     => 1,
-					'maximum'     => 500,
-				],
-				'orderby' => [
-					'type'        => 'string',
-					'description' => 'Field to order by.',
-					'enum'        => [ 'name', 'slug', 'term_id', 'count', 'parent' ],
-					'default'     => 'name',
-				],
-				'order' => [
-					'type'        => 'string',
-					'description' => 'Order direction.',
-					'enum'        => [ 'asc', 'desc' ],
-					'default'     => 'asc',
-				],
-			],
+				$this->get_pagination_input_schema(
+					[ 'name', 'slug', 'term_id', 'count', 'parent' ],
+					500,
+					100,
+				)
+			),
 		];
 	}
 
@@ -132,12 +105,14 @@ class ListTerms extends AbstractAbility {
 			);
 		}
 
+		$pagination = $this->normalize_pagination_args( $args, 500, 100, 'name', 'asc' );
+
 		$query_args = [
 			'taxonomy'   => $taxonomy,
 			'hide_empty' => $args['hide_empty'] ?? false,
-			'number'     => min( (int) ( $args['per_page'] ?? 100 ), 500 ),
-			'orderby'    => $args['orderby'] ?? 'name',
-			'order'      => strtoupper( $args['order'] ?? 'asc' ),
+			'number'     => $pagination['per_page'],
+			'orderby'    => $pagination['orderby'],
+			'order'      => $pagination['order'],
 		];
 
 		if ( ! empty( $args['search'] ) ) {
@@ -172,6 +147,24 @@ class ListTerms extends AbstractAbility {
 			'parent'      => $term->parent,
 			'count'       => $term->count,
 			'taxonomy'    => $term->taxonomy,
+		];
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function get_term_item_schema(): array {
+		return [
+			'type'       => 'object',
+			'properties' => [
+				'id'          => [ 'type' => 'integer' ],
+				'name'        => [ 'type' => 'string' ],
+				'slug'        => [ 'type' => 'string' ],
+				'description' => [ 'type' => 'string' ],
+				'parent'      => [ 'type' => 'integer' ],
+				'count'       => [ 'type' => 'integer' ],
+				'taxonomy'    => [ 'type' => 'string' ],
+			],
 		];
 	}
 }

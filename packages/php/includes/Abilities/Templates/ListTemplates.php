@@ -1,12 +1,21 @@
 <?php
+/**
+ * @package WordForge
+ */
 
 declare(strict_types=1);
 
 namespace WordForge\Abilities\Templates;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\CacheableTrait;
 
 class ListTemplates extends AbstractAbility {
+
+	use CacheableTrait;
+
+	private const CACHE_KEY = 'templates';
+	private const CACHE_TTL = 300;
 
 	public function get_category(): string {
 		return 'wordforge-templates';
@@ -37,21 +46,14 @@ class ListTemplates extends AbstractAbility {
 		return [
 			'type'       => 'object',
 			'properties' => [
-				'success' => [
-					'type'        => 'boolean',
-					'description' => 'Whether the query executed successfully.',
-				],
-				'data' => [
+				'success' => [ 'type' => 'boolean' ],
+				'data'    => [
 					'type'       => 'object',
 					'properties' => [
-						'type' => [
-							'type'        => 'string',
-							'description' => 'Template type (wp_template or wp_template_part).',
-						],
+						'type'  => [ 'type' => 'string' ],
 						'items' => [
-							'type'        => 'array',
-							'description' => 'Array of templates.',
-							'items'       => [
+							'type'  => 'array',
+							'items' => [
 								'type'       => 'object',
 								'properties' => [
 									'id'          => [ 'type' => 'integer' ],
@@ -66,10 +68,7 @@ class ListTemplates extends AbstractAbility {
 								],
 							],
 						],
-						'total' => [
-							'type'        => 'integer',
-							'description' => 'Total number of templates.',
-						],
+						'total' => [ 'type' => 'integer' ],
 					],
 					'required' => [ 'type', 'items', 'total' ],
 				],
@@ -83,10 +82,9 @@ class ListTemplates extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => [
 				'type' => [
-					'type'        => 'string',
-					'description' => 'Template type.',
-					'enum'        => [ 'wp_template', 'wp_template_part' ],
-					'default'     => 'wp_template',
+					'type'    => 'string',
+					'enum'    => [ 'wp_template', 'wp_template_part' ],
+					'default' => 'wp_template',
 				],
 				'area' => [
 					'type'        => 'string',
@@ -98,20 +96,32 @@ class ListTemplates extends AbstractAbility {
 
 	public function execute( array $args ): array {
 		$type = $args['type'] ?? 'wp_template';
+		$area = $args['area'] ?? null;
 
 		if ( ! current_theme_supports( 'block-templates' ) ) {
 			return $this->error( 'Current theme does not support block templates.', 'not_supported' );
 		}
 
-		$query_args = [
+		return $this->cached_success(
+			self::CACHE_KEY,
+			fn() => $this->fetch_templates( $type, $area ),
+			self::CACHE_TTL,
+			[ 'type' => $type, 'area' => $area ]
+		);
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function fetch_templates( string $type, ?string $area ): array {
+		$templates = get_posts( [
 			'post_type'      => $type,
 			'post_status'    => [ 'publish', 'auto-draft' ],
 			'posts_per_page' => 100,
 			'orderby'        => 'title',
 			'order'          => 'ASC',
-		];
+		] );
 
-		$templates = get_posts( $query_args );
 		$items = [];
 
 		foreach ( $templates as $template ) {
@@ -123,32 +133,25 @@ class ListTemplates extends AbstractAbility {
 				'status'      => $template->post_status,
 				'type'        => $type,
 				'modified'    => $template->post_modified,
-				'source'      => $this->get_template_source( $template ),
+				'source'      => 'auto-draft' === $template->post_status ? 'theme' : 'custom',
 			];
 
 			if ( 'wp_template_part' === $type ) {
-				$area = get_post_meta( $template->ID, 'wp_template_part_area', true );
-				$item['area'] = $area ?: 'uncategorized';
+				$item_area = get_post_meta( $template->ID, 'wp_template_part_area', true );
+				$item['area'] = $item_area ?: 'uncategorized';
 			}
 
-			if ( ! empty( $args['area'] ) && isset( $item['area'] ) && $item['area'] !== $args['area'] ) {
+			if ( $area && isset( $item['area'] ) && $item['area'] !== $area ) {
 				continue;
 			}
 
 			$items[] = $item;
 		}
 
-		return $this->success( [
+		return [
 			'type'  => $type,
 			'items' => $items,
 			'total' => count( $items ),
-		] );
-	}
-
-	private function get_template_source( \WP_Post $template ): string {
-		if ( 'auto-draft' === $template->post_status ) {
-			return 'theme';
-		}
-		return 'custom';
+		];
 	}
 }
