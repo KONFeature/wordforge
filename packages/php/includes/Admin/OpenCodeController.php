@@ -571,7 +571,7 @@ class OpenCodeController {
 	public function get_providers(): WP_REST_Response {
 		return new WP_REST_Response(
 			array(
-				'providers' => ProviderConfig::get_providers_for_display(),
+				'configuredProviders' => ProviderConfig::get_configured_providers(),
 			)
 		);
 	}
@@ -580,9 +580,9 @@ class OpenCodeController {
 		$provider_id = $request->get_param( 'providerId' );
 		$api_key     = $request->get_param( 'apiKey' );
 
-		if ( ! $provider_id || ! isset( ProviderConfig::PROVIDERS[ $provider_id ] ) ) {
+		if ( empty( $provider_id ) ) {
 			return new WP_REST_Response(
-				array( 'error' => 'Invalid provider ID' ),
+				array( 'error' => 'Provider ID is required' ),
 				400
 			);
 		}
@@ -607,8 +607,8 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success'   => true,
-				'providers' => ProviderConfig::get_providers_for_display(),
+				'success'            => true,
+				'configuredProviders' => ProviderConfig::get_configured_providers(),
 			)
 		);
 	}
@@ -616,9 +616,9 @@ class OpenCodeController {
 	public function delete_provider( WP_REST_Request $request ): WP_REST_Response {
 		$provider_id = $request->get_param( 'provider_id' );
 
-		if ( ! $provider_id || ! isset( ProviderConfig::PROVIDERS[ $provider_id ] ) ) {
+		if ( empty( $provider_id ) ) {
 			return new WP_REST_Response(
-				array( 'error' => 'Invalid provider ID' ),
+				array( 'error' => 'Provider ID is required' ),
 				400
 			);
 		}
@@ -629,8 +629,8 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success'   => true,
-				'providers' => ProviderConfig::get_providers_for_display(),
+				'success'            => true,
+				'configuredProviders' => ProviderConfig::get_configured_providers(),
 			)
 		);
 	}

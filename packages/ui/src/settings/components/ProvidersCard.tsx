@@ -10,7 +10,6 @@ import {
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import type { ProviderInfo } from '../../types';
 import {
   useProviders,
   useRemoveProvider,
@@ -21,14 +20,9 @@ import styles from './ProvidersCard.module.css';
 interface ProvidersCardProps {
   restUrl: string;
   nonce: string;
-  initialProviders: ProviderInfo[];
 }
 
-export const ProvidersCard = ({
-  restUrl,
-  nonce,
-  initialProviders,
-}: ProvidersCardProps) => {
+export const ProvidersCard = ({ restUrl, nonce }: ProvidersCardProps) => {
   const { data, isLoading } = useProviders(restUrl, nonce);
   const saveProvider = useSaveProvider(restUrl, nonce);
   const removeProvider = useRemoveProvider(restUrl, nonce);
@@ -37,7 +31,7 @@ export const ProvidersCard = ({
   const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
-  const providers = data?.providers ?? initialProviders;
+  const providers = data?.providers ?? [];
 
   const handleSave = async (providerId: string) => {
     const apiKey = apiKeyInputs[providerId];
@@ -112,18 +106,20 @@ export const ProvidersCard = ({
                       </span>
                     )}
                   </div>
-                  <ExternalLink
-                    href={provider.help_url}
-                    className={styles.helpLink}
-                  >
-                    {__('Get API Key', 'wordforge')}
-                  </ExternalLink>
+                  {provider.helpUrl && (
+                    <ExternalLink
+                      href={provider.helpUrl}
+                      className={styles.helpLink}
+                    >
+                      {__('Get API Key', 'wordforge')}
+                    </ExternalLink>
+                  )}
                 </div>
 
                 {provider.configured && editingProvider !== provider.id ? (
                   <div className={styles.configuredState}>
                     <code className={styles.maskedKey}>
-                      {provider.api_key_masked}
+                      {provider.apiKeyMasked}
                     </code>
                     <div className={styles.actions}>
                       <Button
@@ -159,13 +155,7 @@ export const ProvidersCard = ({
                             [provider.id]: value,
                           }))
                         }
-                        placeholder={
-                          provider.id === 'openai'
-                            ? 'sk-...'
-                            : provider.id === 'anthropic'
-                              ? 'sk-ant-...'
-                              : 'AI...'
-                        }
+                        placeholder={provider.placeholder || 'API key...'}
                         className={styles.apiKeyInput}
                       />
                       <Button
@@ -208,7 +198,9 @@ export const ProvidersCard = ({
                         </Button>
                       )}
                     </div>
-                    <p className={styles.helpText}>{provider.help_text}</p>
+                    {provider.helpText && (
+                      <p className={styles.helpText}>{provider.helpText}</p>
+                    )}
                   </div>
                 )}
               </div>

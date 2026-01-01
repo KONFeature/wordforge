@@ -133,7 +133,7 @@ class SettingsPage {
 				),
 			),
 			'abilities'    => $abilities,
-			'providers'    => ProviderConfig::get_providers_for_display(),
+			'configuredProviders' => ProviderConfig::get_configured_providers(),
 			'agents'       => AgentConfig::get_agents_for_display(),
 			'activity'     => ActivityMonitor::get_status(),
 			'integrations' => array(

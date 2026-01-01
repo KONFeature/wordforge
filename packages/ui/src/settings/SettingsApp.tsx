@@ -53,11 +53,7 @@ export const SettingsApp = () => {
           />
         </div>
 
-        <ProvidersCard
-          restUrl={config.restUrl}
-          nonce={config.nonce}
-          initialProviders={config.providers}
-        />
+        <ProvidersCard restUrl={config.restUrl} nonce={config.nonce} />
 
         <AgentConfigCard
           restUrl={config.restUrl}

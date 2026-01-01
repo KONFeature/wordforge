@@ -2,6 +2,7 @@ import type { Model, Provider } from '@opencode-ai/sdk/client';
 import { Button, Popover, TextControl } from '@wordpress/components';
 import { memo, useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { sortProviders } from '../../lib/providerHelpers';
 import styles from './ModelSelector.module.css';
 
 export interface SelectedModel {
@@ -147,22 +148,7 @@ export const ModelSelector = ({
 
   const sortedProviders = useMemo(() => {
     if (!Array.isArray(providers)) return [];
-    return [...providers].sort((a, b) => {
-      const order = [
-        'anthropic',
-        'google',
-        'openai',
-        'opencode',
-        'openrouter',
-        'groq',
-      ];
-      const aIdx = order.indexOf(a.id);
-      const bIdx = order.indexOf(b.id);
-      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-      if (aIdx !== -1) return -1;
-      if (bIdx !== -1) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    return sortProviders(providers);
   }, [providers]);
 
   const getModelDisplayName = useCallback((): string => {

@@ -45,13 +45,19 @@ export interface WordForgeEditorConfig {
   nonce: string;
 }
 
-export interface ProviderInfo {
+export interface ConfiguredProvider {
+  configured: boolean;
+  api_key_masked: string | null;
+}
+
+export interface ProviderDisplayInfo {
   id: string;
   name: string;
   configured: boolean;
-  api_key_masked: string | null;
-  help_url: string;
-  help_text: string;
+  apiKeyMasked: string | null;
+  helpUrl: string;
+  helpText: string;
+  placeholder: string;
 }
 
 export interface AgentInfo {
@@ -100,7 +106,7 @@ export interface WordForgeSettingsConfig {
     };
   };
   abilities: Record<string, Array<{ name: string; description: string }>>;
-  providers: ProviderInfo[];
+  configuredProviders: Record<string, ConfiguredProvider>;
   agents: AgentInfo[];
   activity: ActivityStatus;
   integrations: {
