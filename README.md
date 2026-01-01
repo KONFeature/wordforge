@@ -46,21 +46,7 @@ WordForge consists of three packages:
 
 There are two ways to interact with WordForge:
 
-### Option A: MCP Client (Claude Desktop, OpenCode, etc.)
-
-Use WordForge from your local machine with any MCP-compatible AI client. The AI connects to your WordPress site remotely and can manage content through natural language.
-
-**Best for:** Developers, power users, bulk operations, complex workflows
-
-```
-┌─────────────────┐      MCP Protocol      ┌─────────────────┐
-│  Claude Desktop │  ◄──────────────────►  │   WordPress +   │
-│  or OpenCode    │                        │   WordForge     │
-└─────────────────┘                        └─────────────────┘
-     Your Machine                              Your Server
-```
-
-### Option B: WordPress Admin Interface
+### Option A: WordPress Admin Interface
 
 Use the built-in chat interface directly in your WordPress admin. WordForge can download and run [OpenCode](https://github.com/sst/opencode) on your server, providing three integration points:
 
@@ -119,6 +105,8 @@ flowchart TB
 | **Auditor** | Analysis specialist | SEO audits, content reviews, performance recommendations, site health checks |
 | **Commerce Manager** | WooCommerce specialist | Product CRUD, inventory management, pricing, categories *(only when WooCommerce is active)* |
 
+Grealty inspired by the agents from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) by [@justsisyphus](https://x.com/justsisyphus)
+
 #### Automatic Context Injection
 
 Each agent receives **live WordPress context** so the AI understands your site:
@@ -167,9 +155,23 @@ Configure AI providers in **WordForge → Settings → Providers**:
 - **Anthropic** — Claude models (Opus, Sonnet, Haiku)
 - **OpenAI** — GPT-4o, GPT-4 Turbo
 - **Google** — Gemini Pro, Gemini Flash
-- **[https://opencode.ai/zen](OpenCode Zen)** — Hosted models (no API key needed)
+- **[OpenCode Zen](https://opencode.ai/zen)** — Hosted models (no API key needed)
 
 ---
+
+### Option B: MCP Client (Claude Desktop, OpenCode, etc.)
+
+Use WordForge from your local machine with any MCP-compatible AI client. The AI connects to your WordPress site remotely and can manage content through natural language.
+
+**Best for:** Developers, power users, bulk operations, complex workflows
+
+```
+┌─────────────────┐      MCP Protocol      ┌─────────────────┐
+│  Claude Desktop │  ◄──────────────────►  │   WordPress +   │
+│  or OpenCode    │                        │   WordForge     │
+└─────────────────┘                        └─────────────────┘
+     Your Machine                              Your Server
+```
 
 ## Installation
 

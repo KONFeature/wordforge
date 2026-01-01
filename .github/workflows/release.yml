@@ -28,9 +28,13 @@ jobs:
         run: |
           sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/mcp/manifest.json
 
+      - name: Update version in MCP package.json
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/mcp/package.json
+
       - name: Update version in MCP source
         run: |
-          sed -i 's/version: ".*",/version: "${{ steps.version.outputs.VERSION }}",/' packages/mcp/src/index.ts
+          sed -i "s/version: '.*',/version: '${{ steps.version.outputs.VERSION }}',/" packages/mcp/src/index.ts
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

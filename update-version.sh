@@ -17,25 +17,25 @@ cd "$SCRIPT_DIR"
 echo "Updating version to $VERSION..."
 
 # WordPress plugin (header + constant)
-echo "  - wordforge.php"
-sed -i '' "s/Version: .*/Version: $VERSION/" wordforge.php
-sed -i '' "s/define( 'WORDFORGE_VERSION', '.*' );/define( 'WORDFORGE_VERSION', '$VERSION' );/" wordforge.php
+echo "  - packages/php/wordforge.php"
+sed -i '' "s/Version: .*/Version: $VERSION/" packages/php/wordforge.php
+sed -i '' "s/define( 'WORDFORGE_VERSION', '.*' );/define( 'WORDFORGE_VERSION', '$VERSION' );/" packages/php/wordforge.php
 
-# Claude extension manifest
-echo "  - claude-extension/manifest.json"
-sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" claude-extension/manifest.json
+# MCP manifest
+echo "  - packages/mcp/manifest.json"
+sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/mcp/manifest.json
 
-# Claude extension package.json
-echo "  - claude-extension/package.json"
-sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" claude-extension/package.json
+# MCP package.json
+echo "  - packages/mcp/package.json"
+sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/mcp/package.json
 
-# Claude extension source (MCP server version)
-echo "  - claude-extension/src/index.ts"
-sed -i '' "s/version: \".*\",/version: \"$VERSION\",/" claude-extension/src/index.ts
+# MCP source (server version)
+echo "  - packages/mcp/src/index.ts"
+sed -i '' "s/version: \".*\",/version: \"$VERSION\",/" packages/mcp/src/index.ts
 
 echo ""
 echo "Done! Updated version to $VERSION in:"
-echo "  - wordforge.php (plugin header + WORDFORGE_VERSION)"
-echo "  - claude-extension/manifest.json"
-echo "  - claude-extension/package.json"
-echo "  - claude-extension/src/index.ts"
+echo "  - packages/php/wordforge.php (plugin header + WORDFORGE_VERSION)"
+echo "  - packages/mcp/manifest.json"
+echo "  - packages/mcp/package.json"
+echo "  - packages/mcp/src/index.ts"
