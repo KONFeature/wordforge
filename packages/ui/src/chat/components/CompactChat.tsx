@@ -77,8 +77,18 @@ export const CompactChat = ({
         isBusy={chat.isBusy}
         hasSession={!!chat.sessionId}
         compact
+        parentSession={
+          chat.parentSession
+            ? { id: chat.parentSession.id, title: chat.parentSession.title }
+            : null
+        }
         onRefresh={chat.refresh}
         onDelete={() => setShowDeleteModal(true)}
+        onBackToParent={
+          chat.parentSession
+            ? () => chat.selectSession(chat.parentSession!.id)
+            : undefined
+        }
         onToggleSessions={() => setSessionsCollapsed(!sessionsCollapsed)}
         sessionsCollapsed={sessionsCollapsed}
       />

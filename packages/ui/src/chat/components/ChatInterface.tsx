@@ -39,6 +39,7 @@ export const ChatInterface = ({ chat, context = null }: ChatInterfaceProps) => {
           isLoading={chat.isLoadingMessages}
           isThinking={chat.isBusy}
           isBusy={chat.isBusy}
+          onOpenSession={chat.selectSession}
         />
       )}
 

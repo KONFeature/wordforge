@@ -20,6 +20,7 @@ import {
   useAutoStartServer,
   useServerStatus,
 } from './useServerStatus';
+import { findParentSession } from './useSessionHierarchy';
 import {
   useDeleteSession,
   useSessionStatuses,
@@ -29,6 +30,7 @@ import {
 export interface ChatState {
   sessionId: string | null;
   session: Session | undefined;
+  parentSession: Session | null;
   sessions: Session[];
   statuses: Record<string, SessionStatus>;
   isLoadingSessions: boolean;
@@ -101,6 +103,11 @@ export const useChat = (
     [sessions, sessionId],
   );
 
+  const parentSession = useMemo(
+    () => findParentSession(sessions, sessionId),
+    [sessions, sessionId],
+  );
+
   const currentStatus = sessionId
     ? (statuses[sessionId]?.type ?? 'idle')
     : 'idle';
@@ -165,6 +172,7 @@ export const useChat = (
   return {
     sessionId,
     session,
+    parentSession,
     sessions,
     statuses,
     isLoadingSessions,

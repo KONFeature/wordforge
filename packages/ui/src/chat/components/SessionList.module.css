@@ -97,3 +97,54 @@
 .statusDot.busy {
   background: var(--wf-color-warning);
 }
+
+.sessionGroup {
+  margin-bottom: var(--wf-spacing-xs);
+}
+
+.childrenContainer {
+  margin-left: var(--wf-spacing-md);
+  border-left: 2px solid var(--wf-color-border-light);
+  padding-left: var(--wf-spacing-xs);
+}
+
+.childSession {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  font-size: var(--wf-font-size-sm);
+  background: transparent;
+  border: none;
+  margin-bottom: 2px;
+}
+
+.childSession:hover {
+  background: var(--wf-color-bg-alt);
+}
+
+.childSession.active {
+  background: var(--wf-color-bg-selected);
+}
+
+.childIndicator {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-sm);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sessionContent {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.childSession .sessionTitle {
+  font-size: var(--wf-font-size-sm);
+  margin-bottom: 2px;
+}
+
+.childSession .sessionMeta {
+  font-size: var(--wf-font-size-xs);
+}

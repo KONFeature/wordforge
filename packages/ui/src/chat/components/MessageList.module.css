@@ -501,3 +501,95 @@
   border-top: 1px solid var(--wf-color-border-light);
   line-height: 1.5;
 }
+
+.taskStep {
+  background: linear-gradient(
+    135deg,
+    var(--wf-color-bg-alt) 0%,
+    var(--wf-color-white) 100%
+  );
+  border: 1px solid var(--wf-color-border-light);
+  border-radius: var(--wf-radius-md);
+  margin-bottom: var(--wf-spacing-sm);
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+}
+
+.taskStep:last-child {
+  margin-bottom: 0;
+}
+
+.taskStep.running {
+  border-color: var(--wf-color-warning);
+}
+
+.taskStep.completed {
+  border-color: var(--wf-color-success);
+}
+
+.taskStep.error {
+  border-color: var(--wf-color-error);
+}
+
+.taskStepHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+  font-size: var(--wf-font-size-md);
+}
+
+.taskStepIcon {
+  font-size: var(--wf-font-size-lg);
+}
+
+.taskStepTitle {
+  flex: 1;
+  font-weight: 500;
+  color: var(--wf-color-text);
+}
+
+.taskStepStatus {
+  padding: 2px 8px;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-xs);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.taskStepStatus.pending {
+  background: var(--wf-color-bg-code);
+  color: var(--wf-color-text-muted);
+}
+
+.taskStepStatus.running {
+  background: var(--wf-color-warning-bg);
+  color: var(--wf-color-warning-text);
+}
+
+.taskStepStatus.completed {
+  background: var(--wf-color-success-bg);
+  color: var(--wf-color-success-text);
+}
+
+.taskStepStatus.error {
+  background: var(--wf-color-error-bg);
+  color: var(--wf-color-error-text);
+}
+
+.taskStepLink {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  background: var(--wf-color-bg-selected);
+  border: 1px solid var(--wf-color-border-selected);
+  border-radius: var(--wf-radius-sm);
+  color: var(--wf-color-primary, #0073aa);
+  font-size: var(--wf-font-size-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.taskStepLink:hover {
+  background: var(--wf-color-border-selected);
+}

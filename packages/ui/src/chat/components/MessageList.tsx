@@ -27,6 +27,7 @@ interface MessageListProps {
   isLoading: boolean;
   isThinking: boolean;
   isBusy: boolean;
+  onOpenSession?: (sessionId: string) => void;
 }
 
 const isUserMessage = (msg: Message): msg is UserMessage => msg.role === 'user';
@@ -36,6 +37,16 @@ const isTextPart = (part: Part): part is TextPart => part.type === 'text';
 const isToolPart = (part: Part): part is ToolPart => part.type === 'tool';
 const isReasoningPart = (part: Part): part is ReasoningPart =>
   part.type === 'reasoning';
+
+const isTaskTool = (part: ToolPart): boolean => part.tool === 'task';
+
+const getTaskSessionId = (part: ToolPart): string | undefined => {
+  const state = part.state;
+  if ('metadata' in state && state.metadata) {
+    return state.metadata.sessionId as string | undefined;
+  }
+  return undefined;
+};
 
 interface MessageTurn {
   userMessage: ChatMessage;
@@ -233,6 +244,54 @@ const ToolCallStep = ({ part }: { part: ToolPart }) => {
   );
 };
 
+interface TaskToolStepProps {
+  part: ToolPart;
+  onOpenSession?: (sessionId: string) => void;
+}
+
+const TaskToolStep = ({ part, onOpenSession }: TaskToolStepProps) => {
+  const state = part.state;
+  const status = state.status;
+  const title =
+    ('title' in state && state.title) || __('Sub-agent Task', 'wordforge');
+  const sessionId = getTaskSessionId(part);
+
+  const statusLabels: Record<string, string> = {
+    pending: __('Pending', 'wordforge'),
+    running: __('Running', 'wordforge'),
+    completed: __('Completed', 'wordforge'),
+    error: __('Failed', 'wordforge'),
+  };
+
+  const handleOpenSession = () => {
+    if (sessionId && onOpenSession) {
+      onOpenSession(sessionId);
+    }
+  };
+
+  return (
+    <div className={`${styles.taskStep} ${styles[status]}`}>
+      <div className={styles.taskStepHeader}>
+        {status === 'running' || status === 'pending' ? <Spinner /> : null}
+        <span className={styles.taskStepIcon}>🤖</span>
+        <span className={styles.taskStepTitle}>{title}</span>
+        <span className={`${styles.taskStepStatus} ${styles[status]}`}>
+          {statusLabels[status]}
+        </span>
+      </div>
+      {sessionId && onOpenSession && (
+        <button
+          type="button"
+          className={styles.taskStepLink}
+          onClick={handleOpenSession}
+        >
+          {__('View Session', 'wordforge')} →
+        </button>
+      )}
+    </div>
+  );
+};
+
 const ReasoningStep = ({ part }: { part: ReasoningPart }) => {
   const hasContent = part.text && part.text.trim().length > 0;
 
@@ -285,10 +344,17 @@ const UserMessageBlock = ({ message }: { message: ChatMessage }) => {
   );
 };
 
+interface AssistantResponseBlockProps {
+  messages: ChatMessage[];
+  isComplete: boolean;
+  onOpenSession?: (sessionId: string) => void;
+}
+
 const AssistantResponseBlock = ({
   messages,
   isComplete,
-}: { messages: ChatMessage[]; isComplete: boolean }) => {
+  onOpenSession,
+}: AssistantResponseBlockProps) => {
   if (messages.length === 0) return null;
 
   const allParts: Part[] = messages.flatMap((m) => m.parts);
@@ -328,13 +394,21 @@ const AssistantResponseBlock = ({
 
       {allSteps.length > 0 && (
         <div className={styles.stepsContainer}>
-          {allSteps.map((step) =>
-            isToolPart(step) ? (
-              <ToolCallStep key={step.id} part={step} />
-            ) : (
-              <ReasoningStep key={step.id} part={step} />
-            ),
-          )}
+          {allSteps.map((step) => {
+            if (isToolPart(step)) {
+              if (isTaskTool(step)) {
+                return (
+                  <TaskToolStep
+                    key={step.id}
+                    part={step}
+                    onOpenSession={onOpenSession}
+                  />
+                );
+              }
+              return <ToolCallStep key={step.id} part={step} />;
+            }
+            return <ReasoningStep key={step.id} part={step} />;
+          })}
         </div>
       )}
 
@@ -359,13 +433,19 @@ const AssistantResponseBlock = ({
   );
 };
 
-const SessionTurn = ({ turn }: { turn: MessageTurn }) => {
+interface SessionTurnProps {
+  turn: MessageTurn;
+  onOpenSession?: (sessionId: string) => void;
+}
+
+const SessionTurn = ({ turn, onOpenSession }: SessionTurnProps) => {
   return (
     <div className={styles.turn}>
       <UserMessageBlock message={turn.userMessage} />
       <AssistantResponseBlock
         messages={turn.assistantMessages}
         isComplete={turn.isComplete}
+        onOpenSession={onOpenSession}
       />
     </div>
   );
@@ -375,6 +455,7 @@ export const MessageList = ({
   messages,
   isLoading,
   isThinking,
+  onOpenSession,
 }: MessageListProps) => {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -412,7 +493,11 @@ export const MessageList = ({
     <div className={styles.root}>
       <div className={styles.container}>
         {turns.map((turn) => (
-          <SessionTurn key={turn.userMessage.info.id} turn={turn} />
+          <SessionTurn
+            key={turn.userMessage.info.id}
+            turn={turn}
+            onOpenSession={onOpenSession}
+          />
         ))}
 
         {isThinking && (

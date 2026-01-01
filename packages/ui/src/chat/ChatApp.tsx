@@ -49,8 +49,18 @@ export const ChatApp = () => {
             title={chat.session?.title || __('Select a session', 'wordforge')}
             isBusy={chat.isBusy}
             hasSession={!!chat.sessionId}
+            parentSession={
+              chat.parentSession
+                ? { id: chat.parentSession.id, title: chat.parentSession.title }
+                : null
+            }
             onRefresh={chat.refresh}
             onDelete={() => setShowDeleteModal(true)}
+            onBackToParent={
+              chat.parentSession
+                ? () => chat.selectSession(chat.parentSession!.id)
+                : undefined
+            }
           />
 
           <ChatInterface chat={chat} />
