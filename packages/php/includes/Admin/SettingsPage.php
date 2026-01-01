@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\ActivityMonitor;
 use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
 use WordForge\OpenCode\ProviderConfig;
@@ -20,18 +21,28 @@ class SettingsPage {
 			'type'              => 'array',
 			'sanitize_callback' => [ $this, 'sanitize_settings' ],
 			'default'           => [
-				'mcp_enabled'   => true,
-				'mcp_namespace' => 'wordforge',
-				'mcp_route'     => 'mcp',
+				'mcp_enabled'             => true,
+				'mcp_namespace'           => 'wordforge',
+				'mcp_route'               => 'mcp',
+				'auto_shutdown_enabled'   => true,
+				'auto_shutdown_threshold' => 1800,
 			],
 		] );
 	}
 
 	public function sanitize_settings( array $input ): array {
+		$threshold = isset( $input['auto_shutdown_threshold'] )
+			? absint( $input['auto_shutdown_threshold'] )
+			: 1800;
+
+		$threshold = max( 300, min( 86400, $threshold ) );
+
 		return [
-			'mcp_enabled'   => ! empty( $input['mcp_enabled'] ),
-			'mcp_namespace' => sanitize_text_field( $input['mcp_namespace'] ?? 'wordforge' ),
-			'mcp_route'     => sanitize_text_field( $input['mcp_route'] ?? 'mcp' ),
+			'mcp_enabled'             => ! empty( $input['mcp_enabled'] ),
+			'mcp_namespace'           => sanitize_text_field( $input['mcp_namespace'] ?? 'wordforge' ),
+			'mcp_route'               => sanitize_text_field( $input['mcp_route'] ?? 'mcp' ),
+			'auto_shutdown_enabled'   => isset( $input['auto_shutdown_enabled'] ) ? (bool) $input['auto_shutdown_enabled'] : true,
+			'auto_shutdown_threshold' => $threshold,
 		];
 	}
 
@@ -85,16 +96,18 @@ class SettingsPage {
 			'nonce'        => \wp_create_nonce( 'wp_rest' ),
 			'optionsNonce' => \wp_create_nonce( 'wordforge_settings-options' ),
 			'settings'     => [
-				'pluginVersion'  => WORDFORGE_VERSION,
-				'binaryInstalled' => $binary_info['is_installed'],
-				'serverRunning'  => $server_status['running'],
-				'serverPort'     => $server_status['port'] ?? null,
-				'mcpEnabled'     => $settings['mcp_enabled'] ?? true,
-				'mcpNamespace'   => $settings['mcp_namespace'] ?? 'wordforge',
-				'mcpRoute'       => $settings['mcp_route'] ?? 'mcp',
-				'mcpEndpoint'    => \WordForge\get_endpoint_url(),
-				'serverId'       => \WordForge\Mcp\ServerManager::get_server_id(),
-				'platformInfo'   => [
+				'pluginVersion'         => WORDFORGE_VERSION,
+				'binaryInstalled'       => $binary_info['is_installed'],
+				'serverRunning'         => $server_status['running'],
+				'serverPort'            => $server_status['port'] ?? null,
+				'mcpEnabled'            => $settings['mcp_enabled'] ?? true,
+				'mcpNamespace'          => $settings['mcp_namespace'] ?? 'wordforge',
+				'mcpRoute'              => $settings['mcp_route'] ?? 'mcp',
+				'mcpEndpoint'           => \WordForge\get_endpoint_url(),
+				'serverId'              => \WordForge\Mcp\ServerManager::get_server_id(),
+				'autoShutdownEnabled'   => $settings['auto_shutdown_enabled'] ?? true,
+				'autoShutdownThreshold' => $settings['auto_shutdown_threshold'] ?? 1800,
+				'platformInfo'          => [
 					'os'           => $binary_info['os'],
 					'arch'         => $binary_info['arch'],
 					'binary_name'  => $binary_info['binary_name'],
@@ -106,6 +119,7 @@ class SettingsPage {
 			'abilities'    => $abilities,
 			'providers'    => ProviderConfig::get_providers_for_display(),
 			'agents'       => AgentConfig::get_agents_for_display(),
+			'activity'     => ActivityMonitor::get_status(),
 			'integrations' => [
 				'mcpAdapter'  => $mcp_active,
 				'woocommerce' => $woo_active,

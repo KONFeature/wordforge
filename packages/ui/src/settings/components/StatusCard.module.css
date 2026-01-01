@@ -97,6 +97,30 @@
   font-size: var(--wf-font-size-md);
 }
 
+.autoShutdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wf-spacing-md);
+}
+
+.autoShutdown .components-toggle-control {
+  margin: 0;
+}
+
+.autoShutdown .components-base-control {
+  margin: 0;
+}
+
+.shutdownInfo {
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text-muted);
+  margin: 0;
+}
+
+.shutdownInfo strong {
+  color: var(--wf-color-text);
+}
+
 @media (max-width: 782px) {
   .header {
     flex-direction: column;

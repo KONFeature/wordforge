@@ -4,8 +4,16 @@ import {
   CardBody,
   CardHeader,
   Icon,
+  SelectControl,
+  ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import {
+  formatDuration,
+  THRESHOLD_OPTIONS,
+  useAutoShutdownSettings,
+  useSaveAutoShutdown,
+} from '../hooks/useAutoShutdown';
 import { useServerAction } from '../hooks/useServerActions';
 import styles from './StatusCard.module.css';
 
@@ -30,6 +38,8 @@ interface StatusCardProps {
 
 export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
   const serverAction = useServerAction(onStatusChange);
+  const { data: autoShutdown } = useAutoShutdownSettings();
+  const saveAutoShutdown = useSaveAutoShutdown();
 
   const getStatusMessage = () => {
     if (serverAction.isSuccess) {
@@ -250,6 +260,46 @@ export const StatusCard = ({ status, onStatusChange }: StatusCardProps) => {
                   {status.binary.os}-{status.binary.arch}
                 </code>
               </div>
+            </div>
+          </div>
+
+          <div className={styles.statGroup}>
+            <h3 className={styles.groupTitle}>
+              {__('Auto-Shutdown', 'wordforge')}
+            </h3>
+            <div className={styles.autoShutdown}>
+              <ToggleControl
+                label={__('Stop server when idle', 'wordforge')}
+                checked={autoShutdown?.enabled ?? true}
+                onChange={(enabled) => saveAutoShutdown.mutate({ enabled })}
+                disabled={saveAutoShutdown.isPending}
+                __nextHasNoMarginBottom
+              />
+              {autoShutdown?.enabled && (
+                <SelectControl
+                  label={__('Idle timeout', 'wordforge')}
+                  value={String(autoShutdown?.threshold ?? 1800)}
+                  options={THRESHOLD_OPTIONS.map((opt) => ({
+                    value: String(opt.value),
+                    label: opt.label,
+                  }))}
+                  onChange={(value) =>
+                    saveAutoShutdown.mutate({ threshold: Number(value) })
+                  }
+                  disabled={saveAutoShutdown.isPending}
+                  __nextHasNoMarginBottom
+                />
+              )}
+              {status.server.running &&
+                autoShutdown?.enabled &&
+                autoShutdown?.activity?.will_shutdown_in != null && (
+                  <p className={styles.shutdownInfo}>
+                    {__('Shutting down in', 'wordforge')}{' '}
+                    <strong>
+                      {formatDuration(autoShutdown.activity.will_shutdown_in)}
+                    </strong>
+                  </p>
+                )}
             </div>
           </div>
         </div>

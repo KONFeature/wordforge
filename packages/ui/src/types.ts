@@ -61,6 +61,15 @@ export interface AgentInfo {
   recommendations: string[];
 }
 
+export interface ActivityStatus {
+  last_activity: number | null;
+  seconds_inactive: number | null;
+  threshold: number;
+  is_inactive: boolean;
+  auto_shutdown_enabled: boolean;
+  will_shutdown_in: number | null;
+}
+
 export interface WordForgeSettingsConfig {
   restUrl: string;
   nonce: string;
@@ -75,6 +84,8 @@ export interface WordForgeSettingsConfig {
     mcpRoute: string;
     mcpEndpoint: string;
     serverId: string;
+    autoShutdownEnabled: boolean;
+    autoShutdownThreshold: number;
     platformInfo: {
       os: string;
       arch: string;
@@ -87,6 +98,7 @@ export interface WordForgeSettingsConfig {
   abilities: Record<string, Array<{ name: string; description: string }>>;
   providers: ProviderInfo[];
   agents: AgentInfo[];
+  activity: ActivityStatus;
   integrations: {
     woocommerce: boolean;
     mcpAdapter: boolean;

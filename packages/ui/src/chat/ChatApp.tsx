@@ -7,6 +7,7 @@ import { DeleteSessionModal } from './components/DeleteSessionModal';
 import { InputArea } from './components/InputArea';
 import { MessageList } from './components/MessageList';
 import type { SelectedModel } from './components/ModelSelector';
+import { ServerStatusBanner } from './components/ServerStatusBanner';
 import { SessionList } from './components/SessionList';
 import { useMcpStatus, useProvidersConfig } from './hooks/useConfig';
 import {
@@ -14,6 +15,7 @@ import {
   useMessages,
   useSendMessage,
 } from './hooks/useMessages';
+import { useAutoStartServer, useServerStatus } from './hooks/useServerStatus';
 import {
   useCreateSession,
   useDeleteSession,
@@ -43,6 +45,9 @@ export const ChatApp = () => {
   const { data: configData, isLoading: isLoadingConfig } =
     useProvidersConfig(client);
   const { data: mcpStatus = {} } = useMcpStatus(client);
+
+  const { data: serverStatus } = useServerStatus();
+  const autoStart = useAutoStartServer();
 
   const createSession = useCreateSession(client);
   const deleteSession = useDeleteSession(client);
@@ -155,12 +160,25 @@ export const ChatApp = () => {
             </div>
           </div>
 
-          <MessageList
-            messages={messages}
-            isLoading={isLoadingMessages}
-            isThinking={isBusy}
-            isBusy={isBusy}
-          />
+          {serverStatus && !serverStatus.running ? (
+            <ServerStatusBanner
+              status={serverStatus}
+              onAutoStart={() => autoStart.mutate()}
+              isStarting={autoStart.isPending}
+              error={
+                autoStart.error instanceof Error
+                  ? autoStart.error.message
+                  : null
+              }
+            />
+          ) : (
+            <MessageList
+              messages={messages}
+              isLoading={isLoadingMessages}
+              isThinking={isBusy}
+              isBusy={isBusy}
+            />
+          )}
 
           {errorMessage && (
             <div className={styles.errorContainer}>

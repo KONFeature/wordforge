@@ -4,11 +4,13 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useChatCore } from '../hooks/useChatCore';
 import type { ScopedContext } from '../hooks/useContextInjection';
+import { useAutoStartServer, useServerStatus } from '../hooks/useServerStatus';
 import styles from './CompactChat.module.css';
 import { DeleteSessionModal } from './DeleteSessionModal';
 import { InputArea } from './InputArea';
 import { MessageList } from './MessageList';
 import { QuickActions } from './QuickActions';
+import { ServerStatusBanner } from './ServerStatusBanner';
 import { SessionList } from './SessionList';
 
 interface ContextBadgeProps {
@@ -110,6 +112,9 @@ export const CompactChat = ({
 
   const chat = useChatCore(client, { context });
 
+  const { data: serverStatus } = useServerStatus();
+  const autoStart = useAutoStartServer();
+
   const errorMessage = chat.error?.message ?? null;
   const hasSession = !!chat.currentSessionId;
   const hasMessages = (chat.messages ?? []).length > 0;
@@ -191,7 +196,18 @@ export const CompactChat = ({
         )}
 
         <div className={styles.chatArea}>
-          {hasSession ? (
+          {serverStatus && !serverStatus.running ? (
+            <ServerStatusBanner
+              status={serverStatus}
+              onAutoStart={() => autoStart.mutate()}
+              isStarting={autoStart.isPending}
+              error={
+                autoStart.error instanceof Error
+                  ? autoStart.error.message
+                  : null
+              }
+            />
+          ) : hasSession ? (
             <>
               <MessageList
                 messages={chat.messages ?? []}

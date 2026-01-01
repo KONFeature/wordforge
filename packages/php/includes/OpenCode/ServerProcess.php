@@ -174,6 +174,8 @@ class ServerProcess {
 
 		self::register_wordforge_mcp( $port, $options['mcp_auth_token'] ?? '' );
 
+		ActivityMonitor::record_activity();
+
 		return [
 			'success' => true,
 			'url'     => "http://127.0.0.1:{$port}",
@@ -210,6 +212,7 @@ class ServerProcess {
 		}
 
 		self::cleanup_state_files();
+		ActivityMonitor::clear_activity();
 		return true;
 	}
 

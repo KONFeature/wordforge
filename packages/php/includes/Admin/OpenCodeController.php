@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\ActivityMonitor;
 use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
 use WordForge\OpenCode\ProviderConfig;
@@ -166,6 +167,43 @@ class OpenCodeController {
 				'permission_callback' => [ $this, 'check_permission' ],
 			]
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/activity',
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_activity' ],
+				'permission_callback' => [ $this, 'check_permission' ],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/auto-start',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'auto_start_server' ],
+				'permission_callback' => [ $this, 'check_permission' ],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/auto-shutdown',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'get_auto_shutdown_settings' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'save_auto_shutdown_settings' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
+			]
+		);
 	}
 
 	public function check_permission(): bool {
@@ -197,9 +235,10 @@ class OpenCodeController {
 		$update_info   = BinaryManager::check_for_update();
 
 		return new WP_REST_Response( [
-			'binary' => $binary_status,
-			'server' => $server_status,
-			'update' => is_wp_error( $update_info ) ? null : $update_info,
+			'binary'   => $binary_status,
+			'server'   => $server_status,
+			'update'   => is_wp_error( $update_info ) ? null : $update_info,
+			'activity' => ActivityMonitor::get_status(),
 		] );
 	}
 
@@ -356,6 +395,8 @@ class OpenCodeController {
 			status_header( 204 );
 			exit;
 		}
+
+		ActivityMonitor::record_activity();
 
 		$server_url = ServerProcess::get_server_url();
 
@@ -603,6 +644,88 @@ class OpenCodeController {
 		return new WP_REST_Response( [
 			'success' => true,
 			'agents'  => AgentConfig::get_agents_for_display(),
+		] );
+	}
+
+	public function get_activity(): WP_REST_Response {
+		return new WP_REST_Response( ActivityMonitor::get_status() );
+	}
+
+	public function auto_start_server(): WP_REST_Response {
+		if ( ! BinaryManager::is_installed() ) {
+			set_time_limit( 300 );
+
+			$download_result = BinaryManager::download_latest();
+
+			if ( is_wp_error( $download_result ) ) {
+				return new WP_REST_Response(
+					[ 'error' => 'Download failed: ' . $download_result->get_error_message() ],
+					500
+				);
+			}
+		}
+
+		$token  = $this->generate_mcp_auth_token();
+		$result = ServerProcess::start( [
+			'mcp_auth_token' => $token,
+		] );
+
+		if ( ! $result['success'] ) {
+			return new WP_REST_Response(
+				[ 'error' => $result['error'] ?? 'Failed to start server' ],
+				500
+			);
+		}
+
+		return new WP_REST_Response( [
+			'success'  => true,
+			'url'      => $result['url'],
+			'port'     => $result['port'],
+			'version'  => $result['version'] ?? null,
+			'status'   => $result['status'],
+			'binary'   => BinaryManager::get_platform_info(),
+			'activity' => ActivityMonitor::get_status(),
+		] );
+	}
+
+	public function get_auto_shutdown_settings(): WP_REST_Response {
+		$settings = \WordForge\get_settings();
+
+		return new WP_REST_Response( [
+			'enabled'   => $settings['auto_shutdown_enabled'] ?? true,
+			'threshold' => $settings['auto_shutdown_threshold'] ?? 1800,
+			'activity'  => ActivityMonitor::get_status(),
+		] );
+	}
+
+	public function save_auto_shutdown_settings( WP_REST_Request $request ): WP_REST_Response {
+		$enabled   = $request->get_param( 'enabled' );
+		$threshold = $request->get_param( 'threshold' );
+
+		$settings = \WordForge\get_settings();
+
+		if ( null !== $enabled ) {
+			$settings['auto_shutdown_enabled'] = (bool) $enabled;
+		}
+
+		if ( null !== $threshold ) {
+			$threshold = absint( $threshold );
+			$settings['auto_shutdown_threshold'] = max( 300, min( 86400, $threshold ) );
+		}
+
+		update_option( 'wordforge_settings', $settings );
+
+		if ( $settings['auto_shutdown_enabled'] ) {
+			ActivityMonitor::schedule_cron();
+		} else {
+			ActivityMonitor::unschedule_cron();
+		}
+
+		return new WP_REST_Response( [
+			'success'  => true,
+			'enabled'  => $settings['auto_shutdown_enabled'],
+			'threshold' => $settings['auto_shutdown_threshold'],
+			'activity' => ActivityMonitor::get_status(),
 		] );
 	}
 

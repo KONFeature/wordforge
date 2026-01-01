@@ -74,9 +74,11 @@ function get_settings(): array {
     return wp_parse_args(
         get_option( 'wordforge_settings', [] ),
         [
-            'mcp_enabled'   => true,
-            'mcp_namespace' => 'wordforge',
-            'mcp_route'     => 'mcp',
+            'mcp_enabled'             => true,
+            'mcp_namespace'           => 'wordforge',
+            'mcp_route'               => 'mcp',
+            'auto_shutdown_enabled'   => true,
+            'auto_shutdown_threshold' => 1800,
         ]
     );
 }
@@ -90,6 +92,8 @@ function init(): void {
 	new Admin\SettingsPage();
 	new Admin\OpenCodeController();
 	new Admin\WidgetManager();
+
+    OpenCode\ActivityMonitor::schedule_cron();
 
     if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
         add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
@@ -200,6 +204,16 @@ function is_woocommerce_active(): bool {
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
 
+add_filter( 'cron_schedules', function ( array $schedules ): array {
+    $schedules[ OpenCode\ActivityMonitor::get_cron_interval() ] = [
+        'interval' => 300,
+        'display'  => __( 'Every 5 Minutes', 'wordforge' ),
+    ];
+    return $schedules;
+} );
+
+add_action( OpenCode\ActivityMonitor::get_cron_hook(), [ OpenCode\ActivityMonitor::class, 'check_and_stop_if_inactive' ] );
+
 /**
  * Add Settings link to plugins page.
  *
@@ -219,8 +233,14 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), __NAMESPACE__ 
 
 function cleanup_opencode_on_deactivate(): void {
     OpenCode\ServerProcess::stop();
+    OpenCode\ActivityMonitor::unschedule_cron();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\cleanup_opencode_on_deactivate' );
+
+function schedule_activity_monitor(): void {
+    OpenCode\ActivityMonitor::schedule_cron();
+}
+register_activation_hook( __FILE__, __NAMESPACE__ . '\\schedule_activity_monitor' );
 
 function cleanup_opencode_on_uninstall(): void {
 	OpenCode\ServerProcess::stop();
