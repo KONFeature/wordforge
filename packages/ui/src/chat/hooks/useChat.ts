@@ -116,21 +116,21 @@ export const useChat = (
   const serverError =
     autoStart.error instanceof Error ? autoStart.error.message : null;
 
-  const send = async (text: string): Promise<SendMessageResult> => {
-    const result = await sendMessage.mutateAsync({
-      text,
-      sessionId: sessionId ?? undefined,
-      model: model ?? undefined,
-      context,
-      messages,
-    });
-
-    if (result.isNewSession) {
-      setSessionId(result.sessionId);
-    }
-
-    return result;
-  };
+  const send = async (text: string): Promise<SendMessageResult> =>
+    await sendMessage.mutateAsync(
+      {
+        text,
+        sessionId: sessionId ?? undefined,
+        model: model ?? undefined,
+        context,
+        messages,
+      },
+      {
+        onSuccess: (result) => {
+          if (result.isNewSession) setSessionId(result.sessionId);
+        },
+      },
+    );
 
   const abort = () => {
     if (sessionId) {

@@ -30,6 +30,14 @@ export const useSessionStatuses = (client: OpencodeClient | null) => {
       ) as Record<string, SessionStatus>;
     },
     enabled: !!client,
+    refetchInterval: (query) => {
+      const statuses = query.state.data;
+      if (!statuses) return false;
+      const hasBusy = Object.values(statuses).some(
+        (s) => s.type === 'busy' || s.type === 'retry',
+      );
+      return hasBusy ? 2000 : false;
+    },
   });
 };
 

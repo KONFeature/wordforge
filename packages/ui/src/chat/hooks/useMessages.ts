@@ -1,4 +1,9 @@
-import type { OpencodeClient, Session } from '@opencode-ai/sdk/client';
+import type {
+  OpencodeClient,
+  Session,
+  SessionPromptData,
+  SessionStatus,
+} from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
@@ -7,7 +12,7 @@ import {
   formatContextXml,
   shouldIncludeContext,
 } from './useContextInjection';
-import { SESSIONS_KEY } from './useSessions';
+import { SESSIONS_KEY, STATUSES_KEY } from './useSessions';
 
 export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
@@ -16,6 +21,8 @@ export const useMessages = (
   client: OpencodeClient | null,
   sessionId: string | null,
 ) => {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: messagesKey(sessionId!),
     queryFn: async () => {
@@ -25,6 +32,14 @@ export const useMessages = (
       return (result.data || []) as ChatMessage[];
     },
     enabled: !!client && !!sessionId,
+    refetchInterval: () => {
+      if (!sessionId) return false;
+      const statuses =
+        queryClient.getQueryData<Record<string, SessionStatus>>(STATUSES_KEY);
+      const status = statuses?.[sessionId];
+      const isBusy = status?.type === 'busy' || status?.type === 'retry';
+      return isBusy ? 2000 : false;
+    },
   });
 };
 
@@ -38,23 +53,37 @@ interface SendMessageParams {
 
 export interface SendMessageResult {
   sessionId: string;
-  messages: ChatMessage[];
   isNewSession: boolean;
 }
 
 export const useSendMessage = (client: OpencodeClient | null) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({
-      text,
-      sessionId: providedSessionId,
-      model,
-      context,
-      messages = [],
-    }: SendMessageParams): Promise<SendMessageResult> => {
+    mutationFn: async (
+      {
+        text,
+        sessionId: providedSessionId,
+        model,
+        context,
+        messages = [],
+      }: SendMessageParams,
+      { client: queryClient },
+    ): Promise<SendMessageResult> => {
       let sessionId = providedSessionId;
       let isNewSession = false;
+
+      // Build user msg
+      const parts: { type: 'text'; text: string }[] = [];
+      if (context) {
+        const contextXml = formatContextXml(context);
+        if (shouldIncludeContext(messages, contextXml)) {
+          parts.push({ type: 'text', text: contextXml });
+        }
+      }
+      parts.push({ type: 'text', text });
+      const body: SessionPromptData['body'] = {
+        parts,
+        model,
+      };
 
       if (!sessionId) {
         const createResult = await client!.session.create({ body: {} });
@@ -62,45 +91,13 @@ export const useSendMessage = (client: OpencodeClient | null) => {
         sessionId = newSession.id;
         isNewSession = true;
 
+        // Add the session to the list
         queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
           old ? [newSession, ...old] : [newSession],
         );
       }
 
-      const parts: { type: 'text'; text: string }[] = [];
-
-      if (context) {
-        const contextXml = formatContextXml(context);
-        if (shouldIncludeContext(messages, contextXml)) {
-          parts.push({ type: 'text', text: contextXml });
-        }
-      }
-
-      parts.push({ type: 'text', text });
-
-      const body: {
-        parts: { type: 'text'; text: string }[];
-        model?: SelectedModel;
-      } = { parts };
-      if (model) body.model = model;
-
-      await client!.session.prompt({ path: { id: sessionId }, body });
-
-      const result = await client!.session.messages({
-        path: { id: sessionId },
-      });
-
-      return {
-        sessionId,
-        messages: result.data as ChatMessage[],
-        isNewSession,
-      };
-    },
-    onMutate: async ({ text, sessionId }) => {
-      if (!sessionId) {
-        return { previous: undefined, sessionId: undefined };
-      }
-
+      // Add the user msg to the session list (for reactive update)
       const tempUserMsg: ChatMessage = {
         info: {
           id: `temp-user-${Date.now()}`,
@@ -110,38 +107,40 @@ export const useSendMessage = (client: OpencodeClient | null) => {
           agent: 'wordpress-manager',
           model: { providerID: '', modelID: '' },
         },
-        parts: [
-          {
-            id: `temp-part-${Date.now()}`,
-            type: 'text',
-            text,
-            messageID: 'temp',
-            sessionID: sessionId,
-          },
-        ],
+        parts: parts.map((p) => ({
+          ...p,
+          id: `temp-part-${Date.now()}`,
+          messageID: 'temp',
+          sessionID: sessionId,
+        })),
       };
-
       await queryClient.cancelQueries({ queryKey: messagesKey(sessionId) });
-      const previous = queryClient.getQueryData<ChatMessage[]>(
-        messagesKey(sessionId),
-      );
       queryClient.setQueryData<ChatMessage[]>(messagesKey(sessionId), (old) => [
         ...(old || []),
         tempUserMsg,
       ]);
 
-      return { previous, sessionId };
+      await client!.session.promptAsync({ path: { id: sessionId }, body });
+
+      return {
+        sessionId,
+        isNewSession,
+      };
     },
-    onSuccess: (result) => {
-      queryClient.setQueryData(messagesKey(result.sessionId), result.messages);
+    onSuccess: async (result, _params, _error, { client: queryClient }) => {
+      const promises = [];
       if (result.isNewSession) {
-        queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+        promises.push(
+          queryClient.invalidateQueries({ queryKey: SESSIONS_KEY }),
+        );
       }
-    },
-    onError: (_err, _params, ctx) => {
-      if (ctx?.previous && ctx?.sessionId) {
-        queryClient.setQueryData(messagesKey(ctx.sessionId), ctx.previous);
-      }
+      promises.push(queryClient.invalidateQueries({ queryKey: STATUSES_KEY }));
+      promises.push(
+        queryClient.invalidateQueries({
+          queryKey: messagesKey(result.sessionId),
+        }),
+      );
+      await Promise.allSettled(promises);
     },
   });
 };
