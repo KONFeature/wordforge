@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from '../MessageList.module.css';
 
 interface MarkdownProps {
@@ -7,6 +8,7 @@ interface MarkdownProps {
 
 export const Markdown = ({ children }: MarkdownProps) => (
   <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
     components={{
       pre: ({ children }) => <pre className={styles.codeBlock}>{children}</pre>,
       code: ({ className, children, ...props }) => {

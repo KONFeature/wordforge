@@ -174,6 +174,38 @@ function register_ability_categories(): void {
 		)
 	);
 
+	wp_register_ability_category(
+		'wordforge-users',
+		array(
+			'label'       => __( 'User Management', 'wordforge' ),
+			'description' => __( 'Abilities for listing and retrieving WordPress user information.', 'wordforge' ),
+		)
+	);
+
+	wp_register_ability_category(
+		'wordforge-comments',
+		array(
+			'label'       => __( 'Comments', 'wordforge' ),
+			'description' => __( 'Abilities for managing WordPress comments and moderation.', 'wordforge' ),
+		)
+	);
+
+	wp_register_ability_category(
+		'wordforge-settings',
+		array(
+			'label'       => __( 'Site Settings', 'wordforge' ),
+			'description' => __( 'Abilities for reading and updating WordPress site settings.', 'wordforge' ),
+		)
+	);
+
+	wp_register_ability_category(
+		'wordforge-analytics',
+		array(
+			'label'       => __( 'Analytics', 'wordforge' ),
+			'description' => __( 'Abilities for retrieving site statistics and analytics data.', 'wordforge' ),
+		)
+	);
+
 	if ( is_woocommerce_active() ) {
 		wp_register_ability_category(
 			'wordforge-woocommerce',

@@ -95,24 +95,29 @@ class GetPageBlocks extends AbstractAbility {
 	}
 
 	private function simplify_blocks( array $blocks ): array {
-		return array_map(
-			function ( $block ) {
-				$simplified = array(
-					'name'  => $block['blockName'],
-					'attrs' => $block['attrs'] ?? array(),
-				);
+		// array_values() re-indexes the array to ensure sequential keys (0, 1, 2...)
+		// This is required because array_filter preserves keys, and non-sequential
+		// keys cause PHP to encode the array as a JSON object instead of array.
+		return array_values(
+			array_map(
+				function ( $block ) {
+					$simplified = array(
+						'name'  => $block['blockName'],
+						'attrs' => $block['attrs'] ?? array(),
+					);
 
-				if ( ! empty( $block['innerBlocks'] ) ) {
-					$simplified['innerBlocks'] = $this->simplify_blocks( $block['innerBlocks'] );
-				}
+					if ( ! empty( $block['innerBlocks'] ) ) {
+						$simplified['innerBlocks'] = $this->simplify_blocks( $block['innerBlocks'] );
+					}
 
-				if ( ! empty( $block['innerHTML'] ) && null === $block['blockName'] ) {
-						$simplified['html'] = trim( $block['innerHTML'] );
-				}
+					if ( ! empty( $block['innerHTML'] ) && null === $block['blockName'] ) {
+							$simplified['html'] = trim( $block['innerHTML'] );
+					}
 
-				return $simplified;
-			},
-			array_filter( $blocks, fn( $b ) => ! empty( $b['blockName'] ) || ! empty( trim( $b['innerHTML'] ?? '' ) ) )
+					return $simplified;
+				},
+				array_filter( $blocks, fn( $b ) => ! empty( $b['blockName'] ) || ! empty( trim( $b['innerHTML'] ?? '' ) ) )
+			)
 		);
 	}
 }

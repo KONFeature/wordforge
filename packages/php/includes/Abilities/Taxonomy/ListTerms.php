@@ -129,7 +129,8 @@ class ListTerms extends AbstractAbility {
 			return $this->error( $terms->get_error_message(), 'query_failed' );
 		}
 
-		$items = array_map( fn( \WP_Term $term ) => $this->format_term( $term ), $terms );
+		// array_values() ensures sequential keys for proper JSON array encoding
+		$items = array_values( array_map( fn( \WP_Term $term ) => $this->format_term( $term ), $terms ) );
 
 		return $this->success(
 			array(

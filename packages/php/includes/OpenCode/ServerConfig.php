@@ -11,6 +11,7 @@ class ServerConfig {
 	public static function generate( array $options, int $port ): array {
 		$config = array(
 			'$schema'       => 'https://opencode.ai/config.json',
+			'default_agent' => 'wordpress-manager',
 			'instructions'  => array( 'context/site.md' ),
 			'permission'    => array(
 				'edit'               => 'deny',

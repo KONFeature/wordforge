@@ -38,6 +38,10 @@ export const AssistantMessage = memo(
       ? { provider: firstMsg.info.providerID, model: firstMsg.info.modelID }
       : null;
 
+    const agentName = isAssistantMessage(firstMsg.info)
+      ? (firstMsg.info as { agent?: string }).agent
+      : null;
+
     const createdTime = firstMsg.info.time?.created;
     const time = createdTime
       ? new Date(createdTime * 1000).toLocaleTimeString([], {
@@ -62,6 +66,9 @@ export const AssistantMessage = memo(
             <span className={styles.messageModel}>
               &#129302; {modelInfo.provider}/{modelInfo.model}
             </span>
+          )}
+          {agentName && (
+            <span className={styles.messageAgent}>{agentName}</span>
           )}
         </div>
 

@@ -93,6 +93,16 @@
   color: var(--wf-color-text-muted);
 }
 
+.messageAgent {
+  padding: 1px 8px;
+  background: var(--wf-color-primary-light, #e5f3ff);
+  border: 1px solid var(--wf-color-primary-muted, #c5d9ed);
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-xs);
+  color: var(--wf-color-primary, #0073aa);
+  font-weight: 500;
+}
+
 .messageContent {
   font-size: var(--wf-font-size-lg);
   line-height: 1.6;

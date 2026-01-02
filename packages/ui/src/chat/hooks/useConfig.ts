@@ -1,4 +1,4 @@
-import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
+import type { Agent, McpStatus, Provider } from '@opencode-ai/sdk/client';
 import { useQuery } from '@tanstack/react-query';
 import {
   useConnectionStatus,
@@ -7,6 +7,8 @@ import {
 import { filterProviders } from '../../lib/filterModels';
 import { queryKeys } from '../../lib/queryKeys';
 import type { SelectedModel } from '../components/ModelSelector';
+
+const AGENTS_KEY = ['opencode-agents'] as const;
 
 interface ConfigData {
   providers: Provider[];
@@ -64,5 +66,19 @@ export const useMcpStatus = () => {
       ) as Record<string, McpStatus>;
     },
     enabled: !!client,
+  });
+};
+
+export const useAgentsConfig = () => {
+  const client = useOpencodeClientOptional();
+
+  return useQuery({
+    queryKey: AGENTS_KEY,
+    queryFn: async (): Promise<Agent[]> => {
+      const result = await client!.agent.list();
+      return result.data ?? [];
+    },
+    enabled: !!client,
+    staleTime: 300000,
   });
 };

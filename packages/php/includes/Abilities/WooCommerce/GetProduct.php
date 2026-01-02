@@ -91,10 +91,6 @@ class GetProduct extends AbstractAbility {
 					'default'     => false,
 				),
 			),
-			'oneOf'      => array(
-				array( 'required' => array( 'id' ) ),
-				array( 'required' => array( 'sku' ) ),
-			),
 		);
 	}
 

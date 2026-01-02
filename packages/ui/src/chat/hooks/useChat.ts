@@ -1,8 +1,14 @@
-import type { Provider, Session, SessionStatus } from '@opencode-ai/sdk/client';
+import type {
+  Agent,
+  Provider,
+  Session,
+  SessionStatus,
+} from '@opencode-ai/sdk/client';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
+import { DEFAULT_AGENT } from '../../components/AgentSelector';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
-import { useProvidersConfig } from './useConfig';
+import { useAgentsConfig, useProvidersConfig } from './useConfig';
 import type { ScopedContext } from './useContextInjection';
 import {
   type SendMessageResult,
@@ -38,6 +44,10 @@ export interface ChatState {
   setModel: (model: SelectedModel | null) => void;
   providers: Provider[];
 
+  agent: string | null;
+  setAgent: (agent: string | null) => void;
+  agents: Agent[];
+
   serverStatus: ServerStatus | undefined;
   isServerReady: boolean;
 
@@ -67,6 +77,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
 
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
   const [model, setModel] = useState<SelectedModel | null>(null);
+  const [agent, setAgent] = useState<string | null>(DEFAULT_AGENT);
 
   const { data: sessions = [], isLoading: isLoadingSessions } = useSessions();
   const { data: statuses = {}, refetch: refetchStatus } = useSessionStatuses();
@@ -77,6 +88,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     error: messagesQueryError,
   } = useMessages(sessionId);
   const { data: configData } = useProvidersConfig();
+  const { data: agents = [] } = useAgentsConfig();
 
   const { data: serverStatus } = useServerStatus();
   const autoStart = useAutoStartServer();
@@ -122,6 +134,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
         text,
         sessionId: sessionId ?? undefined,
         model: model ?? undefined,
+        agent: agent ?? undefined,
         context,
         messages,
       },
@@ -179,6 +192,10 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     model,
     setModel,
     providers: configData?.providers ?? [],
+
+    agent,
+    setAgent,
+    agents,
 
     serverStatus,
     isServerReady,

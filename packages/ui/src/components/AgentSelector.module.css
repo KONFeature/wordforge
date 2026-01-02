@@ -1,0 +1,89 @@
+.root {
+  position: relative;
+}
+
+.trigger {
+  font-size: var(--wf-font-size-sm);
+  padding: 2px var(--wf-spacing-sm);
+  background: var(--wf-color-bg-code);
+  border-radius: var(--wf-radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  max-width: 200px;
+}
+
+.triggerIcon {
+  flex-shrink: 0;
+}
+
+.triggerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerArrow {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.popoverContent {
+  width: 220px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.agentList {
+  max-height: 250px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--wf-color-white);
+}
+
+.agentButton {
+  width: 100%;
+  text-align: left;
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background var(--wf-transition-fast);
+}
+
+.agentButton:hover {
+  background: var(--wf-color-bg-code);
+}
+
+.agentButton.selected {
+  background: var(--wf-color-bg-selected);
+}
+
+.agentName {
+  font-weight: 500;
+  font-size: var(--wf-font-size-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkmark {
+  color: var(--wf-color-success);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .popoverContent {
+    width: 100%;
+    max-width: none;
+  }
+
+  .trigger {
+    max-width: 150px;
+  }
+}

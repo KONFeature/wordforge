@@ -14,9 +14,10 @@ class LocalServerConfig {
 
 	public static function generate( string $runtime = self::RUNTIME_NODE ): array {
 		$config = array(
-			'$schema'      => 'https://opencode.ai/config.json',
-			'instructions' => array( 'context/site.md' ),
-			'permission'   => array(
+			'$schema'       => 'https://opencode.ai/config.json',
+			'default_agent' => 'wordpress-manager',
+			'instructions'  => array( 'context/site.md' ),
+			'permission'    => array(
 				'edit'               => 'ask',
 				'external_directory' => 'deny',
 				'bash'               => array(

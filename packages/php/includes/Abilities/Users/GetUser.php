@@ -101,7 +101,7 @@ class GetUser extends AbstractAbility {
 					'description' => 'Include user metadata (custom fields) in the response.',
 					'default'     => false,
 				),
-				'include_caps' => array(
+			'include_caps' => array(
 					'type'        => 'boolean',
 					'description' => 'Include detailed capability list in the response.',
 					'default'     => false,
@@ -181,7 +181,7 @@ class GetUser extends AbstractAbility {
 			'registered'   => $user->user_registered,
 			'url'          => $user->user_url,
 			'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
-			'post_count'   => count_user_posts( $user->ID ),
+			'post_count'   => (int) count_user_posts( $user->ID ),
 			'locale'       => get_user_locale( $user->ID ),
 		);
 	}

@@ -1,4 +1,4 @@
-import type { Provider } from '@opencode-ai/sdk/client';
+import type { Agent, Provider } from '@opencode-ai/sdk/client';
 import { Button } from '@wordpress/components';
 import {
   type KeyboardEvent,
@@ -7,6 +7,7 @@ import {
   useState,
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { AgentSelector } from '../../components/AgentSelector';
 import {
   ModelSelector,
   type SelectedModel,
@@ -21,6 +22,9 @@ interface InputAreaProps {
   providers: Provider[];
   selectedModel: SelectedModel | null;
   onSelectModel: (model: SelectedModel) => void;
+  agents: Agent[];
+  selectedAgent: string | null;
+  onSelectAgent: (agent: string) => void;
   placeholder?: string;
   compact?: boolean;
 }
@@ -33,6 +37,9 @@ export const InputArea = ({
   providers,
   selectedModel,
   onSelectModel,
+  agents,
+  selectedAgent,
+  onSelectAgent,
   placeholder,
   compact = false,
 }: InputAreaProps) => {
@@ -125,6 +132,12 @@ export const InputArea = ({
                 {__('Send', 'wordforge')}
               </Button>
             )}
+            <AgentSelector
+              agents={agents}
+              selectedAgent={selectedAgent}
+              onSelectAgent={onSelectAgent}
+              disabled={disabled || isBusy}
+            />
             <ModelSelector
               providers={providers}
               selectedModel={selectedModel}
@@ -134,6 +147,12 @@ export const InputArea = ({
           </div>
         ) : (
           <div className={styles.modelRow}>
+            <AgentSelector
+              agents={agents}
+              selectedAgent={selectedAgent}
+              onSelectAgent={onSelectAgent}
+              disabled={disabled || isBusy}
+            />
             <ModelSelector
               providers={providers}
               selectedModel={selectedModel}

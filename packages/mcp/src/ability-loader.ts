@@ -2,7 +2,12 @@ import { z } from 'zod';
 import type { JSONSchema } from 'zod/v4/core';
 import type { AbilitiesApiClient } from './abilities-client.js';
 import * as logger from './logger.js';
-import type { Ability, HttpMethod, LoadedAbility } from './types.js';
+import type {
+  Ability,
+  HttpMethod,
+  JsonSchema,
+  LoadedAbility,
+} from './types.js';
 
 export async function loadAbilities(
   client: AbilitiesApiClient,
@@ -70,9 +75,62 @@ function getHttpMethod(ability: Ability): HttpMethod {
   return hasInput ? 'POST' : 'GET';
 }
 
-function jsonSchemaToZod(schema: unknown): z.ZodTypeAny {
+/**
+ * Recursively transform a JSON Schema to accept string values for integer/number types.
+ * MCP clients often transmit numeric parameters as strings (e.g., "16" instead of 16).
+ * This ensures validation passes by allowing both types.
+ */
+function makeIntegersAcceptStrings(schema: JsonSchema): JsonSchema {
+  if (!schema || typeof schema !== 'object') {
+    return schema;
+  }
+
+  const result = { ...schema };
+
+  // Transform integer/number types to accept strings
+  if (result.type === 'integer' || result.type === 'number') {
+    result.type = [result.type, 'string'];
+  }
+
+  // Handle array of types (e.g., ['integer', 'null'])
+  if (Array.isArray(result.type)) {
+    const hasInteger = result.type.includes('integer');
+    const hasNumber = result.type.includes('number');
+    const hasString = result.type.includes('string');
+
+    if ((hasInteger || hasNumber) && !hasString) {
+      result.type = [...result.type, 'string'];
+    }
+  }
+
+  // Recursively process nested properties
+  if (result.properties) {
+    result.properties = Object.fromEntries(
+      Object.entries(result.properties).map(([key, value]) => [
+        key,
+        makeIntegersAcceptStrings(value as JsonSchema),
+      ]),
+    );
+  }
+
+  // Process array items
+  if (result.items) {
+    result.items = makeIntegersAcceptStrings(result.items as JsonSchema);
+  }
+
+  return result;
+}
+
+function jsonSchemaToZod(
+  schema: unknown,
+  coerceIntegers = false,
+): z.ZodTypeAny {
   try {
-    return z.fromJSONSchema(schema as JSONSchema.JSONSchema);
+    let processedSchema = schema;
+    if (coerceIntegers) {
+      processedSchema = makeIntegersAcceptStrings(schema as JsonSchema);
+    }
+    return z.fromJSONSchema(processedSchema as JSONSchema.JSONSchema);
   } catch (err) {
     logger.debug(
       'Failed to convert JSON schema to Zod, using passthrough',
@@ -88,11 +146,11 @@ function convertToLoadedAbility(ability: Ability): LoadedAbility {
   const httpMethod = getHttpMethod(ability);
 
   const inputSchema = ability.input_schema
-    ? jsonSchemaToZod(ability.input_schema)
+    ? jsonSchemaToZod(ability.input_schema, true)
     : z.object({});
 
   const outputSchema = ability.output_schema
-    ? jsonSchemaToZod(ability.output_schema)
+    ? jsonSchemaToZod(ability.output_schema, false)
     : undefined;
 
   return {

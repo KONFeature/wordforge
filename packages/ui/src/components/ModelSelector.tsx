@@ -92,13 +92,22 @@ const ProviderGroup = memo(
     searchQuery,
   }: ProviderGroupProps) => {
     const models = useMemo(() => {
-      const entries = Object.entries(provider.models || {});
-      if (!searchQuery) return entries;
-      return entries.filter(
-        ([id, model]) =>
-          model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          id.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      let entries = Object.entries(provider.models || {});
+      if (searchQuery) {
+        entries = entries.filter(
+          ([id, model]) =>
+            model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            id.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      }
+      return entries.sort(([, a], [, b]) => {
+        const dateA = (a as { release_date?: string }).release_date;
+        const dateB = (b as { release_date?: string }).release_date;
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
     }, [provider.models, searchQuery]);
 
     if (models.length === 0) return null;

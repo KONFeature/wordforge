@@ -64,6 +64,7 @@ interface SendMessageParams {
   text: string;
   sessionId?: string;
   model?: SelectedModel;
+  agent?: string;
   context?: ScopedContext | null;
   messages?: ChatMessage[];
 }
@@ -83,6 +84,7 @@ export const useSendMessage = () => {
         text,
         sessionId: providedSessionId,
         model,
+        agent,
         context,
         messages = [],
       }: SendMessageParams,
@@ -106,6 +108,7 @@ export const useSendMessage = () => {
       const body: SessionPromptData['body'] = {
         parts,
         model,
+        agent,
       };
 
       if (!sessionId) {
@@ -154,6 +157,8 @@ export const useSendMessage = () => {
       };
     },
     onSuccess: async (result, _params, _error, { client: queryClient }) => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
       const promises = [];
       if (result.isNewSession) {
         promises.push(

@@ -237,6 +237,9 @@ export const ChatInterface = ({
         providers={chat.providers}
         selectedModel={chat.model}
         onSelectModel={chat.setModel}
+        agents={chat.agents}
+        selectedAgent={chat.agent}
+        onSelectAgent={chat.setAgent}
         placeholder={
           hasSession
             ? __('Type your message...', 'wordforge')

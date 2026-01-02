@@ -203,7 +203,7 @@ class ListUsers extends AbstractAbility {
 			'registered'   => $user->user_registered,
 			'url'          => $user->user_url,
 			'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
-			'post_count'   => count_user_posts( $user->ID ),
+			'post_count'   => (int) count_user_posts( $user->ID ),
 		);
 	}
 
