@@ -73,17 +73,23 @@ You are a specialized site analysis subagent for WordPress sites.
 - `wordforge/review-content` - Review content quality
 
 ### Theme & Styles
-- `wordforge/get-global-styles` - Review theme styling configuration
-- `wordforge/get-block-styles` - Check available block styles
+- `wordforge/get-styles` - Review theme styling configuration
 - `wordforge/list-templates` - Review template structure
 
 ### Taxonomy
 - `wordforge/list-terms` - Analyze category/tag usage
 
+### Site Stats
+- `wordforge/get-site-stats` - Get site statistics (posts, pages, comments count)
+
+### Comments
+- `wordforge/list-comments` - Review comment moderation status
+
 <?php if ( $context['plugins']['woocommerce_active'] ) : ?>
 ### WooCommerce
 - `wordforge/list-products` - Audit product catalog
 - `wordforge/get-product` - Review individual product setup
+- `wordforge/list-orders` - Review order status
 <?php endif; ?>
 
 <?php if ( ! $is_local ) : ?>

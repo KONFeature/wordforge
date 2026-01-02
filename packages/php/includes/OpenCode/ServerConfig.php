@@ -36,26 +36,28 @@ class ServerConfig {
 	}
 
 	private static function build_agents_config(): array {
+		$is_remote_mcp = ! self::has_local_mcp_server();
+
 		$agents = array(
 			'wordpress-manager'         => array(
 				'mode'        => 'primary',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-manager' ),
 				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
-				'prompt'      => AgentPrompts::get_wordpress_manager_prompt(),
+				'prompt'      => AgentPrompts::get_wordpress_manager_prompt( false, $is_remote_mcp ),
 				'color'       => '#3858E9',
 			),
 			'wordpress-content-creator' => array(
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-content-creator' ),
 				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
-				'prompt'      => AgentPrompts::get_content_creator_prompt(),
+				'prompt'      => AgentPrompts::get_content_creator_prompt( false, $is_remote_mcp ),
 				'color'       => '#10B981',
 			),
 			'wordpress-auditor'         => array(
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-auditor' ),
 				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
-				'prompt'      => AgentPrompts::get_auditor_prompt(),
+				'prompt'      => AgentPrompts::get_auditor_prompt( false, $is_remote_mcp ),
 				'color'       => '#F59E0B',
 			),
 		);
@@ -65,12 +67,18 @@ class ServerConfig {
 				'mode'        => 'subagent',
 				'model'       => AgentConfig::get_effective_model( 'wordpress-commerce-manager' ),
 				'description' => 'WooCommerce specialist - product management, inventory, pricing',
-				'prompt'      => AgentPrompts::get_commerce_manager_prompt(),
+				'prompt'      => AgentPrompts::get_commerce_manager_prompt( false, $is_remote_mcp ),
 				'color'       => '#8B5CF6',
 			);
 		}
 
 		return $agents;
+	}
+
+	private static function has_local_mcp_server(): bool {
+		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
+		$runtime         = self::get_js_runtime();
+		return file_exists( $mcp_server_path ) && $runtime;
 	}
 
 	public static function get_mcp_config(): ?array {

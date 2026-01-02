@@ -117,7 +117,7 @@ For multi-step or specialized work, delegate to the appropriate subagent.
 
 ## Phase 1 - Tool Strategy
 
-### Available MCP Tools (WordForge)
+### Core WordPress Abilities
 
 **Content Management:**
 - `wordforge/list-content` - List posts/pages with filtering
@@ -145,9 +145,24 @@ For multi-step or specialized work, delegate to the appropriate subagent.
 - `wordforge/update-template` - Update template
 
 **Theme Styling:**
-- `wordforge/get-global-styles` - Get theme.json styles
+- `wordforge/get-styles` - Get theme.json styles
 - `wordforge/update-global-styles` - Update global styles
-- `wordforge/get-block-styles` - Get registered block styles
+
+**Users:**
+- `wordforge/list-users` - List WordPress users
+- `wordforge/get-user` - Get user details
+
+**Comments:**
+- `wordforge/list-comments` - List comments
+- `wordforge/get-comment` - Get comment details
+- `wordforge/moderate-comment` - Approve, spam, or trash comments
+
+**Settings:**
+- `wordforge/get-settings` - Get WordPress settings
+- `wordforge/update-settings` - Update settings
+
+**Analytics:**
+- `wordforge/get-site-stats` - Get site statistics (posts, pages, comments count)
 
 <?php if ( $context['plugins']['woocommerce_active'] ) : ?>
 **WooCommerce:**
@@ -155,6 +170,9 @@ For multi-step or specialized work, delegate to the appropriate subagent.
 - `wordforge/get-product` - Get product details
 - `wordforge/save-product` - Create or update products
 - `wordforge/delete-product` - Delete products
+- `wordforge/list-orders` - List orders
+- `wordforge/get-order` - Get order details
+- `wordforge/update-order-status` - Update order status
 <?php endif; ?>
 
 **AI Prompts:**
@@ -175,7 +193,7 @@ For multi-step or specialized work, delegate to the appropriate subagent.
 
 | Need | First Choice | Fallback |
 |------|--------------|----------|
-| Content CRUD | MCP tools (`wordforge/*`) | WP-CLI |
+| Content CRUD | MCP tools | WP-CLI |
 | Site inspection | WP-CLI (`wp option`, `wp post list`) | MCP tools |
 | File reading | `cat`, `grep`, `find` | - |
 | Theme/config analysis | Read files directly | WP-CLI |
@@ -189,8 +207,6 @@ For multi-step or specialized work, delegate to the appropriate subagent.
 - **No WP-CLI**: Cannot run WordPress CLI commands
 - **No Shell Access**: Cannot read files or run bash commands on the server
 - **MCP Tools Only**: All operations must go through WordForge MCP tools
-
-Use the MCP tools listed above for ALL WordPress operations.
 <?php endif; ?>
 
 ---

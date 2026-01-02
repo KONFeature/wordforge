@@ -819,9 +819,20 @@ class OpenCodeController {
 		);
 	}
 
-	public function download_local_config(): void {
-		$config    = LocalServerConfig::generate();
-		$agents_md = LocalServerConfig::generate_agents_md();
+	public function download_local_config( WP_REST_Request $request ): void {
+		$runtime = $request->get_param( 'runtime' ) ?? LocalServerConfig::RUNTIME_NODE;
+
+		$valid_runtimes = array(
+			LocalServerConfig::RUNTIME_NODE,
+			LocalServerConfig::RUNTIME_BUN,
+			LocalServerConfig::RUNTIME_NONE,
+		);
+		if ( ! in_array( $runtime, $valid_runtimes, true ) ) {
+			$runtime = LocalServerConfig::RUNTIME_NODE;
+		}
+
+		$config    = LocalServerConfig::generate( $runtime );
+		$agents_md = LocalServerConfig::generate_agents_md( $runtime );
 		$site_name = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
@@ -841,6 +852,14 @@ class OpenCodeController {
 
 		$zip->addFromString( 'opencode.json', \wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 		$zip->addFromString( 'AGENTS.md', $agents_md );
+
+		if ( LocalServerConfig::RUNTIME_NONE !== $runtime ) {
+			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
+			if ( $mcp_binary_path ) {
+				$zip->addFile( $mcp_binary_path, 'wordforge-mcp.cjs' );
+			}
+		}
+
 		$zip->close();
 
 		header( 'Content-Type: application/zip' );
@@ -862,6 +881,7 @@ class OpenCodeController {
 			array(
 				'port'    => $settings['port'],
 				'enabled' => $settings['enabled'],
+				'runtime' => $settings['runtime'],
 			)
 		);
 	}
@@ -869,6 +889,7 @@ class OpenCodeController {
 	public function save_local_settings( WP_REST_Request $request ): WP_REST_Response {
 		$port    = $request->get_param( 'port' );
 		$enabled = $request->get_param( 'enabled' );
+		$runtime = $request->get_param( 'runtime' );
 
 		$settings = array();
 
@@ -878,6 +899,10 @@ class OpenCodeController {
 
 		if ( null !== $enabled ) {
 			$settings['enabled'] = (bool) $enabled;
+		}
+
+		if ( null !== $runtime ) {
+			$settings['runtime'] = sanitize_text_field( $runtime );
 		}
 
 		$result = LocalServerConfig::save_settings( $settings );
@@ -896,6 +921,7 @@ class OpenCodeController {
 				'success' => true,
 				'port'    => $updated['port'],
 				'enabled' => $updated['enabled'],
+				'runtime' => $updated['runtime'],
 			)
 		);
 	}

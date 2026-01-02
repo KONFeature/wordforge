@@ -240,16 +240,12 @@ class SettingsPage {
 			),
 			'Styles'      => array(
 				array(
-					'name'        => 'wordforge/get-global-styles',
-					'description' => 'Get theme.json styles',
+					'name'        => 'wordforge/get-styles',
+					'description' => 'Get theme.json or block styles',
 				),
 				array(
 					'name'        => 'wordforge/update-global-styles',
 					'description' => 'Update global styles',
-				),
-				array(
-					'name'        => 'wordforge/get-block-styles',
-					'description' => 'Get block style variations',
 				),
 			),
 			'Prompts'     => array(

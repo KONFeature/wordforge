@@ -184,6 +184,20 @@ Return content directly without preamble. Structure your response as:
 No explanations of what you're doing. Just deliver the content.
 </Communication_Style>
 
+<Available_Tools>
+## MCP Tools (if needed)
+
+If you need to fetch existing content for reference:
+```
+wordforge/get-content({ "id": 123 })
+```
+
+**Content-related tools:**
+- `wordforge/get-content` - Get existing content for reference
+- `wordforge/list-media` - Find media to reference
+- `wordforge/generate-content` - AI content generation prompt
+</Available_Tools>
+
 <Constraints>
 ## Limitations
 

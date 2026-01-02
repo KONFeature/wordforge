@@ -5,6 +5,7 @@ import {
   CardHeader,
   ExternalLink,
   Notice,
+  SelectControl,
   Spinner,
   TextControl,
 } from '@wordpress/components';
@@ -12,6 +13,7 @@ import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { checkLocalServerHealth } from '../../lib/openCodeClient';
 import {
+  type RuntimePreference,
   useDownloadLocalConfig,
   useLocalSettings,
   useSaveLocalSettings,
@@ -29,6 +31,7 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     useDownloadLocalConfig();
 
   const [port, setPort] = useState(String(initialPort));
+  const [runtime, setRuntime] = useState<RuntimePreference>('node');
   const [localServerOnline, setLocalServerOnline] = useState<boolean | null>(
     null,
   );
@@ -52,7 +55,10 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     if (settings?.port) {
       setPort(String(settings.port));
     }
-  }, [settings?.port]);
+    if (settings?.runtime) {
+      setRuntime(settings.runtime);
+    }
+  }, [settings?.port, settings?.runtime]);
 
   const handlePortChange = (value: string) => {
     setPort(value);
@@ -65,8 +71,14 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     }
   };
 
+  const handleRuntimeChange = (value: string) => {
+    const newRuntime = value as RuntimePreference;
+    setRuntime(newRuntime);
+    saveSettings({ runtime: newRuntime });
+  };
+
   const handleDownload = () => {
-    downloadConfig();
+    downloadConfig(runtime);
   };
 
   return (
@@ -139,10 +151,36 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
                 </h3>
                 <p className={styles.stepDescription}>
                   {__(
-                    'Download the configuration files for your WordPress site. This ZIP contains your OpenCode settings and credentials.',
+                    'Select your JavaScript runtime and download the configuration files for your WordPress site.',
                     'wordforge',
                   )}
                 </p>
+                <SelectControl
+                  label={__('JavaScript Runtime', 'wordforge')}
+                  value={runtime}
+                  options={[
+                    { value: 'node', label: __('Node.js', 'wordforge') },
+                    { value: 'bun', label: __('Bun', 'wordforge') },
+                    {
+                      value: 'none',
+                      label: __('None (Remote MCP only)', 'wordforge'),
+                    },
+                  ]}
+                  onChange={handleRuntimeChange}
+                  help={
+                    runtime === 'none'
+                      ? __(
+                          'No local MCP server will be used. OpenCode will connect directly to WordPress via remote MCP.',
+                          'wordforge',
+                        )
+                      : __(
+                          'The MCP server binary will be included in the download and run using your selected runtime.',
+                          'wordforge',
+                        )
+                  }
+                  disabled={isSaving}
+                  className={styles.runtimeSelect}
+                />
                 <Button
                   variant="primary"
                   onClick={handleDownload}
@@ -179,10 +217,15 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
                   {__('Extract and Open', 'wordforge')}
                 </h3>
                 <p className={styles.stepDescription}>
-                  {__(
-                    'Extract the ZIP file to a folder on your computer. Then open that folder in OpenCode:',
-                    'wordforge',
-                  )}
+                  {runtime === 'none'
+                    ? __(
+                        'Extract the ZIP file to a folder on your computer. The config will connect directly to WordPress via remote MCP.',
+                        'wordforge',
+                      )
+                    : __(
+                        'Extract the ZIP file to a folder on your computer. It includes the MCP server binary that will run locally.',
+                        'wordforge',
+                      )}
                 </p>
                 <ul className={styles.commandList}>
                   <li>
@@ -201,17 +244,30 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
               <div className={styles.stepNumber}>4</div>
               <div className={styles.stepContent}>
                 <h3 className={styles.stepTitle}>
-                  {__('Start the Server', 'wordforge')}
+                  {runtime === 'none'
+                    ? __('Start Chatting', 'wordforge')
+                    : __('Start the Server', 'wordforge')}
                 </h3>
-                <p className={styles.stepDescription}>
-                  {__(
-                    'Start the OpenCode server so WordPress can connect to it:',
-                    'wordforge',
-                  )}
-                </p>
-                <code className={styles.command}>
-                  opencode serve --port {port}
-                </code>
+                {runtime === 'none' ? (
+                  <p className={styles.stepDescription}>
+                    {__(
+                      'You can start chatting immediately! OpenCode will connect to WordPress via the remote MCP endpoint.',
+                      'wordforge',
+                    )}
+                  </p>
+                ) : (
+                  <>
+                    <p className={styles.stepDescription}>
+                      {__(
+                        'Start the OpenCode server so WordPress can connect to it:',
+                        'wordforge',
+                      )}
+                    </p>
+                    <code className={styles.command}>
+                      opencode serve --port {port}
+                    </code>
+                  </>
+                )}
                 <p className={styles.stepNote}>
                   {__(
                     'Once running, you can chat from this WordPress admin or from OpenCode directly.',
