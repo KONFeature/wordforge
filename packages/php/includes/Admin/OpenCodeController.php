@@ -607,7 +607,7 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success'            => true,
+				'success'             => true,
 				'configuredProviders' => ProviderConfig::get_configured_providers(),
 			)
 		);
@@ -629,7 +629,7 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success'            => true,
+				'success'             => true,
 				'configuredProviders' => ProviderConfig::get_configured_providers(),
 			)
 		);

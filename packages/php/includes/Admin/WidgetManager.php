@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\ExecCapability;
 use WordForge\OpenCode\ServerProcess;
 
 class WidgetManager {
@@ -15,6 +16,10 @@ class WidgetManager {
 	}
 
 	public function maybe_enqueue_widget( string $hook ): void {
+		if ( ! ExecCapability::can_exec() ) {
+			return;
+		}
+
 		if ( ! $this->should_show_widget_for_hook( $hook ) ) {
 			return;
 		}
@@ -23,6 +28,10 @@ class WidgetManager {
 	}
 
 	public function render_widget_container(): void {
+		if ( ! ExecCapability::can_exec() ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen ) {
 			return;

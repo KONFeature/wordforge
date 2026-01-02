@@ -97,6 +97,7 @@ export interface WordForgeSettingsConfig {
     serverId: string;
     autoShutdownEnabled: boolean;
     autoShutdownThreshold: number;
+    execEnabled: boolean;
     platformInfo: {
       os: string;
       arch: string;

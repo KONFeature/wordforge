@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\ExecCapability;
+
 class MenuManager {
 
 	public const MENU_SLUG = 'wordforge';
@@ -35,14 +37,16 @@ class MenuManager {
 			array( $this, 'render_settings_page' )
 		);
 
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( 'Chat', 'wordforge' ),
-			__( 'Chat', 'wordforge' ),
-			'manage_options',
-			self::CHAT_SLUG,
-			array( $this, 'render_chat_page' )
-		);
+		if ( ExecCapability::can_exec() ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Chat', 'wordforge' ),
+				__( 'Chat', 'wordforge' ),
+				'manage_options',
+				self::CHAT_SLUG,
+				array( $this, 'render_chat_page' )
+			);
+		}
 	}
 
 	public function render_settings_page(): void {

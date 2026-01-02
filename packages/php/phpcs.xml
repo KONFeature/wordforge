@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<ruleset name="WordForge">
+	<description>WordPress Coding Standards for WordForge (PSR-4 compatible)</description>
+
+	<!-- Use WordPress coding standards as base -->
+	<rule ref="WordPress">
+		<!-- Exclude file naming rules - we use PSR-4 autoloading -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.DocComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+	</rule>
+
+	<!-- Scan these files -->
+	<file>./includes</file>
+	<file>./wordforge.php</file>
+
+	<!-- Exclude generated files -->
+	<exclude-pattern>./vendor/*</exclude-pattern>
+	<exclude-pattern>./assets/*</exclude-pattern>
+
+	<!-- Show progress and use colors -->
+	<arg value="ps"/>
+	<arg name="colors"/>
+
+	<!-- Use 8 parallel processes -->
+	<arg name="parallel" value="8"/>
+
+	<!-- PHP 8.0+ -->
+	<config name="testVersion" value="8.0-"/>
+</ruleset>

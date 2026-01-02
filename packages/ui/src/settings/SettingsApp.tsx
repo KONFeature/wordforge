@@ -1,4 +1,6 @@
+import { Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import type { WordForgeSettingsConfig } from '../types';
 import styles from './SettingsApp.module.css';
 import { AbilitiesCard } from './components/AbilitiesCard';
@@ -42,26 +44,55 @@ export const SettingsApp = () => {
   };
 
   const serverRunning = config.settings.serverRunning;
+  const execEnabled = config.settings.execEnabled;
 
   return (
     <div className="wordforge-settings-container">
       <div className={`wordforge-cards ${styles.cards}`}>
-        <div className={styles.fullWidth}>
-          <StatusCard
-            status={statusProps}
-            onStatusChange={handleStatusChange}
+        {!execEnabled && (
+          <div className={styles.fullWidth}>
+            <Notice status="warning" isDismissible={false}>
+              <strong>{__('AI Agent Unavailable', 'wordforge')}</strong>
+              <p>
+                {__(
+                  'Your hosting provider has disabled process execution (exec), which is required to run the AI agent. The MCP abilities are still available for external clients like Claude Desktop.',
+                  'wordforge',
+                )}
+              </p>
+              <p>
+                <em>
+                  {__(
+                    'Alternatives coming soon: Remote server mode and browser-based AI.',
+                    'wordforge',
+                  )}
+                </em>
+              </p>
+            </Notice>
+          </div>
+        )}
+
+        {execEnabled && (
+          <div className={styles.fullWidth}>
+            <StatusCard
+              status={statusProps}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+        )}
+
+        {execEnabled && (
+          <ProvidersCard restUrl={config.restUrl} nonce={config.nonce} />
+        )}
+
+        {execEnabled && (
+          <AgentConfigCard
+            restUrl={config.restUrl}
+            nonce={config.nonce}
+            initialAgents={config.agents}
+            serverRunning={serverRunning}
+            onStartServer={() => handleStatusChange()}
           />
-        </div>
-
-        <ProvidersCard restUrl={config.restUrl} nonce={config.nonce} />
-
-        <AgentConfigCard
-          restUrl={config.restUrl}
-          nonce={config.nonce}
-          initialAgents={config.agents}
-          serverRunning={serverRunning}
-          onStartServer={() => handleStatusChange()}
-        />
+        )}
 
         <div className={styles.fullWidth}>
           <ConnectionCard

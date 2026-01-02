@@ -7,6 +7,7 @@ namespace WordForge\Admin;
 use WordForge\OpenCode\ActivityMonitor;
 use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\ExecCapability;
 use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ServerProcess;
 
@@ -107,11 +108,13 @@ class SettingsPage {
 		$server_status = ServerProcess::get_status();
 		$abilities     = $this->get_registered_abilities();
 
+		$exec_capabilities = ExecCapability::get_capabilities();
+
 		$config = array(
-			'restUrl'      => \rest_url( 'wordforge/v1' ),
-			'nonce'        => \wp_create_nonce( 'wp_rest' ),
-			'optionsNonce' => \wp_create_nonce( 'wordforge_settings-options' ),
-			'settings'     => array(
+			'restUrl'             => \rest_url( 'wordforge/v1' ),
+			'nonce'               => \wp_create_nonce( 'wp_rest' ),
+			'optionsNonce'        => \wp_create_nonce( 'wordforge_settings-options' ),
+			'settings'            => array(
 				'pluginVersion'         => WORDFORGE_VERSION,
 				'binaryInstalled'       => $binary_info['is_installed'],
 				'serverRunning'         => $server_status['running'],
@@ -131,16 +134,17 @@ class SettingsPage {
 					'install_path' => $binary_info['install_path'],
 					'version'      => $binary_info['version'] ?? null,
 				),
+				'execEnabled'           => $exec_capabilities['can_exec'],
 			),
-			'abilities'    => $abilities,
-			'configuredProviders' => ProviderConfig::get_configured_providers(),
-			'agents'       => AgentConfig::get_agents_for_display(),
-			'activity'     => ActivityMonitor::get_status(),
-			'integrations' => array(
+			'abilities'           => $abilities,
+			'configuredProviders' => $exec_capabilities['can_exec'] ? ProviderConfig::get_configured_providers() : array(),
+			'agents'              => $exec_capabilities['can_exec'] ? AgentConfig::get_agents_for_display() : array(),
+			'activity'            => ActivityMonitor::get_status(),
+			'integrations'        => array(
 				'mcpAdapter'  => $mcp_active,
 				'woocommerce' => $woo_active,
 			),
-			'i18n'         => array(),
+			'i18n'                => array(),
 		);
 
 		\wp_add_inline_script(

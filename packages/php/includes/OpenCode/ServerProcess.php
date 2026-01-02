@@ -213,10 +213,10 @@ class ServerProcess {
 	 * @return array{healthy: bool, version?: string, error?: string}
 	 */
 	private static function wait_for_health( int $port, int $timeout_seconds ): array {
-		$url        = sprintf( self::HEALTH_CHECK_URL, $port );
-		$start      = time();
-		$last_error = '';
-		$attempts   = 0;
+		$url          = sprintf( self::HEALTH_CHECK_URL, $port );
+		$start        = time();
+		$last_error   = '';
+		$attempts     = 0;
 		$max_attempts = $timeout_seconds * 4;
 
 		while ( $attempts < $max_attempts && ( time() - $start ) < $timeout_seconds ) {

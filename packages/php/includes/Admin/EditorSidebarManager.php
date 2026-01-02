@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace WordForge\Admin;
 
+use WordForge\OpenCode\ExecCapability;
+
 class EditorSidebarManager {
 
 	public function __construct() {
@@ -11,6 +13,10 @@ class EditorSidebarManager {
 	}
 
 	public function enqueue_editor_assets(): void {
+		if ( ! ExecCapability::can_exec() ) {
+			return;
+		}
+
 		$asset_path = WORDFORGE_PLUGIN_DIR . 'assets/js/editor-sidebar.asset.php';
 		if ( ! file_exists( $asset_path ) ) {
 			return;
