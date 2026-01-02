@@ -32,6 +32,7 @@ export interface ChatState {
 
   messages: ChatMessage[];
   isLoadingMessages: boolean;
+  messagesError: Error | null;
 
   model: SelectedModel | null;
   setModel: (model: SelectedModel | null) => void;
@@ -73,6 +74,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     data: messages = [],
     isLoading: isLoadingMessages,
     refetch: refetchMessages,
+    error: messagesQueryError,
   } = useMessages(sessionId);
   const { data: configData } = useProvidersConfig();
 
@@ -171,6 +173,8 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
 
     messages,
     isLoadingMessages,
+    messagesError:
+      messagesQueryError instanceof Error ? messagesQueryError : null,
 
     model,
     setModel,

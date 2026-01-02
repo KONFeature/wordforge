@@ -32,3 +32,51 @@
 .errorContainer {
   padding: 0 var(--wf-spacing-md);
 }
+
+.messagesErrorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--wf-spacing-xl);
+  text-align: center;
+  gap: var(--wf-spacing-md);
+}
+
+.messagesErrorIcon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.messagesErrorTitle {
+  color: var(--wf-color-text);
+  font-size: var(--wf-font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.messagesErrorText {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-base);
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.messagesErrorHint {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-sm);
+  margin: 0;
+  max-width: 400px;
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  background: var(--wf-color-surface-alt);
+  border-radius: var(--wf-border-radius-md);
+}
+
+.messagesErrorHint code {
+  font-family: var(--wf-font-mono);
+  background: var(--wf-color-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+}

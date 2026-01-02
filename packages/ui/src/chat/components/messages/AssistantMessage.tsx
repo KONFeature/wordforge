@@ -22,23 +22,29 @@ interface AssistantMessageProps {
 
 export const AssistantMessage = memo(
   ({ messages, isComplete, onOpenSession }: AssistantMessageProps) => {
-    if (messages.length === 0) return null;
+    if (!messages || messages.length === 0) return null;
 
-    const allParts: Part[] = messages.flatMap((m) => m.parts);
-    const allSteps = allParts.filter(
+    const allParts: Part[] = messages.flatMap((m) => m.parts || []);
+    const validParts = allParts.filter((p): p is Part => p != null);
+    const allSteps = validParts.filter(
       (p) => isToolPart(p) || isReasoningPart(p),
     ) as (ToolPart | ReasoningPart)[];
-    const allTextParts = allParts.filter(isTextPart);
+    const allTextParts = validParts.filter(isTextPart);
 
     const firstMsg = messages[0];
+    if (!firstMsg?.info) return null;
+
     const modelInfo = isAssistantMessage(firstMsg.info)
       ? { provider: firstMsg.info.providerID, model: firstMsg.info.modelID }
       : null;
 
-    const time = new Date(firstMsg.info.time.created * 1000).toLocaleTimeString(
-      [],
-      { hour: '2-digit', minute: '2-digit' },
-    );
+    const createdTime = firstMsg.info.time?.created;
+    const time = createdTime
+      ? new Date(createdTime * 1000).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '';
 
     const errorMessage = messages.find(
       (m) => isAssistantMessage(m.info) && m.info.error,

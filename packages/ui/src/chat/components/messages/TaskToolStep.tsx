@@ -18,8 +18,10 @@ const STATUS_LABELS: Record<StepStatus, string> = {
 };
 
 export const TaskToolStep = ({ part, onOpenSession }: TaskToolStepProps) => {
+  if (!part?.state) return null;
+
   const state = part.state;
-  const status = state.status;
+  const status = state.status ?? 'pending';
   const title =
     ('title' in state && state.title) || __('Sub-agent Task', 'wordforge');
   const sessionId = getTaskSessionId(part);

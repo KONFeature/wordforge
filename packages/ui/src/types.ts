@@ -1,3 +1,5 @@
+import type { Message, Part } from '@opencode-ai/sdk';
+
 export type {
   Session,
   Message,

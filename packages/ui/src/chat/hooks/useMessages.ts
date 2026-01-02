@@ -4,9 +4,10 @@ import type {
   SessionStatus,
 } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { SelectedModel } from '../../components/ModelSelector';
 import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import type { ChatMessage } from '../components/MessageList';
-import type { SelectedModel } from '../components/ModelSelector';
+import { sanitizeMessage } from '../utils/msgSanitizer';
 import {
   type ScopedContext,
   formatContextXml,
@@ -26,10 +27,26 @@ export const useMessages = (sessionId: string | null) => {
     queryFn: async () => {
       const result = await client!.session.messages({
         path: { id: sessionId! },
+        query: {
+          limit: 100
+        }
       });
-      return (result.data || []) as ChatMessage[];
+
+      const rawMessages = result.data || [];
+
+      const validMessages: ChatMessage[] = [];
+      for (let i = 0; i < rawMessages.length; i++) {
+        const sanitized = sanitizeMessage(rawMessages[i], i);
+        if (sanitized) {
+          validMessages.push(sanitized);
+        }
+      }
+
+      return validMessages;
     },
     enabled: !!client && !!sessionId,
+    gcTime: 0,
+    staleTime: 0,
     refetchInterval: () => {
       if (!sessionId) return false;
       const statuses =

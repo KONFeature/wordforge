@@ -1,5 +1,11 @@
 import { Notice } from '@wordpress/components';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import {
+  Component,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useClient } from '../../lib/ClientProvider';
 import type { ChatState } from '../hooks/useChat';
@@ -11,6 +17,84 @@ import type { ChatMessage } from './MessageList';
 import { QuickActions } from './QuickActions';
 import { SearchBar } from './SearchBar';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
+
+interface MessageErrorBoundaryProps {
+  sessionId: string | null;
+  isLocalServer: boolean;
+  children: ReactNode;
+}
+
+interface MessageErrorBoundaryState {
+  hasError: boolean;
+}
+
+class MessageErrorBoundary extends Component<
+  MessageErrorBoundaryProps,
+  MessageErrorBoundaryState
+> {
+  constructor(props: MessageErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): MessageErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('[WordForge] Message render error:', error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps: MessageErrorBoundaryProps): void {
+    if (prevProps.sessionId !== this.props.sessionId && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <MessagesErrorState
+          sessionId={this.props.sessionId}
+          isLocalServer={this.props.isLocalServer}
+        />
+      );
+    }
+    return this.props.children;
+  }
+}
+
+interface MessagesErrorStateProps {
+  sessionId: string | null;
+  isLocalServer: boolean;
+}
+
+const MessagesErrorState = ({
+  sessionId,
+  isLocalServer,
+}: MessagesErrorStateProps) => (
+  <div className={styles.messagesErrorState}>
+    <div className={styles.messagesErrorIcon}>⚠️</div>
+    <p className={styles.messagesErrorTitle}>
+      {__('Unable to load this conversation', 'wordforge')}
+    </p>
+    <p className={styles.messagesErrorText}>
+      {__(
+        'This conversation may be too large to display in the browser, or the data may be corrupted.',
+        'wordforge',
+      )}
+    </p>
+    {!isLocalServer && sessionId && (
+      <p className={styles.messagesErrorHint}>
+        {__(
+          'You can continue this conversation in your local OpenCode instance:',
+          'wordforge',
+        )}{' '}
+        <code>opencode --resume {sessionId}</code>
+      </p>
+    )}
+  </div>
+);
 
 interface ChatInterfaceProps {
   chat: ChatState;
@@ -56,7 +140,8 @@ export const ChatInterface = ({
 
   const hasSession = !!chat.sessionId;
   const hasMessages = chat.messages.length > 0;
-  const showQuickActions = context && !hasMessages;
+  const hasMessagesError = !!chat.messagesError;
+  const showQuickActions = context && !hasMessages && !hasMessagesError;
   const displayMessages =
     isSearching && filteredMessages ? filteredMessages : chat.messages;
 
@@ -96,15 +181,27 @@ export const ChatInterface = ({
         />
       )}
 
-      {hasSession && (
-        <VirtualizedMessageList
-          messages={displayMessages}
-          isLoading={chat.isLoadingMessages}
-          isThinking={chat.isBusy && !isSearching}
-          isBusy={chat.isBusy}
-          onOpenSession={chat.selectSession}
-          height={containerHeight - (showSearch ? 50 : 0)}
+      {hasSession && hasMessagesError && (
+        <MessagesErrorState
+          sessionId={chat.sessionId}
+          isLocalServer={config?.localServerEnabled ?? false}
         />
+      )}
+
+      {hasSession && !hasMessagesError && (
+        <MessageErrorBoundary
+          sessionId={chat.sessionId}
+          isLocalServer={config?.localServerEnabled ?? false}
+        >
+          <VirtualizedMessageList
+            messages={displayMessages}
+            isLoading={chat.isLoadingMessages}
+            isThinking={chat.isBusy && !isSearching}
+            isBusy={chat.isBusy}
+            onOpenSession={chat.selectSession}
+            height={containerHeight - (showSearch ? 50 : 0)}
+          />
+        </MessageErrorBoundary>
       )}
 
       {!hasSession && (

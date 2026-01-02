@@ -8,9 +8,20 @@ interface ToolCallStepProps {
   part: ToolPart;
 }
 
+const safeStringify = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return '[Unable to display content]';
+  }
+};
+
 export const ToolCallStep = ({ part }: ToolCallStepProps) => {
+  if (!part?.state) return null;
+
   const state = part.state;
-  const status = state.status;
+  const status = state.status ?? 'pending';
   const title = ('title' in state && state.title) || part.tool || 'unknown';
 
   const input = 'input' in state ? state.input : undefined;
@@ -49,7 +60,7 @@ export const ToolCallStep = ({ part }: ToolCallStepProps) => {
             {__('Input', 'wordforge')}
           </div>
           <pre className={styles.stepSectionContent}>
-            {JSON.stringify(input, null, 2)}
+            {safeStringify(input)}
           </pre>
         </div>
       )}
@@ -59,9 +70,7 @@ export const ToolCallStep = ({ part }: ToolCallStepProps) => {
             {__('Output', 'wordforge')}
           </div>
           <pre className={styles.stepSectionContent}>
-            {typeof output === 'string'
-              ? output
-              : JSON.stringify(output, null, 2)}
+            {safeStringify(output)}
           </pre>
         </div>
       )}
@@ -71,7 +80,7 @@ export const ToolCallStep = ({ part }: ToolCallStepProps) => {
             {__('Error', 'wordforge')}
           </div>
           <pre className={`${styles.stepSectionContent} ${styles.error}`}>
-            {error}
+            {typeof error === 'string' ? error : safeStringify(error)}
           </pre>
         </div>
       )}

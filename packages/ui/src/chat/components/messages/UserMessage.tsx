@@ -15,12 +15,18 @@ interface UserMessageProps {
 }
 
 export const UserMessage = memo(({ message }: UserMessageProps) => {
-  const time = new Date(message.info.time.created * 1000).toLocaleTimeString(
-    [],
-    { hour: '2-digit', minute: '2-digit' },
-  );
+  if (!message?.info) return null;
 
-  const textParts = message.parts.filter(isTextPart);
+  const createdTime = message.info.time?.created;
+  const time = createdTime
+    ? new Date(createdTime * 1000).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
+
+  const parts = message.parts || [];
+  const textParts = parts.filter(isTextPart);
   const contextPart = textParts.find(isContextPart);
   const messageParts = textParts.filter((p) => !isContextPart(p));
   const contextText = contextPart
