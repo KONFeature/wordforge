@@ -201,6 +201,15 @@ class ServerConfig {
 			'npm list*'      => 'allow',
 			'npm ls*'        => 'allow',
 			'bun pm ls*'     => 'allow',
+			'curl'     => 'allow',
+			'wget'     => 'allow',
+			'ping'     => 'allow',
+			'echo'     => 'allow',
+			'php -r'     => 'allow',
+			'php -l'     => 'allow',
+			'date'     => 'allow',
+			'ps aux'     => 'allow',
+			'systemctl status'     => 'allow',
 			'*'              => 'deny',
 		);
 	}

@@ -17,10 +17,10 @@ class LocalServerConfig {
 			'$schema'      => 'https://opencode.ai/config.json',
 			'instructions' => array( 'context/site.md' ),
 			'permission'   => array(
-				'edit'               => 'deny',
+				'edit'               => 'ask',
 				'external_directory' => 'deny',
 				'bash'               => array(
-					'*' => 'deny',
+					'*' => 'ask',
 				),
 			),
 		);

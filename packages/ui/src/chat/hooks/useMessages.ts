@@ -5,7 +5,11 @@ import type {
 } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SelectedModel } from '../../components/ModelSelector';
-import { useOpencodeClientOptional } from '../../lib/ClientProvider';
+import {
+  useConnectionStatus,
+  useOpencodeClientOptional,
+} from '../../lib/ClientProvider';
+import { queryKeys } from '../../lib/queryKeys';
 import type { ChatMessage } from '../components/MessageList';
 import { sanitizeMessage } from '../utils/msgSanitizer';
 import {
@@ -13,23 +17,20 @@ import {
   formatContextXml,
   shouldIncludeContext,
 } from './useContextInjection';
-import { SESSIONS_KEY, STATUSES_KEY } from './useSessions';
-
-export const messagesKey = (sessionId: string) =>
-  ['messages', sessionId] as const;
 
 export const useMessages = (sessionId: string | null) => {
   const client = useOpencodeClientOptional();
   const queryClient = useQueryClient();
+  const { mode } = useConnectionStatus();
 
   return useQuery({
-    queryKey: messagesKey(sessionId!),
+    queryKey: queryKeys.messages(mode, sessionId!),
     queryFn: async () => {
       const result = await client!.session.messages({
         path: { id: sessionId! },
         query: {
-          limit: 100
-        }
+          limit: 100,
+        },
       });
 
       const rawMessages = result.data || [];
@@ -49,8 +50,9 @@ export const useMessages = (sessionId: string | null) => {
     staleTime: 0,
     refetchInterval: () => {
       if (!sessionId) return false;
-      const statuses =
-        queryClient.getQueryData<Record<string, SessionStatus>>(STATUSES_KEY);
+      const statuses = queryClient.getQueryData<Record<string, SessionStatus>>(
+        queryKeys.statuses(mode),
+      );
       const status = statuses?.[sessionId];
       const isBusy = status?.type === 'busy' || status?.type === 'retry';
       return isBusy ? 2000 : false;
@@ -73,6 +75,7 @@ export interface SendMessageResult {
 
 export const useSendMessage = () => {
   const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
 
   return useMutation({
     mutationFn: async (
@@ -111,7 +114,7 @@ export const useSendMessage = () => {
         sessionId = newSession.id;
         isNewSession = true;
 
-        queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
+        queryClient.setQueryData<Session[]>(queryKeys.sessions(mode), (old) =>
           old ? [newSession, ...old] : [newSession],
         );
       }
@@ -132,11 +135,13 @@ export const useSendMessage = () => {
           sessionID: sessionId,
         })),
       };
-      await queryClient.cancelQueries({ queryKey: messagesKey(sessionId) });
-      queryClient.setQueryData<ChatMessage[]>(messagesKey(sessionId), (old) => [
-        ...(old || []),
-        tempUserMsg,
-      ]);
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.messages(mode, sessionId),
+      });
+      queryClient.setQueryData<ChatMessage[]>(
+        queryKeys.messages(mode, sessionId),
+        (old) => [...(old || []), tempUserMsg],
+      );
 
       await client.session.promptAsync({
         path: { id: sessionId },
@@ -152,13 +157,15 @@ export const useSendMessage = () => {
       const promises = [];
       if (result.isNewSession) {
         promises.push(
-          queryClient.invalidateQueries({ queryKey: SESSIONS_KEY }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.sessions(mode) }),
         );
       }
-      promises.push(queryClient.invalidateQueries({ queryKey: STATUSES_KEY }));
+      promises.push(
+        queryClient.invalidateQueries({ queryKey: queryKeys.statuses(mode) }),
+      );
       promises.push(
         queryClient.invalidateQueries({
-          queryKey: messagesKey(result.sessionId),
+          queryKey: queryKeys.messages(mode, result.sessionId),
         }),
       );
       await Promise.allSettled(promises);

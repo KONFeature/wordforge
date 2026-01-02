@@ -1,15 +1,17 @@
 import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useOpencodeClientOptional } from '../../lib/ClientProvider';
-
-export const SESSIONS_KEY = ['sessions'] as const;
-export const STATUSES_KEY = ['session-statuses'] as const;
+import {
+  useConnectionStatus,
+  useOpencodeClientOptional,
+} from '../../lib/ClientProvider';
+import { queryKeys } from '../../lib/queryKeys';
 
 export const useSessions = () => {
   const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
 
   return useQuery({
-    queryKey: SESSIONS_KEY,
+    queryKey: queryKeys.sessions(mode),
     queryFn: async () => {
       const result = await client!.session.list();
       const sessions = Array.isArray(result.data) ? result.data : [];
@@ -21,9 +23,10 @@ export const useSessions = () => {
 
 export const useSessionStatuses = () => {
   const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
 
   return useQuery({
-    queryKey: STATUSES_KEY,
+    queryKey: queryKeys.statuses(mode),
     queryFn: async () => {
       const result = await client!.session.status();
       return (
@@ -44,6 +47,7 @@ export const useSessionStatuses = () => {
 
 export const useCreateSession = () => {
   const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
 
   return useMutation({
     mutationFn: async () => {
@@ -51,7 +55,7 @@ export const useCreateSession = () => {
       return result.data!;
     },
     onSuccess: (newSession, _var, _result, { client: queryClient }) => {
-      queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
+      queryClient.setQueryData<Session[]>(queryKeys.sessions(mode), (old) =>
         old ? [newSession, ...old] : [newSession],
       );
     },
@@ -60,6 +64,7 @@ export const useCreateSession = () => {
 
 export const useDeleteSession = () => {
   const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
 
   return useMutation({
     mutationFn: async (sessionId: string) => {
@@ -68,7 +73,7 @@ export const useDeleteSession = () => {
     },
     onSuccess: (deletedId, _var, _result, { client: queryClient }) => {
       queryClient.setQueryData<Session[]>(
-        SESSIONS_KEY,
+        queryKeys.sessions(mode),
         (old) => old?.filter((s) => s.id !== deletedId) ?? [],
       );
     },

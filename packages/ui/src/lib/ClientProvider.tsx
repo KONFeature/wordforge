@@ -1,5 +1,5 @@
 import type { OpencodeClient } from '@opencode-ai/sdk/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
@@ -94,19 +94,10 @@ interface ClientProviderProps {
 
 export const ClientProvider = ({ children }: ClientProviderProps) => {
   const config = getConfig();
-  const queryClient = useQueryClient();
-  const { preferLocal, setPreference: setPreferenceRaw } = useLocalPreference();
+  const { preferLocal, setPreference } = useLocalPreference();
 
   const { data: healthData, refetch: refetchConnectionStatus } =
     useConnectionStatusQuery(config);
-
-  const setPreference = useCallback(
-    (prefer: 'local' | 'remote') => {
-      setPreferenceRaw(prefer);
-      queryClient.invalidateQueries();
-    },
-    [setPreferenceRaw, queryClient],
-  );
 
   const localAvailable = healthData?.localAvailable ?? false;
   const remoteAvailable = healthData?.remoteAvailable ?? false;
