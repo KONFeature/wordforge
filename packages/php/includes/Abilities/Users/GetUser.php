@@ -75,11 +75,6 @@ class GetUser extends AbstractAbility {
 	public function get_input_schema(): array {
 		return array(
 			'type'       => 'object',
-			'oneOf'      => array(
-				array( 'required' => array( 'id' ) ),
-				array( 'required' => array( 'login' ) ),
-				array( 'required' => array( 'email' ) ),
-			),
 			'properties' => array(
 				'id'           => array(
 					'type'        => 'integer',

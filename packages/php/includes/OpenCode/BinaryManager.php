@@ -6,8 +6,12 @@ namespace WordForge\OpenCode;
 
 class BinaryManager {
 
-	private const GITHUB_API_LATEST = 'https://api.github.com/repos/sst/opencode/releases/latest';
-	private const DOWNLOAD_BASE_URL = 'https://github.com/sst/opencode/releases/download';
+	private const GITHUB_REPO            = 'sst/opencode';
+	private const GITHUB_API_LATEST      = 'https://api.github.com/repos/sst/opencode/releases/latest';
+	private const GITHUB_LATEST_DOWNLOAD = 'https://github.com/sst/opencode/releases/latest/download';
+	private const GITHUB_DOWNLOAD_BASE   = 'https://github.com/sst/opencode/releases/download';
+	private const CACHE_KEY              = 'wordforge_opencode_latest_release';
+	private const CACHE_EXPIRATION       = HOUR_IN_SECONDS;
 
 	public static function get_binary_dir(): string {
 		$upload_dir = wp_upload_dir();
@@ -19,15 +23,35 @@ class BinaryManager {
 	}
 
 	public static function get_binary_name(): string {
-		return 'win32' === self::get_os() ? 'opencode.exe' : 'opencode';
+		return 'windows' === self::get_os() ? 'opencode.exe' : 'opencode';
 	}
 
 	private static function get_archive_name(): string {
+		$target = self::get_target();
+		$os     = self::get_os();
+
+		return 'linux' === $os ? "{$target}.tar.gz" : "{$target}.zip";
+	}
+
+	/**
+	 * Build the full target string including all platform variants.
+	 * Examples: opencode-linux-x64, opencode-linux-x64-baseline-musl, opencode-darwin-arm64
+	 */
+	private static function get_target(): string {
 		$os   = self::get_os();
 		$arch = self::get_arch();
-		$base = "opencode-{$os}-{$arch}";
 
-		return 'linux' === $os ? "{$base}.tar.gz" : "{$base}.zip";
+		$target = "opencode-{$os}-{$arch}";
+
+		if ( self::needs_baseline() ) {
+			$target .= '-baseline';
+		}
+
+		if ( self::is_musl() ) {
+			$target .= '-musl';
+		}
+
+		return $target;
 	}
 
 	private static function get_os(): string {
@@ -36,19 +60,133 @@ class BinaryManager {
 		if ( str_contains( $uname, 'darwin' ) ) {
 			return 'darwin';
 		}
-		if ( str_contains( $uname, 'win' ) ) {
-			return 'win32';
+		if ( str_contains( $uname, 'win' ) || str_contains( $uname, 'mingw' ) || str_contains( $uname, 'msys' ) || str_contains( $uname, 'cygwin' ) ) {
+			return 'windows';
 		}
 		return 'linux';
 	}
 
 	private static function get_arch(): string {
+		$os      = self::get_os();
 		$machine = strtolower( php_uname( 'm' ) );
 
+		// Normalize architecture names.
 		if ( in_array( $machine, array( 'arm64', 'aarch64' ), true ) ) {
+			$arch = 'arm64';
+		} elseif ( in_array( $machine, array( 'x86_64', 'amd64' ), true ) ) {
+			$arch = 'x64';
+		} else {
+			$arch = 'x64'; // Default fallback.
+		}
+
+		// Rosetta detection: PHP might report x64 but we're actually on arm64 Mac.
+		if ( 'darwin' === $os && 'x64' === $arch ) {
+			$arch = self::detect_rosetta_arch( $arch );
+		}
+
+		return $arch;
+	}
+
+	/**
+	 * Detect if running under Rosetta translation on Apple Silicon.
+	 * If so, return arm64 to download the native binary.
+	 */
+	private static function detect_rosetta_arch( string $current_arch ): string {
+		// Check sysctl for Rosetta translation flag.
+		$output = array();
+		$code   = 0;
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
+		@exec( 'sysctl -n sysctl.proc_translated 2>/dev/null', $output, $code );
+
+		if ( 0 === $code && ! empty( $output[0] ) && '1' === trim( $output[0] ) ) {
 			return 'arm64';
 		}
-		return 'x64';
+
+		return $current_arch;
+	}
+
+	/**
+	 * Detect if running on musl libc (Alpine Linux, etc.).
+	 */
+	private static function is_musl(): bool {
+		if ( 'linux' !== self::get_os() ) {
+			return false;
+		}
+
+		// Check for Alpine Linux.
+		if ( file_exists( '/etc/alpine-release' ) ) {
+			return true;
+		}
+
+		// Check ldd version output for musl signature.
+		$output = array();
+		$code   = 0;
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
+		@exec( 'ldd --version 2>&1', $output, $code );
+
+		$ldd_output = implode( ' ', $output );
+		if ( stripos( $ldd_output, 'musl' ) !== false ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Detect if CPU lacks AVX2 support (needs baseline binary).
+	 * Only relevant for x64 architecture.
+	 */
+	private static function needs_baseline(): bool {
+		$arch = self::get_arch();
+		$os   = self::get_os();
+
+		if ( 'x64' !== $arch ) {
+			return false;
+		}
+
+		if ( 'linux' === $os ) {
+			return self::linux_needs_baseline();
+		}
+
+		if ( 'darwin' === $os ) {
+			return self::darwin_needs_baseline();
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check Linux CPU for AVX2 support via /proc/cpuinfo.
+	 */
+	private static function linux_needs_baseline(): bool {
+		if ( ! file_exists( '/proc/cpuinfo' ) ) {
+			return false; // Can't detect, assume modern CPU.
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$cpuinfo = @file_get_contents( '/proc/cpuinfo' );
+		if ( false === $cpuinfo ) {
+			return false;
+		}
+
+		// If AVX2 is not found in flags, we need baseline.
+		return stripos( $cpuinfo, 'avx2' ) === false;
+	}
+
+	/**
+	 * Check macOS CPU for AVX2 support via sysctl.
+	 */
+	private static function darwin_needs_baseline(): bool {
+		$output = array();
+		$code   = 0;
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
+		@exec( 'sysctl -n hw.optional.avx2_0 2>/dev/null', $output, $code );
+
+		if ( 0 === $code && ! empty( $output[0] ) ) {
+			return '1' !== trim( $output[0] );
+		}
+
+		return false; // Can't detect, assume modern CPU.
 	}
 
 	public static function is_installed(): bool {
@@ -63,13 +201,25 @@ class BinaryManager {
 			return null;
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		return trim( file_get_contents( $version_file ) );
 	}
 
 	/**
+	 * Fetch latest release info from GitHub API with caching.
+	 *
+	 * @param bool $force_refresh Skip cache and fetch fresh data.
 	 * @return array{version: string, download_url: string, tag_name: string}|\WP_Error
 	 */
-	public static function fetch_latest_release() {
+	public static function fetch_latest_release( bool $force_refresh = false ) {
+		// Check cache first.
+		if ( ! $force_refresh ) {
+			$cached = get_transient( self::CACHE_KEY );
+			if ( false !== $cached && is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+
 		$response = wp_remote_get(
 			self::GITHUB_API_LATEST,
 			array(
@@ -101,13 +251,18 @@ class BinaryManager {
 
 		$version      = ltrim( $body['tag_name'], 'v' );
 		$archive_name = self::get_archive_name();
-		$download_url = self::DOWNLOAD_BASE_URL . "/v{$version}/{$archive_name}";
+		$download_url = self::GITHUB_DOWNLOAD_BASE . "/v{$version}/{$archive_name}";
 
-		return array(
+		$result = array(
 			'version'      => $version,
 			'download_url' => $download_url,
 			'tag_name'     => $body['tag_name'],
 		);
+
+		// Cache the result.
+		set_transient( self::CACHE_KEY, $result, self::CACHE_EXPIRATION );
+
+		return $result;
 	}
 
 	/**
@@ -130,18 +285,19 @@ class BinaryManager {
 	}
 
 	/**
+	 * Download and install the latest OpenCode binary.
+	 * Uses GitHub's redirect URL to avoid API rate limits.
+	 *
 	 * @param callable|null $progress_callback Receives (string $stage, string $message).
 	 * @return true|\WP_Error
 	 */
 	public static function download_latest( ?callable $progress_callback = null ) {
-		$release = self::fetch_latest_release();
-
-		if ( is_wp_error( $release ) ) {
-			return $release;
-		}
+		// Use the redirect URL pattern - no API call needed!
+		$archive_name = self::get_archive_name();
+		$download_url = self::GITHUB_LATEST_DOWNLOAD . '/' . $archive_name;
 
 		if ( $progress_callback ) {
-			$progress_callback( 'fetching', 'Fetching OpenCode v' . $release['version'] . '...' );
+			$progress_callback( 'fetching', 'Fetching latest OpenCode...' );
 		}
 
 		$dir = self::get_binary_dir();
@@ -151,6 +307,7 @@ class BinaryManager {
 
 		$htaccess = $dir . '/.htaccess';
 		if ( ! file_exists( $htaccess ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 			file_put_contents( $htaccess, "Deny from all\n" );
 		}
 
@@ -162,7 +319,7 @@ class BinaryManager {
 			require_once \ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		$temp_archive = \download_url( $release['download_url'], 300 );
+		$temp_archive = \download_url( $download_url, 300 );
 
 		if ( is_wp_error( $temp_archive ) ) {
 			return $temp_archive;
@@ -173,6 +330,7 @@ class BinaryManager {
 		}
 
 		$extract_result = self::extract_binary( $temp_archive, $dir );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 		@unlink( $temp_archive );
 
 		if ( is_wp_error( $extract_result ) ) {
@@ -180,17 +338,52 @@ class BinaryManager {
 		}
 
 		$binary_path = self::get_binary_path();
-		if ( 'win32' !== self::get_os() ) {
+		if ( 'windows' !== self::get_os() ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 			chmod( $binary_path, 0755 );
 		}
 
-		file_put_contents( $dir . '/.version', $release['version'] );
+		// Get version from the downloaded binary or fetch from API (cached).
+		$version = self::detect_installed_version( $binary_path );
+		if ( null === $version ) {
+			// Fallback: fetch from API (will be cached).
+			$release = self::fetch_latest_release();
+			$version = is_wp_error( $release ) ? 'unknown' : $release['version'];
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		file_put_contents( $dir . '/.version', $version );
 
 		if ( $progress_callback ) {
-			$progress_callback( 'complete', 'OpenCode v' . $release['version'] . ' installed' );
+			$progress_callback( 'complete', 'OpenCode v' . $version . ' installed' );
 		}
 
 		return true;
+	}
+
+	/**
+	 * Try to detect version from the installed binary.
+	 */
+	private static function detect_installed_version( string $binary_path ): ?string {
+		if ( ! file_exists( $binary_path ) || ! is_executable( $binary_path ) ) {
+			return null;
+		}
+
+		$output = array();
+		$code   = 0;
+		$cmd    = escapeshellarg( $binary_path ) . ' version 2>/dev/null';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
+		@exec( $cmd, $output, $code );
+
+		if ( 0 === $code && ! empty( $output[0] ) ) {
+			// Parse version from output (e.g., "opencode 1.0.180" or just "1.0.180").
+			$version_line = trim( $output[0] );
+			if ( preg_match( '/(\d+\.\d+\.\d+)/', $version_line, $matches ) ) {
+				return $matches[1];
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -202,6 +395,7 @@ class BinaryManager {
 		$binary_path = $dest_dir . '/' . $binary_name;
 
 		if ( file_exists( $binary_path ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 			unlink( $binary_path );
 		}
 
@@ -212,6 +406,7 @@ class BinaryManager {
 			$cmd    = "tar -xzf {$escaped_archive} -C {$escaped_dest} opencode 2>&1";
 			$output = array();
 			$code   = 0;
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
 			exec( $cmd, $output, $code );
 
 			if ( 0 !== $code ) {
@@ -248,6 +443,7 @@ class BinaryManager {
 		$files = glob( $dir . '/*' );
 		foreach ( $files as $file ) {
 			if ( is_file( $file ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 				unlink( $file );
 			}
 		}
@@ -255,6 +451,7 @@ class BinaryManager {
 		$hidden = glob( $dir . '/.*' );
 		foreach ( $hidden as $file ) {
 			if ( is_file( $file ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 				unlink( $file );
 			}
 		}
@@ -262,18 +459,28 @@ class BinaryManager {
 		return rmdir( $dir );
 	}
 
+	/**
+	 * Clear the cached release information.
+	 */
+	public static function clear_cache(): bool {
+		return delete_transient( self::CACHE_KEY );
+	}
+
 	public static function get_platform_info(): array {
 		return array(
-			'os'           => self::get_os(),
-			'arch'         => self::get_arch(),
-			'archive_name' => self::get_archive_name(),
-			'binary_name'  => self::get_binary_name(),
-			'binary_dir'   => self::get_binary_dir(),
-			'binary_path'  => self::get_binary_path(),
-			'is_installed' => self::is_installed(),
-			'version'      => self::get_installed_version(),
-			'php_uname_s'  => php_uname( 's' ),
-			'php_uname_m'  => php_uname( 'm' ),
+			'os'             => self::get_os(),
+			'arch'           => self::get_arch(),
+			'target'         => self::get_target(),
+			'archive_name'   => self::get_archive_name(),
+			'binary_name'    => self::get_binary_name(),
+			'binary_dir'     => self::get_binary_dir(),
+			'binary_path'    => self::get_binary_path(),
+			'is_installed'   => self::is_installed(),
+			'version'        => self::get_installed_version(),
+			'is_musl'        => self::is_musl(),
+			'needs_baseline' => self::needs_baseline(),
+			'php_uname_s'    => php_uname( 's' ),
+			'php_uname_m'    => php_uname( 'm' ),
 		);
 	}
 }

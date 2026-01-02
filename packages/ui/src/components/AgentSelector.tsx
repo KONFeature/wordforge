@@ -4,12 +4,10 @@ import { memo, useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import styles from './AgentSelector.module.css';
 
-const DEFAULT_AGENT = 'wordpress-manager';
-
 interface AgentSelectorProps {
   agents: Agent[];
   selectedAgent: string | null;
-  onSelectAgent: (agentName: string) => void;
+  onSelectAgent: (agentName: string | null) => void;
   disabled?: boolean;
 }
 
@@ -53,8 +51,9 @@ export const AgentSelector = ({
   }, [agents]);
 
   const getAgentDisplayName = useCallback((): string => {
+    if (!selectedAgent) return __('Use default', 'wordforge');
     const agent = filteredAgents.find((a) => a.name === selectedAgent);
-    return agent?.name ?? selectedAgent ?? __('Select Agent', 'wordforge');
+    return agent?.name ?? selectedAgent;
   }, [selectedAgent, filteredAgents]);
 
   const handleSelectAgent = useCallback(
@@ -64,6 +63,11 @@ export const AgentSelector = ({
     },
     [onSelectAgent],
   );
+
+  const handleSelectDefault = useCallback(() => {
+    onSelectAgent(null);
+    setIsOpen(false);
+  }, [onSelectAgent]);
 
   if (filteredAgents.length === 0) {
     return null;
@@ -96,6 +100,15 @@ export const AgentSelector = ({
         >
           <div className={styles.popoverContent}>
             <div className={styles.agentList}>
+              <button
+                type="button"
+                onClick={handleSelectDefault}
+                className={`${styles.defaultButton} ${!selectedAgent ? styles.selected : ''}`}
+                aria-pressed={!selectedAgent}
+              >
+                <span>{__('Use default', 'wordforge')}</span>
+                {!selectedAgent && <span className={styles.checkmark}>✓</span>}
+              </button>
               {filteredAgents.map((agent) => (
                 <AgentButton
                   key={agent.name}
@@ -111,5 +124,3 @@ export const AgentSelector = ({
     </div>
   );
 };
-
-export { DEFAULT_AGENT };

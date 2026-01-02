@@ -1,13 +1,14 @@
+import type { SelectedModel } from '@/components/ModelSelector';
 import type {
   Agent,
+  AssistantMessage,
   Provider,
   Session,
   SessionStatus,
 } from '@opencode-ai/sdk/client';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
-import { DEFAULT_AGENT } from '../../components/AgentSelector';
 import type { ChatMessage } from '../components/MessageList';
-import type { SelectedModel } from '../components/ModelSelector';
+import { isAssistantMessage } from '../components/messages';
 import { useAgentsConfig, useProvidersConfig } from './useConfig';
 import type { ScopedContext } from './useContextInjection';
 import {
@@ -97,11 +98,25 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
   const abortSession = useAbortSession();
   const deleteSessionMutation = useDeleteSession();
 
+  const lastUserModel = useMemo(() => {
+    const assistantMessages = messages
+      .map((m) => m.info)
+      .filter((i) => isAssistantMessage(i)) as AssistantMessage[];
+    if (assistantMessages.length === 0) return null;
+    const lastMsg = assistantMessages[assistantMessages.length - 1];
+    if (lastMsg?.modelID && lastMsg?.providerID) {
+      return { providerID: lastMsg.providerID, modelID: lastMsg.modelID };
+    }
+    return null;
+  }, [messages]);
+
   useEffect(() => {
-    if (configData?.defaultModel && !model) {
+    if (lastUserModel) {
+      setModel(lastUserModel);
+    } else if (configData?.defaultModel && !model) {
       setModel(configData.defaultModel);
     }
-  }, [configData?.defaultModel, model]);
+  }, [lastUserModel, configData?.defaultModel]);
 
   const session = useMemo(
     () => sessions.find((s) => s.id === sessionId),

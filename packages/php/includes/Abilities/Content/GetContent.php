@@ -149,12 +149,13 @@ class GetContent extends AbstractAbility {
 
 		// Include meta if requested.
 		if ( ! empty( $args['include_meta'] ) ) {
-			$data['meta'] = $this->get_post_meta( $post->ID );
+			$meta          = $this->get_post_meta( $post->ID );
+			$data['meta'] = empty( $meta ) ? (object) array() : $meta;
 		}
 
-		// Include taxonomies if requested.
 		if ( ! empty( $args['include_taxonomies'] ) ) {
-			$data['taxonomies'] = $this->get_post_taxonomies( $post );
+			$taxonomies          = $this->get_post_taxonomies( $post );
+			$data['taxonomies'] = empty( $taxonomies ) ? (object) array() : $taxonomies;
 		}
 
 		return $this->success( $data );

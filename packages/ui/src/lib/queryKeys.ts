@@ -7,4 +7,5 @@ export const queryKeys = {
     [mode, 'messages', sessionId] as const,
   config: (mode: ConnectionMode) => [mode, 'config'] as const,
   mcpStatus: (mode: ConnectionMode) => [mode, 'mcp-status'] as const,
+  agentConfigs: (mode: ConnectionMode) => [mode, 'agents'] as const,
 };

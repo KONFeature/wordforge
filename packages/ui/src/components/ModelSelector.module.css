@@ -64,6 +64,32 @@
   overscroll-behavior: contain;
 }
 
+.defaultButton {
+  width: 100%;
+  text-align: left;
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--wf-font-size-md);
+  font-weight: 500;
+  color: var(--wf-color-text-muted);
+  border-bottom: 1px solid var(--wf-color-border-light);
+  transition: background var(--wf-transition-fast);
+}
+
+.defaultButton:hover {
+  background: var(--wf-color-bg-code);
+}
+
+.defaultButton.selected {
+  background: var(--wf-color-bg-selected);
+  color: var(--wf-color-text);
+}
+
 .emptyState {
   padding: var(--wf-spacing-xl);
   color: var(--wf-color-text-muted);

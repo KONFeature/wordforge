@@ -11,13 +11,6 @@ export interface SelectedModel {
   modelID: string;
 }
 
-interface ModelSelectorProps {
-  providers: Provider[];
-  selectedModel: SelectedModel | null;
-  onSelectModel: (model: SelectedModel) => void;
-  disabled?: boolean;
-}
-
 interface ProviderGroupProps {
   provider: Provider;
   isExpanded: boolean;
@@ -155,6 +148,13 @@ const ProviderGroup = memo(
   },
 );
 
+interface ModelSelectorProps {
+  providers: Provider[];
+  selectedModel: SelectedModel | null;
+  onSelectModel: (model: SelectedModel | null) => void;
+  disabled?: boolean;
+}
+
 export const ModelSelector = ({
   providers,
   selectedModel,
@@ -173,7 +173,7 @@ export const ModelSelector = ({
   }, [providers]);
 
   const getModelDisplayName = useCallback((): string => {
-    if (!selectedModel) return __('Select Model', 'wordforge');
+    if (!selectedModel) return __('Use default', 'wordforge');
     if (!Array.isArray(providers)) return selectedModel.modelID;
 
     const provider = providers.find((p) => p.id === selectedModel.providerID);
@@ -184,6 +184,12 @@ export const ModelSelector = ({
       ? `${provider.name} / ${model.name}`
       : `${provider.name} / ${selectedModel.modelID}`;
   }, [selectedModel, providers]);
+
+  const handleSelectDefault = useCallback(() => {
+    onSelectModel(null);
+    setIsOpen(false);
+    setSearchQuery('');
+  }, [onSelectModel]);
 
   const toggleProvider = useCallback((providerId: string) => {
     setExpandedProviders((prev) => {
@@ -280,6 +286,19 @@ export const ModelSelector = ({
             </div>
 
             <div className={styles.providerList}>
+              {!searchQuery && (
+                <button
+                  type="button"
+                  onClick={handleSelectDefault}
+                  className={`${styles.defaultButton} ${!selectedModel ? styles.selected : ''}`}
+                  aria-pressed={!selectedModel}
+                >
+                  <span>{__('Use default', 'wordforge')}</span>
+                  {!selectedModel && (
+                    <span className={styles.checkmark}>✓</span>
+                  )}
+                </button>
+              )}
               {filteredProviders.length === 0 ? (
                 <div className={styles.emptyState}>
                   {searchQuery

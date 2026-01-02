@@ -86,10 +86,12 @@ function makeIntegersAcceptStrings(schema: JsonSchema): JsonSchema {
   }
 
   const result = { ...schema };
+  let madeUnion = false;
 
   // Transform integer/number types to accept strings
   if (result.type === 'integer' || result.type === 'number') {
     result.type = [result.type, 'string'];
+    madeUnion = true;
   }
 
   // Handle array of types (e.g., ['integer', 'null'])
@@ -100,7 +102,17 @@ function makeIntegersAcceptStrings(schema: JsonSchema): JsonSchema {
 
     if ((hasInteger || hasNumber) && !hasString) {
       result.type = [...result.type, 'string'];
+      madeUnion = true;
     }
+  }
+
+  // Numeric constraints cause Zod union failures when mixed with string type
+  if (madeUnion) {
+    delete result.minimum;
+    delete result.maximum;
+    delete result.exclusiveMinimum;
+    delete result.exclusiveMaximum;
+    delete result.multipleOf;
   }
 
   // Recursively process nested properties
