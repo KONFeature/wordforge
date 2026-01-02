@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import apiFetch from '@wordpress/api-fetch';
 import type { ActivityStatus } from '../../types';
 
@@ -57,8 +57,6 @@ export const useServerStatus = () => {
 };
 
 export const useAutoStartServer = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (): Promise<AutoStartResponse> => {
       return await apiFetch<AutoStartResponse>({
@@ -66,7 +64,7 @@ export const useAutoStartServer = () => {
         method: 'POST',
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, _var, _result, { client: queryClient }) => {
       queryClient.invalidateQueries({ queryKey: SERVER_STATUS_KEY });
     },
   });

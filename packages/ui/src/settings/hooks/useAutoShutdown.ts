@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import apiFetch from '@wordpress/api-fetch';
 import type { ActivityStatus } from '../../types';
 
@@ -27,8 +27,6 @@ interface SaveAutoShutdownParams {
 }
 
 export const useSaveAutoShutdown = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (params: SaveAutoShutdownParams) => {
       return await apiFetch<AutoShutdownSettings>({
@@ -37,7 +35,7 @@ export const useSaveAutoShutdown = () => {
         data: params,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, _var, _result, { client: queryClient }) => {
       queryClient.invalidateQueries({ queryKey: AUTO_SHUTDOWN_KEY });
     },
   });

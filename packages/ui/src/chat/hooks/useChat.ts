@@ -24,9 +24,12 @@ import {
 } from './useServerStatus';
 import { findParentSession } from './useSessionHierarchy';
 import {
+  type RevertParams,
   useDeleteSession,
+  useRevertSession,
   useSessionStatuses,
   useSessions,
+  useUnrevertSession,
 } from './useSessions';
 
 export interface ChatState {
@@ -55,6 +58,7 @@ export interface ChatState {
   isBusy: boolean;
   isSending: boolean;
   isDeleting: boolean;
+  isReverting: boolean;
   isStartingServer: boolean;
   error: Error | null;
   serverError: string | null;
@@ -62,6 +66,8 @@ export interface ChatState {
   send: (text: string) => Promise<SendMessageResult>;
   abort: () => void;
   deleteSession: () => Promise<void>;
+  revertSession: (messageID: string, partID?: string) => Promise<void>;
+  unrevertSession: () => Promise<void>;
   selectSession: (id: string | null) => void;
   startServer: () => void;
   refresh: () => void;
@@ -97,6 +103,8 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
   const sendMessage = useSendMessage();
   const abortSession = useAbortSession();
   const deleteSessionMutation = useDeleteSession();
+  const revertSessionMutation = useRevertSession();
+  const unrevertSessionMutation = useUnrevertSession();
 
   const lastUserModel = useMemo(() => {
     const assistantMessages = messages
@@ -138,7 +146,12 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
 
   const isServerReady = serverStatus?.running ?? false;
 
-  const error = sendMessage.error ?? deleteSessionMutation.error ?? null;
+  const error =
+    sendMessage.error ??
+    deleteSessionMutation.error ??
+    revertSessionMutation.error ??
+    unrevertSessionMutation.error ??
+    null;
 
   const serverError =
     autoStart.error instanceof Error ? autoStart.error.message : null;
@@ -170,6 +183,19 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     if (!sessionId) return;
     await deleteSessionMutation.mutateAsync(sessionId);
     setSessionId(null);
+  }, [sessionId]);
+
+  const revertSession = useCallback(
+    async (messageID: string, partID?: string) => {
+      if (!sessionId) return;
+      await revertSessionMutation.mutateAsync({ sessionId, messageID, partID });
+    },
+    [sessionId],
+  );
+
+  const unrevertSession = useCallback(async () => {
+    if (!sessionId) return;
+    await unrevertSessionMutation.mutateAsync(sessionId);
   }, [sessionId]);
 
   const selectSession = (id: string | null) => {
@@ -218,6 +244,8 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     isBusy,
     isSending: sendMessage.isPending,
     isDeleting: deleteSessionMutation.isPending,
+    isReverting:
+      revertSessionMutation.isPending || unrevertSessionMutation.isPending,
     isStartingServer: autoStart.isPending,
     error:
       error instanceof Error ? error : error ? new Error(String(error)) : null,
@@ -226,6 +254,8 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
     send,
     abort,
     deleteSession,
+    revertSession,
+    unrevertSession,
     selectSession,
     startServer,
     refresh,

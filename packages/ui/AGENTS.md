@@ -111,7 +111,7 @@ import styles from './MyComponent.module.css';
 
 ### Hooks Pattern (React Query)
 ```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 export const SESSIONS_KEY = ['sessions'] as const;
 
@@ -127,14 +127,12 @@ export const useSessions = (client: OpencodeClient | null) => {
 };
 
 export const useCreateSession = (client: OpencodeClient | null) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async () => {
       const result = await client!.session.create({ body: {} });
       return result.data!;
     },
-    onSuccess: (newSession) => {
+    onSuccess: (newSession, _var, _result, { client: queryClient }) => {
       queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
         old ? [newSession, ...old] : [newSession],
       );

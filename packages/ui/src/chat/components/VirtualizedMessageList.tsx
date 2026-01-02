@@ -1,7 +1,9 @@
+import type { Session } from '@opencode-ai/sdk/client';
 import { Spinner } from '@wordpress/components';
 import { useEffect, useMemo, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { List, useListRef } from 'react-window';
+import { MessageList } from './MessageList';
 import styles from './MessageList.module.css';
 import {
   AssistantMessage,
@@ -13,24 +15,32 @@ import {
 
 export type { ChatMessage };
 
+const ESTIMATED_ROW_HEIGHT = 300;
+const MIN_VIRTUALIZATION_THRESHOLD = 20;
+
 interface VirtualizedMessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
   isThinking: boolean;
   isBusy: boolean;
+  session?: Session | undefined;
+  onUnrevert?: () => void;
+  isUnreverting?: boolean;
+  onRevert?: (messageID: string) => void;
   onOpenSession?: (sessionId: string) => void;
   height?: number;
 }
 
 interface TurnRowProps {
   turn: MessageTurn;
+  onRevert?: (messageID: string) => void;
   onOpenSession?: (sessionId: string) => void;
 }
 
-const TurnRow = ({ turn, onOpenSession }: TurnRowProps) => {
+const TurnRow = ({ turn, onRevert, onOpenSession }: TurnRowProps) => {
   return (
     <div className={styles.turn}>
-      <UserMessage message={turn.userMessage} />
+      <UserMessage message={turn.userMessage} onRevert={onRevert} />
       <AssistantMessage
         messages={turn.assistantMessages}
         onOpenSession={onOpenSession}
@@ -39,13 +49,15 @@ const TurnRow = ({ turn, onOpenSession }: TurnRowProps) => {
   );
 };
 
-const ESTIMATED_ROW_HEIGHT = 300;
-const MIN_VIRTUALIZATION_THRESHOLD = 20;
-
 export const VirtualizedMessageList = ({
   messages,
   isLoading,
   isThinking,
+  isBusy,
+  session,
+  onUnrevert,
+  isUnreverting = false,
+  onRevert,
   onOpenSession,
   height = 600,
 }: VirtualizedMessageListProps) => {
@@ -86,6 +98,22 @@ export const VirtualizedMessageList = ({
     );
   }
 
+  if (session?.revert?.messageID) {
+    return (
+      <MessageList
+        messages={messages}
+        isLoading={isLoading}
+        isThinking={isThinking}
+        isBusy={isBusy}
+        session={session}
+        onUnrevert={onUnrevert}
+        isUnreverting={isUnreverting}
+        onRevert={onRevert}
+        onOpenSession={onOpenSession}
+      />
+    );
+  }
+
   const shouldVirtualize = turns.length > MIN_VIRTUALIZATION_THRESHOLD;
 
   if (!shouldVirtualize) {
@@ -96,6 +124,7 @@ export const VirtualizedMessageList = ({
             <TurnRow
               key={turn.userMessage.info.id}
               turn={turn}
+              onRevert={onRevert}
               onOpenSession={onOpenSession}
             />
           ))}
@@ -118,7 +147,11 @@ export const VirtualizedMessageList = ({
       >
         {({ index, style }) => (
           <div style={style}>
-            <TurnRow turn={turns[index]} onOpenSession={onOpenSession} />
+            <TurnRow
+              turn={turns[index]}
+              onRevert={onRevert}
+              onOpenSession={onOpenSession}
+            />
           </div>
         )}
       </List>

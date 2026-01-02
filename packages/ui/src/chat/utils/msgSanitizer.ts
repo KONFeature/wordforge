@@ -72,30 +72,102 @@ function sanitizeToolState(state: ToolState): ToolState | undefined {
   return sanitized as ToolState;
 }
 
+const MAX_PATCH_FILES = 10;
+
 function sanitizePart(part: Part): Record<string, unknown> | null {
   if (!part || typeof part !== 'object') return null;
 
-  const p = part;
+  const p = part as Record<string, unknown>;
   if (!p.type) return null;
 
   const sanitized: Record<string, unknown> = {
     id: p.id ?? `part-${Date.now()}-${Math.random()}`,
     type: p.type,
+    sessionID: p.sessionID,
+    messageID: p.messageID,
   };
 
-  if (p.type === 'text' && typeof p.text === 'string') {
-    sanitized.text =
-      p.text.length > MAX_TEXT_SIZE
-        ? `${p.text.slice(0, MAX_TEXT_SIZE)}... [truncated]`
-        : p.text;
-  } else if (p.type === 'tool') {
-    sanitized.tool = p.tool ?? 'unknown';
-    sanitized.state = sanitizeToolState(p.state) ?? { status: 'pending' };
-  } else if (p.type === 'reasoning' && typeof p.text === 'string') {
-    sanitized.text =
-      p.text.length > MAX_TEXT_SIZE
-        ? `${p.text.slice(0, MAX_TEXT_SIZE)}... [truncated]`
-        : p.text;
+  switch (p.type) {
+    case 'text':
+      if (typeof p.text === 'string') {
+        sanitized.text =
+          p.text.length > MAX_TEXT_SIZE
+            ? `${p.text.slice(0, MAX_TEXT_SIZE)}... [truncated]`
+            : p.text;
+      }
+      break;
+
+    case 'tool':
+      sanitized.tool = p.tool ?? 'unknown';
+      sanitized.callID = p.callID;
+      sanitized.state = sanitizeToolState(p.state as ToolState) ?? {
+        status: 'pending',
+      };
+      break;
+
+    case 'reasoning':
+      if (typeof p.text === 'string') {
+        sanitized.text =
+          p.text.length > MAX_TEXT_SIZE
+            ? `${p.text.slice(0, MAX_TEXT_SIZE)}... [truncated]`
+            : p.text;
+      }
+      if (p.time) sanitized.time = p.time;
+      break;
+
+    case 'file':
+      sanitized.mime = p.mime;
+      sanitized.filename = p.filename;
+      sanitized.url = p.url;
+      break;
+
+    case 'step-start':
+      break;
+
+    case 'step-finish':
+      sanitized.reason = p.reason;
+      sanitized.cost = p.cost;
+      sanitized.tokens = p.tokens;
+      break;
+
+    case 'snapshot':
+      break;
+
+    case 'patch':
+      sanitized.hash = p.hash;
+      if (Array.isArray(p.files)) {
+        sanitized.files =
+          p.files.length > MAX_PATCH_FILES
+            ? [
+                ...p.files.slice(0, MAX_PATCH_FILES),
+                `... +${p.files.length - MAX_PATCH_FILES} more`,
+              ]
+            : p.files;
+      }
+      break;
+
+    case 'agent':
+      sanitized.name = p.name;
+      break;
+
+    case 'retry':
+      sanitized.attempt = p.attempt;
+      sanitized.error = p.error;
+      sanitized.time = p.time;
+      break;
+
+    case 'compaction':
+      sanitized.auto = p.auto;
+      break;
+
+    case 'subtask':
+      sanitized.prompt = p.prompt;
+      sanitized.description = p.description;
+      sanitized.agent = p.agent;
+      break;
+
+    default:
+      break;
   }
 
   return sanitized;
@@ -143,6 +215,7 @@ export function sanitizeMessage(
     if (info.providerID) sanitizedInfo.providerID = info.providerID;
     if (info.modelID) sanitizedInfo.modelID = info.modelID;
     if (info.error) sanitizedInfo.error = info.error;
+    if (info.tokens) sanitizedInfo.tokens = info.tokens;
   }
 
   const rawParts = Array.isArray(message.parts) ? message.parts : [];

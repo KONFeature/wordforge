@@ -79,3 +79,106 @@ export const useDeleteSession = () => {
     },
   });
 };
+
+export interface RevertParams {
+  sessionId: string;
+  messageID: string;
+  partID?: string;
+}
+
+export const useRevertSession = () => {
+  const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
+
+  return useMutation({
+    mutationFn: async ({ sessionId, messageID, partID }: RevertParams) => {
+      const result = await client!.session.revert({
+        path: { id: sessionId },
+        body: { messageID, partID },
+      });
+      return result.data!;
+    },
+    onMutate: async (
+      { sessionId, messageID, partID },
+      { client: queryClient },
+    ) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.sessions(mode) });
+      const previousSessions = queryClient.getQueryData<Session[]>(
+        queryKeys.sessions(mode),
+      );
+
+      queryClient.setQueryData<Session[]>(
+        queryKeys.sessions(mode),
+        (old) =>
+          old?.map((s) =>
+            s.id === sessionId ? { ...s, revert: { messageID, partID } } : s,
+          ) ?? [],
+      );
+
+      return { previousSessions };
+    },
+    onError: (_err, _vars, context, { client: queryClient }) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(
+          queryKeys.sessions(mode),
+          context.previousSessions,
+        );
+      }
+    },
+    onSuccess: (updatedSession, _var, _result, { client: queryClient }) => {
+      queryClient.setQueryData<Session[]>(
+        queryKeys.sessions(mode),
+        (old) =>
+          old?.map((s) => (s.id === updatedSession.id ? updatedSession : s)) ??
+          [],
+      );
+    },
+  });
+};
+
+export const useUnrevertSession = () => {
+  const client = useOpencodeClientOptional();
+  const { mode } = useConnectionStatus();
+
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const result = await client!.session.unrevert({
+        path: { id: sessionId },
+      });
+      return result.data!;
+    },
+    onMutate: async (sessionId, { client: queryClient }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.sessions(mode) });
+
+      const previousSessions = queryClient.getQueryData<Session[]>(
+        queryKeys.sessions(mode),
+      );
+
+      queryClient.setQueryData<Session[]>(
+        queryKeys.sessions(mode),
+        (old) =>
+          old?.map((s) =>
+            s.id === sessionId ? { ...s, revert: undefined } : s,
+          ) ?? [],
+      );
+
+      return { previousSessions };
+    },
+    onError: (_err, _vars, context, { client: queryClient }) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(
+          queryKeys.sessions(mode),
+          context.previousSessions,
+        );
+      }
+    },
+    onSuccess: (updatedSession, _var, _result, { client: queryClient }) => {
+      queryClient.setQueryData<Session[]>(
+        queryKeys.sessions(mode),
+        (old) =>
+          old?.map((s) => (s.id === updatedSession.id ? updatedSession : s)) ??
+          [],
+      );
+    },
+  });
+};

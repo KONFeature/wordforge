@@ -109,6 +109,8 @@ interface ChatInterfaceProps {
   filteredMessages?: ChatMessage[];
 }
 
+import { ContextInfo } from './ContextInfo';
+
 export const ChatInterface = ({
   chat,
   context = null,
@@ -120,7 +122,8 @@ export const ChatInterface = ({
   searchMatchCount = 0,
   isSearching = false,
   filteredMessages,
-}: ChatInterfaceProps) => {
+  showContextInfo = true,
+}: ChatInterfaceProps & { showContextInfo?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
   const clientContext = useClient();
@@ -181,6 +184,14 @@ export const ChatInterface = ({
         />
       )}
 
+      {showContextInfo && !showSearch && chat.messages.length > 0 && (
+        <ContextInfo
+          messages={chat.messages}
+          providers={chat.providers}
+          compact={compact}
+        />
+      )}
+
       {hasSession && hasMessagesError && (
         <MessagesErrorState
           sessionId={chat.sessionId}
@@ -198,6 +209,10 @@ export const ChatInterface = ({
             isLoading={chat.isLoadingMessages}
             isThinking={chat.isBusy && !isSearching}
             isBusy={chat.isBusy}
+            session={chat.session}
+            onUnrevert={chat.unrevertSession}
+            isUnreverting={chat.isReverting}
+            onRevert={chat.revertSession}
             onOpenSession={chat.selectSession}
             height={containerHeight - (showSearch ? 50 : 0)}
           />

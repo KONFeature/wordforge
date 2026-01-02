@@ -1,8 +1,9 @@
-import type { Message } from '@opencode-ai/sdk/client';
+import type { Message, Session } from '@opencode-ai/sdk/client';
 import { Spinner } from '@wordpress/components';
 import { useEffect, useMemo, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import styles from './MessageList.module.css';
+import { RevertedHistory } from './RevertedHistory';
 import {
   AssistantMessage,
   type ChatMessage,
@@ -18,18 +19,23 @@ interface MessageListProps {
   isLoading: boolean;
   isThinking: boolean;
   isBusy: boolean;
+  session?: Session | undefined;
+  onUnrevert?: () => void;
+  isUnreverting?: boolean;
+  onRevert?: (messageID: string) => void;
   onOpenSession?: (sessionId: string) => void;
 }
 
 interface SessionTurnProps {
   turn: MessageTurn;
+  onRevert?: (messageID: string) => void;
   onOpenSession?: (sessionId: string) => void;
 }
 
-const SessionTurn = ({ turn, onOpenSession }: SessionTurnProps) => {
+const SessionTurn = ({ turn, onRevert, onOpenSession }: SessionTurnProps) => {
   return (
     <div className={styles.turn}>
-      <UserMessage message={turn.userMessage} />
+      <UserMessage message={turn.userMessage} onRevert={onRevert} />
       <AssistantMessage
         messages={turn.assistantMessages}
         isComplete={turn.isComplete}
@@ -43,6 +49,10 @@ export const MessageList = ({
   messages,
   isLoading,
   isThinking,
+  session,
+  onUnrevert,
+  isUnreverting = false,
+  onRevert,
   onOpenSession,
 }: MessageListProps) => {
   const endRef = useRef<HTMLDivElement>(null);
@@ -52,6 +62,25 @@ export const MessageList = ({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isThinking]);
+
+  const { activeTurns, revertedTurns } = useMemo(() => {
+    if (!session?.revert?.messageID) {
+      return { activeTurns: turns, revertedTurns: [] };
+    }
+
+    const revertIndex = turns.findIndex(
+      (turn) => turn.userMessage.info.id === session.revert.messageID,
+    );
+
+    if (revertIndex === -1) {
+      return { activeTurns: turns, revertedTurns: [] };
+    }
+
+    return {
+      activeTurns: turns.slice(0, revertIndex),
+      revertedTurns: turns.slice(revertIndex),
+    };
+  }, [turns, session]);
 
   if (isLoading && messages.length === 0) {
     return (
@@ -80,13 +109,29 @@ export const MessageList = ({
   return (
     <div className={styles.root}>
       <div className={styles.container}>
-        {turns.map((turn) => (
+        {activeTurns.map((turn) => (
           <SessionTurn
             key={turn.userMessage.info.id}
             turn={turn}
+            onRevert={onRevert}
             onOpenSession={onOpenSession}
           />
         ))}
+
+        {session?.revert?.messageID && (
+          <>
+            <hr
+              className={styles.revertDivider}
+              aria-label={__('Revert boundary', 'wordforge')}
+            />
+            <RevertedHistory
+              turns={revertedTurns}
+              onUnrevert={onUnrevert ?? (() => {})}
+              isUnreverting={isUnreverting}
+              onOpenSession={onOpenSession}
+            />
+          </>
+        )}
 
         {isThinking && (
           <div className={styles.thinking}>

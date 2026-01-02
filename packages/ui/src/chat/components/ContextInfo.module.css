@@ -1,0 +1,109 @@
+.root {
+  position: absolute;
+  top: var(--wf-spacing-md);
+  right: var(--wf-spacing-lg);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.compact .root {
+  top: var(--wf-spacing-sm);
+  right: var(--wf-spacing-md);
+}
+
+.badge {
+  pointer-events: auto;
+  background: var(--wf-color-surface);
+  border: 1px solid var(--wf-color-border);
+  border-radius: var(--wf-radius-pill);
+  padding: 2px 8px;
+  font-size: var(--wf-font-size-xs);
+  color: var(--wf-color-text-muted);
+  cursor: help;
+  transition: all 0.2s ease;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--wf-shadow-sm);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge:hover {
+  background: var(--wf-color-white);
+  border-color: var(--wf-color-border-selected);
+  color: var(--wf-color-text);
+  box-shadow: var(--wf-shadow-md);
+}
+
+.details {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--wf-spacing-xs);
+  background: var(--wf-color-white);
+  color: var(--wf-color-text);
+  border: 1px solid var(--wf-color-border);
+  border-radius: var(--wf-radius-md);
+  padding: var(--wf-spacing-md);
+  font-size: var(--wf-font-size-xs);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-5px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  box-shadow: var(--wf-shadow-md);
+  min-width: 180px;
+  z-index: 20;
+}
+
+.badge:hover + .details,
+.details:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wf-spacing-lg);
+  margin-bottom: var(--wf-spacing-xs);
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  color: var(--wf-color-text-muted);
+}
+
+.value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--wf-color-text);
+}
+
+.low {
+  color: var(--wf-color-success);
+  border-color: var(--wf-color-success-bg);
+  background: var(--wf-color-success-bg);
+}
+
+.medium {
+  color: var(--wf-color-warning-text);
+  border-color: var(--wf-color-warning);
+  background: var(--wf-color-warning-bg);
+}
+
+.high {
+  color: var(--wf-color-error-text);
+  border-color: var(--wf-color-error);
+  background: var(--wf-color-error-bg);
+}

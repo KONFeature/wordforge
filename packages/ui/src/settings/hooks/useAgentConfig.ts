@@ -1,5 +1,5 @@
 import type { Provider } from '@opencode-ai/sdk/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
 import type { AgentInfo } from '../../types';
@@ -49,8 +49,6 @@ export const useOpenCodeConfiguredProviders = () => {
 };
 
 export const useSaveAgents = (restUrl: string, nonce: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (models: Record<string, string>) => {
       const response = await fetch(`${restUrl}/opencode/agents`, {
@@ -70,7 +68,7 @@ export const useSaveAgents = (restUrl: string, nonce: string) => {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _Var, _result, { client: queryClient }) => {
       queryClient.setQueryData(
         AGENTS_KEY,
         (old: AgentsResponse | undefined) => ({
@@ -83,8 +81,6 @@ export const useSaveAgents = (restUrl: string, nonce: string) => {
 };
 
 export const useResetAgents = (restUrl: string, nonce: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async () => {
       const response = await fetch(`${restUrl}/opencode/agents/reset`, {
@@ -102,7 +98,7 @@ export const useResetAgents = (restUrl: string, nonce: string) => {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _var, _result, { client: queryClient }) => {
       queryClient.setQueryData(
         AGENTS_KEY,
         (old: AgentsResponse | undefined) => ({

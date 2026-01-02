@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import apiFetch from '@wordpress/api-fetch';
 
 export const LOCAL_SETTINGS_KEY = ['local-settings'] as const;
@@ -30,8 +30,6 @@ export const useLocalSettings = () => {
 };
 
 export const useSaveLocalSettings = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (
       params: SaveLocalSettingsParams,
@@ -42,7 +40,7 @@ export const useSaveLocalSettings = () => {
         data: params,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, _var, _result, { client: queryClient }) => {
       queryClient.invalidateQueries({ queryKey: LOCAL_SETTINGS_KEY });
     },
   });
