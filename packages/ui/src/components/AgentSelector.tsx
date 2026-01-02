@@ -47,15 +47,15 @@ export const AgentSelector = ({
 
   const filteredAgents = useMemo(() => {
     if (!Array.isArray(agents)) return [];
-    return agents.filter((agent) => !agent.hidden && agent.mode !== 'subagent');
+    return agents.filter(
+      (agent) => !(agent.hidden ?? false) && agent.mode !== 'subagent',
+    );
   }, [agents]);
 
-  const effectiveAgent = selectedAgent ?? DEFAULT_AGENT;
-
   const getAgentDisplayName = useCallback((): string => {
-    const agent = filteredAgents.find((a) => a.name === effectiveAgent);
-    return agent?.name ?? effectiveAgent ?? __('Select Agent', 'wordforge');
-  }, [effectiveAgent, filteredAgents]);
+    const agent = filteredAgents.find((a) => a.name === selectedAgent);
+    return agent?.name ?? selectedAgent ?? __('Select Agent', 'wordforge');
+  }, [selectedAgent, filteredAgents]);
 
   const handleSelectAgent = useCallback(
     (agentName: string) => {
@@ -100,7 +100,7 @@ export const AgentSelector = ({
                 <AgentButton
                   key={agent.name}
                   agent={agent}
-                  isSelected={effectiveAgent === agent.name}
+                  isSelected={selectedAgent === agent.name}
                   onClick={() => handleSelectAgent(agent.name)}
                 />
               ))}

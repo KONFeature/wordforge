@@ -129,7 +129,6 @@ export interface WordForgeSettingsConfig {
       arch: string;
       binary_name: string;
       is_installed: boolean;
-      install_path: string;
       version?: string;
     };
   };

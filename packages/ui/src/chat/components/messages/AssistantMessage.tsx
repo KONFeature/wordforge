@@ -16,12 +16,11 @@ import {
 
 interface AssistantMessageProps {
   messages: ChatMessage[];
-  isComplete: boolean;
   onOpenSession?: (sessionId: string) => void;
 }
 
 export const AssistantMessage = memo(
-  ({ messages, isComplete, onOpenSession }: AssistantMessageProps) => {
+  ({ messages, onOpenSession }: AssistantMessageProps) => {
     if (!messages || messages.length === 0) return null;
 
     const allParts: Part[] = messages.flatMap((m) => m.parts || []);
@@ -39,7 +38,7 @@ export const AssistantMessage = memo(
       : null;
 
     const agentName = isAssistantMessage(firstMsg.info)
-      ? (firstMsg.info as { agent?: string }).agent
+      ? (firstMsg.info.mode ?? (firstMsg.info as { agent?: string }).agent)
       : null;
 
     const createdTime = firstMsg.info.time?.created;

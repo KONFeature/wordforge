@@ -133,7 +133,6 @@ class SettingsPage {
 					'arch'         => $binary_info['arch'],
 					'binary_name'  => $binary_info['binary_name'],
 					'is_installed' => $binary_info['is_installed'],
-					'install_path' => $binary_info['install_path'],
 					'version'      => $binary_info['version'] ?? null,
 				),
 				'execEnabled'           => $exec_capabilities['can_exec'],

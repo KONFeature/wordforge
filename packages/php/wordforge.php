@@ -287,9 +287,9 @@ function cleanup_opencode_on_uninstall(): void {
 	delete_option( 'wordforge_settings' );
 }
 
-if ( ! function_exists( 'wordforge_uninstall' ) ) {
+if ( ! function_exists( __NAMESPACE__ . '\\wordforge_uninstall' ) ) {
 	function wordforge_uninstall(): void {
 		\WordForge\cleanup_opencode_on_uninstall();
 	}
 }
-register_uninstall_hook( __FILE__, 'wordforge_uninstall' );
+register_uninstall_hook( __FILE__, __NAMESPACE__ . '\\wordforge_uninstall' );

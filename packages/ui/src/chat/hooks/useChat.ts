@@ -77,7 +77,7 @@ export const useChat = (options: UseChatOptions = {}): ChatState => {
 
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
   const [model, setModel] = useState<SelectedModel | null>(null);
-  const [agent, setAgent] = useState<string | null>(DEFAULT_AGENT);
+  const [agent, setAgent] = useState<string | null>(null);
 
   const { data: sessions = [], isLoading: isLoadingSessions } = useSessions();
   const { data: statuses = {}, refetch: refetchStatus } = useSessionStatuses();

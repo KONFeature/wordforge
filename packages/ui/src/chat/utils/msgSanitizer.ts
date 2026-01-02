@@ -133,6 +133,8 @@ export function sanitizeMessage(
     role: info.role,
     sessionID: info.sessionID,
     time: info.time ?? { created: 0 },
+    mode: info.mode,
+    agent: info.agent,
   };
 
   if (info.role === 'assistant') {

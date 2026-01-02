@@ -75,7 +75,7 @@ export const useAgentsConfig = () => {
   return useQuery({
     queryKey: AGENTS_KEY,
     queryFn: async (): Promise<Agent[]> => {
-      const result = await client!.agent.list();
+      const result = await client!.app.agents();
       return result.data ?? [];
     },
     enabled: !!client,
