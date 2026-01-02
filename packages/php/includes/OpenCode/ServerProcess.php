@@ -97,6 +97,8 @@ class ServerProcess {
 		$config_file = ServerPaths::get_config_file();
 		file_put_contents( $config_file, wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 
+		ServerConfig::write_config_files( $config_dir );
+
 		$binary    = BinaryManager::get_binary_path();
 		$log_file  = ServerPaths::get_log_file();
 		$state_dir = ServerPaths::get_state_dir();

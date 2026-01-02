@@ -1,12 +1,4 @@
 <?php
-/**
- * Local OpenCode server configuration generator.
- *
- * Generates configuration for OpenCode running on the user's local machine,
- * connecting to WordPress via MCP (no wp-cli, no bash commands).
- *
- * @package WordForge
- */
 
 declare(strict_types=1);
 
@@ -18,20 +10,13 @@ class LocalServerConfig {
 	public const RUNTIME_BUN  = 'bun';
 	public const RUNTIME_NONE = 'none';
 
-	/**
-	 * Generate the complete local OpenCode configuration.
-	 *
-	 * @param string $runtime The JavaScript runtime preference (node, bun, none).
-	 * @return array The opencode.json configuration.
-	 */
-	public static function generate( string $runtime = self::RUNTIME_NODE ): array {
-		$agents = self::build_agents_config( $runtime );
+	private const TEMPLATES_DIR = __DIR__ . '/templates';
 
+	public static function generate( string $runtime = self::RUNTIME_NODE ): array {
 		$config = array(
-			'$schema'       => 'https://opencode.ai/config.json',
-			'default_agent' => 'wordpress-manager',
-			'agent'         => $agents,
-			'permission'    => array(
+			'$schema'      => 'https://opencode.ai/config.json',
+			'instructions' => array( 'context/site.md' ),
+			'permission'   => array(
 				'edit'               => 'deny',
 				'external_directory' => 'deny',
 				'bash'               => array(
@@ -55,44 +40,101 @@ class LocalServerConfig {
 		return $config;
 	}
 
-	private static function build_agents_config( string $runtime ): array {
-		$is_remote_mcp = self::RUNTIME_NONE === $runtime;
+	public static function write_config_files( string $base_dir, string $runtime = self::RUNTIME_NODE ): bool {
+		$dirs = array(
+			$base_dir,
+			$base_dir . '/agent',
+			$base_dir . '/context',
+		);
 
-		$agents = array(
-			'wordpress-manager'         => array(
-				'mode'        => 'primary',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-manager' ),
-				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
-				'prompt'      => AgentPrompts::get_wordpress_manager_prompt( true, $is_remote_mcp ),
-				'color'       => '#3858E9',
-			),
-			'wordpress-content-creator' => array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-content-creator' ),
-				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
-				'prompt'      => AgentPrompts::get_content_creator_prompt( true, $is_remote_mcp ),
-				'color'       => '#10B981',
-			),
-			'wordpress-auditor'         => array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-auditor' ),
-				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
-				'prompt'      => AgentPrompts::get_auditor_prompt( true, $is_remote_mcp ),
-				'color'       => '#F59E0B',
-			),
+		foreach ( $dirs as $dir ) {
+			if ( ! is_dir( $dir ) && ! mkdir( $dir, 0755, true ) ) {
+				return false;
+			}
+		}
+
+		$is_remote_mcp = self::RUNTIME_NONE === $runtime;
+		$is_local      = true;
+		$context       = ContextProvider::get_global_context();
+
+		$files = array(
+			'AGENTS.md'                            => self::render_agents_md( $is_local, $is_remote_mcp ),
+			'context/site.md'                      => self::render_site_context( $context, $is_local ),
+			'agent/wordpress-manager.md'           => self::render_agent_template( 'wordpress-manager', $context, $is_local, $is_remote_mcp ),
+			'agent/wordpress-content-creator.md'   => self::render_agent_template( 'wordpress-content-creator', $context, $is_local, $is_remote_mcp ),
+			'agent/wordpress-auditor.md'           => self::render_agent_template( 'wordpress-auditor', $context, $is_local, $is_remote_mcp ),
 		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$agents['wordpress-commerce-manager'] = array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-commerce-manager' ),
-				'description' => 'WooCommerce specialist - product management, inventory, pricing',
-				'prompt'      => AgentPrompts::get_commerce_manager_prompt( true, $is_remote_mcp ),
-				'color'       => '#8B5CF6',
-			);
+			$files['agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, $is_local, $is_remote_mcp );
 		}
 
-		return $agents;
+		foreach ( $files as $filename => $content ) {
+			$filepath = $base_dir . '/' . $filename;
+			if ( false === file_put_contents( $filepath, $content ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static function render_template( string $template_path, array $vars ): string {
+		extract( $vars, EXTR_SKIP );
+		ob_start();
+		include $template_path;
+		$content = ob_get_clean();
+
+		$is_local = $vars['is_local'] ?? false;
+		return self::transform_ability_names( $content, $is_local );
+	}
+
+	private static function transform_ability_names( string $content, bool $is_local ): string {
+		if ( ! $is_local ) {
+			return $content;
+		}
+
+		return str_replace( '`wordforge/', '`wordpress_', $content );
+	}
+
+	private static function render_agents_md( bool $is_local, bool $is_remote_mcp ): string {
+		return self::render_template(
+			self::TEMPLATES_DIR . '/agents-md.php',
+			compact( 'is_local', 'is_remote_mcp' )
+		);
+	}
+
+	private static function render_site_context( array $context, bool $is_local ): string {
+		return self::render_template(
+			self::TEMPLATES_DIR . '/context/site.md.php',
+			compact( 'context', 'is_local' )
+		);
+	}
+
+	private static function render_agent_template( string $agent_id, array $context, bool $is_local, bool $is_remote_mcp ): string {
+		$model    = AgentConfig::get_model_for_agent( $agent_id );
+		$template = self::TEMPLATES_DIR . '/agent/' . $agent_id . '.md.php';
+
+		if ( ! file_exists( $template ) ) {
+			return '';
+		}
+
+		return self::render_template(
+			$template,
+			compact( 'context', 'is_local', 'is_remote_mcp', 'model' )
+		);
+	}
+
+	public static function generate_agents_md( string $runtime = self::RUNTIME_NODE ): string {
+		$is_local      = true;
+		$is_remote_mcp = self::RUNTIME_NONE === $runtime;
+		return self::render_agents_md( $is_local, $is_remote_mcp );
+	}
+
+	public static function generate_site_context( string $runtime = self::RUNTIME_NODE ): string {
+		$context  = ContextProvider::get_global_context();
+		$is_local = true;
+		return self::render_site_context( $context, $is_local );
 	}
 
 	private static function get_mcp_config( string $runtime ): ?array {
@@ -121,143 +163,6 @@ class LocalServerConfig {
 				'WORDPRESS_USERNAME'     => $app_password_data['username'],
 				'WORDPRESS_APP_PASSWORD' => $app_password_data['password'],
 			),
-		);
-	}
-
-	/**
-	 * Generate the AGENTS.md file content with WordPress context.
-	 *
-	 * @param string $runtime The JavaScript runtime preference (node, bun, none).
-	 * @return string The AGENTS.md content.
-	 */
-	public static function generate_agents_md( string $runtime = self::RUNTIME_NODE ): string {
-		$context = ContextProvider::get_global_context();
-
-		$site_url   = $context['site']['url'] ?? \home_url();
-		$site_name  = $context['site']['name'] ?? \get_bloginfo( 'name' );
-		$wp_version = $context['site']['wp_version'] ?? \get_bloginfo( 'version' );
-		$theme_name = $context['theme']['name'] ?? '';
-		$theme_type = ! empty( $context['theme']['is_block_theme'] ) ? 'Block Theme (FSE)' : 'Classic Theme';
-		$plugins    = $context['plugins']['active'] ?? array();
-		$post_types = $context['content_types']['post_types'] ?? array();
-		$taxonomies = $context['content_types']['taxonomies'] ?? array();
-		$woo_active = class_exists( 'WooCommerce' );
-		$site_lang  = $context['site']['language'] ?? \get_locale();
-
-		$plugin_list = '';
-		foreach ( $plugins as $plugin ) {
-			$plugin_list .= sprintf( "- %s (v%s)\n", $plugin['name'], $plugin['version'] );
-		}
-
-		$post_type_list = implode( ', ', array_column( $post_types, 'name' ) );
-		$taxonomy_list  = implode( ', ', array_column( $taxonomies, 'name' ) );
-
-		$woo_section = '';
-		if ( $woo_active ) {
-			$woo_section = <<<'MARKDOWN'
-
-## WooCommerce
-
-WooCommerce is active on this site. You have access to product management tools:
-- `wordforge/list-products` - List products with filtering
-- `wordforge/get-product` - Get product details
-- `wordforge/save-product` - Create or update products
-- `wordforge/delete-product` - Delete products
-
-MARKDOWN;
-		}
-
-		$content = <<<MARKDOWN
-# WordPress Site Configuration
-
-This OpenCode project is configured to manage a WordPress site via the WordForge MCP connection.
-
-## Site Information
-
-| Property | Value |
-|----------|-------|
-| **Site Name** | {$site_name} |
-| **Site URL** | {$site_url} |
-| **WordPress Version** | {$wp_version} |
-| **Language** | {$site_lang} |
-| **Theme** | {$theme_name} ({$theme_type}) |
-
-## Active Plugins
-
-{$plugin_list}
-
-## Content Types
-
-**Post Types**: {$post_type_list}
-
-**Taxonomies**: {$taxonomy_list}
-{$woo_section}
-## Available MCP Tools
-
-### Content Management
-- `wordforge/list-content` - List posts, pages, or custom post types
-- `wordforge/get-content` - Get a single content item by ID or slug
-- `wordforge/save-content` - Create or update content
-- `wordforge/delete-content` - Delete or trash content
-
-### Media Library
-- `wordforge/list-media` - List media library items
-- `wordforge/get-media` - Get media details including all sizes
-- `wordforge/upload-media` - Upload media from URL or base64
-- `wordforge/update-media` - Update alt text, title, caption, description
-- `wordforge/delete-media` - Delete a media item
-
-### Taxonomy
-- `wordforge/list-terms` - List terms for any taxonomy
-- `wordforge/save-term` - Create or update a term
-- `wordforge/delete-term` - Delete a term
-
-### Gutenberg Blocks
-- `wordforge/get-page-blocks` - Get block structure of a page
-- `wordforge/update-page-blocks` - Update page blocks
-
-### Templates (FSE)
-- `wordforge/list-templates` - List block templates and template parts
-- `wordforge/get-template` - Get template with block content
-- `wordforge/update-template` - Update template content
-
-### Theme Styling
-- `wordforge/get-styles` - Get theme.json / block styles
-- `wordforge/update-global-styles` - Update global styles
-
-## Important Notes
-
-1. **No Shell Access**: This local configuration does not have shell or file system access to the WordPress server. All operations must go through the MCP tools.
-
-2. **Authentication**: The MCP connection uses application password authentication. Keep your `opencode.json` file secure.
-
-3. **Content Language**: When creating content, use **{$site_lang}** as the primary language unless instructed otherwise.
-
-4. **Gutenberg Blocks**: Always format content using WordPress Gutenberg block syntax when creating or updating pages/posts.
-
-## Getting Started
-
-1. Open this folder in OpenCode (TUI or Desktop)
-2. Start a conversation about your WordPress site
-3. Use natural language to manage content, media, and settings
-
-Example prompts:
-- "List all published blog posts from this month"
-- "Create a new landing page about our services"
-- "Upload this image and add it to the media library"
-- "Update the SEO metadata for the About page"
-MARKDOWN;
-
-		return self::RUNTIME_NONE === $runtime ? $content : self::transform_tool_names_for_local( $content );
-	}
-
-	private static function transform_tool_names_for_local( string $content ): string {
-		return preg_replace_callback(
-			'/wordforge\/([a-z-]+)/',
-			function ( $matches ) {
-				return 'wordpress_' . str_replace( '-', '_', $matches[1] );
-			},
-			$content
 		);
 	}
 

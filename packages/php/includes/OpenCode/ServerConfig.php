@@ -6,13 +6,12 @@ namespace WordForge\OpenCode;
 
 class ServerConfig {
 
-	public static function generate( array $options, int $port ): array {
-		$agents = self::build_agents_config();
+	private const TEMPLATES_DIR = __DIR__ . '/templates';
 
+	public static function generate( array $options, int $port ): array {
 		$config = array(
 			'$schema'       => 'https://opencode.ai/config.json',
-			'default_agent' => 'wordpress-manager',
-			'agent'         => $agents,
+			'instructions'  => array( 'context/site.md' ),
 			'permission'    => array(
 				'edit'               => 'deny',
 				'external_directory' => 'deny',
@@ -35,44 +34,89 @@ class ServerConfig {
 		return $config;
 	}
 
-	private static function build_agents_config(): array {
-		$is_remote_mcp = ! self::has_local_mcp_server();
+	public static function write_config_files( string $base_dir ): bool {
+		$dirs = array(
+			$base_dir,
+			$base_dir . '/agent',
+			$base_dir . '/context',
+		);
 
-		$agents = array(
-			'wordpress-manager'         => array(
-				'mode'        => 'primary',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-manager' ),
-				'description' => 'WordPress site orchestrator - delegates to specialized subagents for content, commerce, and auditing',
-				'prompt'      => AgentPrompts::get_wordpress_manager_prompt( false, $is_remote_mcp ),
-				'color'       => '#3858E9',
-			),
-			'wordpress-content-creator' => array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-content-creator' ),
-				'description' => 'Content creation specialist - blog posts, landing pages, legal pages with SEO optimization',
-				'prompt'      => AgentPrompts::get_content_creator_prompt( false, $is_remote_mcp ),
-				'color'       => '#10B981',
-			),
-			'wordpress-auditor'         => array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-auditor' ),
-				'description' => 'Site analysis specialist - SEO audits, content reviews, performance recommendations',
-				'prompt'      => AgentPrompts::get_auditor_prompt( false, $is_remote_mcp ),
-				'color'       => '#F59E0B',
-			),
+		foreach ( $dirs as $dir ) {
+			if ( ! is_dir( $dir ) && ! mkdir( $dir, 0755, true ) ) {
+				return false;
+			}
+		}
+
+		$is_remote_mcp = ! self::has_local_mcp_server();
+		$context       = ContextProvider::get_global_context();
+
+		$files = array(
+			'AGENTS.md'                            => self::render_agents_md( $is_remote_mcp ),
+			'context/site.md'                      => self::render_site_context( $context, false ),
+			'agent/wordpress-manager.md'           => self::render_agent_template( 'wordpress-manager', $context, false, $is_remote_mcp ),
+			'agent/wordpress-content-creator.md'   => self::render_agent_template( 'wordpress-content-creator', $context, false, $is_remote_mcp ),
+			'agent/wordpress-auditor.md'           => self::render_agent_template( 'wordpress-auditor', $context, false, $is_remote_mcp ),
 		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$agents['wordpress-commerce-manager'] = array(
-				'mode'        => 'subagent',
-				'model'       => AgentConfig::get_effective_model( 'wordpress-commerce-manager' ),
-				'description' => 'WooCommerce specialist - product management, inventory, pricing',
-				'prompt'      => AgentPrompts::get_commerce_manager_prompt( false, $is_remote_mcp ),
-				'color'       => '#8B5CF6',
-			);
+			$files['agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, false, $is_remote_mcp );
 		}
 
-		return $agents;
+		foreach ( $files as $filename => $content ) {
+			$filepath = $base_dir . '/' . $filename;
+			if ( false === file_put_contents( $filepath, $content ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static function render_template( string $template_path, array $vars ): string {
+		extract( $vars, EXTR_SKIP );
+		ob_start();
+		include $template_path;
+		$content = ob_get_clean();
+
+		$is_local = $vars['is_local'] ?? false;
+		return self::transform_ability_names( $content, $is_local );
+	}
+
+	private static function transform_ability_names( string $content, bool $is_local ): string {
+		if ( ! $is_local ) {
+			return $content;
+		}
+
+		return str_replace( '`wordforge/', '`wordpress_', $content );
+	}
+
+	private static function render_agents_md( bool $is_remote_mcp ): string {
+		$is_local = false;
+		return self::render_template(
+			self::TEMPLATES_DIR . '/agents-md.php',
+			compact( 'is_local', 'is_remote_mcp' )
+		);
+	}
+
+	private static function render_site_context( array $context, bool $is_local ): string {
+		return self::render_template(
+			self::TEMPLATES_DIR . '/context/site.md.php',
+			compact( 'context', 'is_local' )
+		);
+	}
+
+	private static function render_agent_template( string $agent_id, array $context, bool $is_local, bool $is_remote_mcp ): string {
+		$model    = AgentConfig::get_model_for_agent( $agent_id );
+		$template = self::TEMPLATES_DIR . '/agent/' . $agent_id . '.md.php';
+
+		if ( ! file_exists( $template ) ) {
+			return '';
+		}
+
+		return self::render_template(
+			$template,
+			compact( 'context', 'is_local', 'is_remote_mcp', 'model' )
+		);
 	}
 
 	private static function has_local_mcp_server(): bool {
@@ -88,7 +132,7 @@ class ServerConfig {
 		}
 
 		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
-		$abilities_url   = rest_url( 'wp-abilities/v1' );
+		$abilities_url   = \rest_url( 'wp-abilities/v1' );
 		$runtime         = self::get_js_runtime();
 
 		if ( file_exists( $mcp_server_path ) && $runtime ) {

@@ -27,7 +27,7 @@ export function getConfig(): WordforgeConfig {
   }
 
   const nonce = chatConfig?.nonce ?? settingsConfig?.nonce ?? '';
-  const restUrl = settingsConfig?.restUrl ?? '';
+  const restUrl = chatConfig?.restUrl ?? settingsConfig?.restUrl ?? '';
 
   let proxyUrl = '';
   if (chatConfig) {

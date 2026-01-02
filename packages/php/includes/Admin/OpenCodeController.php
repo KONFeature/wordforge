@@ -831,19 +831,29 @@ class OpenCodeController {
 			$runtime = LocalServerConfig::RUNTIME_NODE;
 		}
 
-		$config    = LocalServerConfig::generate( $runtime );
-		$agents_md = LocalServerConfig::generate_agents_md( $runtime );
-		$site_name = \sanitize_title( \get_bloginfo( 'name' ) );
+		$config      = LocalServerConfig::generate( $runtime );
+		$site_name   = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
 			$site_name = 'wordpress-site';
 		}
 
 		$zip_filename = 'wordforge-' . $site_name . '-config.zip';
+		$temp_dir     = sys_get_temp_dir() . '/wordforge_config_' . uniqid();
 		$temp_file    = tempnam( sys_get_temp_dir(), 'wordforge_' );
+
+		if ( ! mkdir( $temp_dir, 0755, true ) ) {
+			\status_header( 500 );
+			header( 'Content-Type: application/json' );
+			echo \wp_json_encode( array( 'error' => 'Failed to create temporary directory' ) );
+			exit;
+		}
+
+		LocalServerConfig::write_config_files( $temp_dir, $runtime );
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $temp_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+			self::cleanup_temp_dir( $temp_dir );
 			\status_header( 500 );
 			header( 'Content-Type: application/json' );
 			echo \wp_json_encode( array( 'error' => 'Failed to create ZIP archive' ) );
@@ -851,7 +861,25 @@ class OpenCodeController {
 		}
 
 		$zip->addFromString( 'opencode.json', \wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
-		$zip->addFromString( 'AGENTS.md', $agents_md );
+
+		$files_to_add = array(
+			'AGENTS.md',
+			'context/site.md',
+			'agent/wordpress-manager.md',
+			'agent/wordpress-content-creator.md',
+			'agent/wordpress-auditor.md',
+		);
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			$files_to_add[] = 'agent/wordpress-commerce-manager.md';
+		}
+
+		foreach ( $files_to_add as $file ) {
+			$filepath = $temp_dir . '/' . $file;
+			if ( file_exists( $filepath ) ) {
+				$zip->addFile( $filepath, $file );
+			}
+		}
 
 		if ( LocalServerConfig::RUNTIME_NONE !== $runtime ) {
 			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
@@ -861,6 +889,8 @@ class OpenCodeController {
 		}
 
 		$zip->close();
+
+		self::cleanup_temp_dir( $temp_dir );
 
 		header( 'Content-Type: application/zip' );
 		header( 'Content-Disposition: attachment; filename="' . $zip_filename . '"' );
@@ -872,6 +902,27 @@ class OpenCodeController {
 		readfile( $temp_file );
 		unlink( $temp_file );
 		exit;
+	}
+
+	private static function cleanup_temp_dir( string $dir ): void {
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$files = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator( $dir, \RecursiveDirectoryIterator::SKIP_DOTS ),
+			\RecursiveIteratorIterator::CHILD_FIRST
+		);
+
+		foreach ( $files as $file ) {
+			if ( $file->isDir() ) {
+				rmdir( $file->getRealPath() );
+			} else {
+				unlink( $file->getRealPath() );
+			}
+		}
+
+		rmdir( $dir );
 	}
 
 	public function get_local_settings(): WP_REST_Response {
