@@ -6,6 +6,7 @@ namespace WordForge\Admin;
 
 use WordForge\OpenCode\BinaryManager;
 use WordForge\OpenCode\ExecCapability;
+use WordForge\OpenCode\LocalServerConfig;
 use WordForge\OpenCode\ServerProcess;
 
 class WidgetManager {
@@ -136,12 +137,17 @@ class WidgetManager {
 			$asset_file['version']
 		);
 
-		$context = ContextDetector::get_context( $hook );
+		$context        = ContextDetector::get_context( $hook );
+		$local_settings = LocalServerConfig::get_settings();
 
 		$config = array(
-			'proxyUrl' => rest_url( 'wordforge/v1/opencode/proxy' ),
-			'nonce'    => wp_create_nonce( 'wp_rest' ),
-			'context'  => $context,
+			'proxyUrl'           => rest_url( 'wordforge/v1/opencode/proxy' ),
+			'restUrl'            => rest_url( 'wordforge/v1' ),
+			'siteUrl'            => site_url(),
+			'nonce'              => wp_create_nonce( 'wp_rest' ),
+			'context'            => $context,
+			'localServerPort'    => $local_settings['port'],
+			'localServerEnabled' => $local_settings['enabled'],
 		);
 
 		wp_add_inline_script(

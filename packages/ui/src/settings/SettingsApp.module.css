@@ -3,6 +3,16 @@
   color: var(--wf-color-error);
 }
 
+.tabPanel {
+  background: transparent;
+}
+
+.tabContent {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--wf-spacing-xl, 24px);
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -14,7 +24,8 @@
 }
 
 @media (max-width: 960px) {
-  .cards {
+  .cards,
+  .tabContent {
     grid-template-columns: 1fr;
   }
 }

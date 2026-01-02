@@ -11,7 +11,11 @@ export type {
 
 export interface WordForgeChatConfig {
   proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
   nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
   i18n: {
     newSession: string;
     untitled: string;
@@ -42,7 +46,25 @@ export interface WordForgeChatConfig {
 }
 export interface WordForgeEditorConfig {
   proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
   nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
+}
+
+export interface WordForgeWidgetConfig {
+  proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
+  nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
+  context?: {
+    type: string;
+    postType?: string;
+    postId?: number;
+  };
 }
 
 export interface ConfiguredProvider {
@@ -98,6 +120,8 @@ export interface WordForgeSettingsConfig {
     autoShutdownEnabled: boolean;
     autoShutdownThreshold: number;
     execEnabled: boolean;
+    localServerPort: number;
+    localServerEnabled: boolean;
     platformInfo: {
       os: string;
       arch: string;
@@ -127,6 +151,7 @@ declare global {
   interface Window {
     wordforgeChat?: WordForgeChatConfig;
     wordforgeEditor?: WordForgeEditorConfig;
+    wordforgeWidget?: WordForgeWidgetConfig;
     wordforgeSettings?: WordForgeSettingsConfig;
   }
 }

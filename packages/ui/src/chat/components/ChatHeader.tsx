@@ -1,5 +1,7 @@
-import { Button } from '@wordpress/components';
+import { Button, Tooltip } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useClientOptional } from '../../lib/ClientProvider';
+import type { ConnectionMode } from '../../lib/openCodeClient';
 import type { ExportFormat } from '../hooks/useExport';
 import styles from './ChatHeader.module.css';
 import { ExportMenu } from './ExportMenu';
@@ -25,6 +27,102 @@ interface ChatHeaderProps {
   sessionsCollapsed?: boolean;
   showSearch?: boolean;
 }
+
+const getConnectionLabel = (mode: ConnectionMode): string => {
+  switch (mode) {
+    case 'local':
+      return __('Local', 'wordforge');
+    case 'remote':
+      return __('Server', 'wordforge');
+    default:
+      return __('Disconnected', 'wordforge');
+  }
+};
+
+const getConnectionTooltip = (
+  mode: ConnectionMode,
+  localAvailable: boolean,
+  remoteAvailable: boolean,
+): string => {
+  if (mode === 'local') {
+    return remoteAvailable
+      ? __(
+          'Connected to local OpenCode. Click to switch to server.',
+          'wordforge',
+        )
+      : __('Connected to local OpenCode.', 'wordforge');
+  }
+  if (mode === 'remote') {
+    return localAvailable
+      ? __(
+          'Connected to WordPress server. Click to switch to local.',
+          'wordforge',
+        )
+      : __('Connected to WordPress server.', 'wordforge');
+  }
+  return __(
+    'No OpenCode server available. Start the server or run OpenCode locally.',
+    'wordforge',
+  );
+};
+
+const getConnectionStyle = (mode: ConnectionMode): string => {
+  switch (mode) {
+    case 'local':
+      return styles.connectionLocal;
+    case 'remote':
+      return styles.connectionRemote;
+    default:
+      return styles.connectionDisconnected;
+  }
+};
+
+const ConnectionBadge = () => {
+  const clientContext = useClientOptional();
+
+  if (!clientContext) {
+    return null;
+  }
+
+  const { connectionStatus, setPreference } = clientContext;
+  const { mode, localAvailable, remoteAvailable, isChecking } =
+    connectionStatus;
+
+  if (isChecking) {
+    return null;
+  }
+
+  const canSwitch =
+    (mode === 'local' && remoteAvailable) ||
+    (mode === 'remote' && localAvailable);
+
+  const handleClick = () => {
+    if (mode === 'local' && remoteAvailable) {
+      setPreference('remote');
+    } else if (mode === 'remote' && localAvailable) {
+      setPreference('local');
+    }
+  };
+
+  const badge = (
+    <button
+      type="button"
+      className={`${styles.connectionBadge} ${getConnectionStyle(mode)}`}
+      onClick={canSwitch ? handleClick : undefined}
+      disabled={!canSwitch}
+      style={!canSwitch ? { cursor: 'default' } : undefined}
+    >
+      <span className={styles.connectionDot} />
+      {getConnectionLabel(mode)}
+    </button>
+  );
+
+  return (
+    <Tooltip text={getConnectionTooltip(mode, localAvailable, remoteAvailable)}>
+      {badge}
+    </Tooltip>
+  );
+};
 
 export const ChatHeader = ({
   title,
@@ -84,6 +182,7 @@ export const ChatHeader = ({
               {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
             </span>
           )}
+          <ConnectionBadge />
         </div>
         <div className={styles.right}>
           {hasSession && (

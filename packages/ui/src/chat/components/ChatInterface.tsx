@@ -1,14 +1,15 @@
 import { Notice } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { useClientOptional } from '../../lib/ClientProvider';
 import type { ChatState } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';
 import styles from './ChatInterface.module.css';
+import { ConnectionBanner } from './ConnectionBanner';
 import { InputArea } from './InputArea';
 import type { ChatMessage } from './MessageList';
 import { QuickActions } from './QuickActions';
 import { SearchBar } from './SearchBar';
-import { ServerStatusBanner } from './ServerStatusBanner';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 
 interface ChatInterfaceProps {
@@ -38,6 +39,7 @@ export const ChatInterface = ({
 }: ChatInterfaceProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
+  const clientContext = useClientOptional();
 
   useEffect(() => {
     const updateHeight = () => {
@@ -58,14 +60,31 @@ export const ChatInterface = ({
   const displayMessages =
     isSearching && filteredMessages ? filteredMessages : chat.messages;
 
-  if (!chat.isServerReady && chat.serverStatus) {
+  const connectionStatus = clientContext?.connectionStatus ?? {
+    mode: 'disconnected' as const,
+    localAvailable: false,
+    remoteAvailable: false,
+    localPort: 4096,
+    isChecking: false,
+  };
+  const isConnected = connectionStatus.mode !== 'disconnected';
+  const showConnectionBanner = !isConnected && !connectionStatus.isChecking;
+
+  const config =
+    window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
+  const siteUrl = config?.siteUrl;
+
+  if (showConnectionBanner) {
     return (
       <div className={styles.root}>
-        <ServerStatusBanner
-          status={chat.serverStatus}
-          onAutoStart={chat.startServer}
-          isStarting={chat.isStartingServer}
-          error={chat.serverError}
+        <ConnectionBanner
+          connectionStatus={connectionStatus}
+          serverStatus={chat.serverStatus}
+          onStartRemoteServer={chat.startServer}
+          isStartingRemote={chat.isStartingServer}
+          remoteError={chat.serverError}
+          siteUrl={siteUrl}
+          onRefresh={clientContext?.refreshStatus}
         />
       </div>
     );

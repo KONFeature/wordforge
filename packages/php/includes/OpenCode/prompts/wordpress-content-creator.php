@@ -4,9 +4,12 @@
  *
  * @package WordForge
  * @var array<string, mixed> $context WordPress context from ContextProvider.
+ * @var bool $is_local Whether this is for local OpenCode mode (no wp-cli, no bash).
  */
 
 defined( 'ABSPATH' ) || exit;
+
+$is_local = $is_local ?? false;
 ?>
 <Role>
 # WordPress Content Creator

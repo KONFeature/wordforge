@@ -1,7 +1,7 @@
 import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
 import { useQuery } from '@tanstack/react-query';
+import { useOpencodeClient } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
-import { opencodeClient } from '../../lib/openCodeClient';
 import type { SelectedModel } from '../components/ModelSelector';
 
 export const CONFIG_KEY = ['config'] as const;
@@ -12,11 +12,13 @@ interface ConfigData {
   defaultModel: SelectedModel | null;
 }
 
-export const useProvidersConfig = () =>
-  useQuery({
+export const useProvidersConfig = () => {
+  const client = useOpencodeClient();
+
+  return useQuery({
     queryKey: CONFIG_KEY,
     queryFn: async (): Promise<ConfigData> => {
-      const result = await opencodeClient.config.providers();
+      const result = await client!.config.providers();
       const data = result.data;
       const rawProviders =
         data && Array.isArray(data.providers) ? data.providers : [];
@@ -43,17 +45,21 @@ export const useProvidersConfig = () =>
 
       return { providers, defaultModel };
     },
-    enabled: !!opencodeClient,
+    enabled: !!client,
   });
+};
 
-export const useMcpStatus = () =>
-  useQuery({
+export const useMcpStatus = () => {
+  const client = useOpencodeClient();
+
+  return useQuery({
     queryKey: MCP_STATUS_KEY,
     queryFn: async () => {
-      const result = await opencodeClient.mcp.status();
+      const result = await client!.mcp.status();
       return (
         result.data && typeof result.data === 'object' ? result.data : {}
       ) as Record<string, McpStatus>;
     },
-    enabled: !!opencodeClient,
+    enabled: !!client,
   });
+};

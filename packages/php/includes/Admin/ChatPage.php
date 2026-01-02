@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\LocalServerConfig;
 use WordForge\OpenCode\ServerProcess;
 
 class ChatPage {
@@ -61,11 +62,17 @@ class ChatPage {
 			$asset_file['version']
 		);
 
+		$local_settings = LocalServerConfig::get_settings();
+
 		$config = array(
-			'proxyUrl'     => \rest_url( 'wordforge/v1/opencode/proxy' ),
-			'nonce'        => \wp_create_nonce( 'wp_rest' ),
-			'serverStatus' => $server_status,
-			'i18n'         => array(
+			'proxyUrl'           => \rest_url( 'wordforge/v1/opencode/proxy' ),
+			'restUrl'            => \rest_url( 'wordforge/v1' ),
+			'siteUrl'            => \site_url(),
+			'nonce'              => \wp_create_nonce( 'wp_rest' ),
+			'serverStatus'       => $server_status,
+			'localServerPort'    => $local_settings['port'],
+			'localServerEnabled' => $local_settings['enabled'],
+			'i18n'               => array(
 				'newSession'      => __( 'New Session', 'wordforge' ),
 				'untitled'        => __( 'Untitled Session', 'wordforge' ),
 				'selectSession'   => __( 'Select a session', 'wordforge' ),

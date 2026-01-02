@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\ExecCapability;
+use WordForge\OpenCode\LocalServerConfig;
 
 class EditorSidebarManager {
 
@@ -53,9 +54,15 @@ class EditorSidebarManager {
 			$asset_file['version']
 		);
 
+		$local_settings = LocalServerConfig::get_settings();
+
 		$config = array(
-			'proxyUrl' => rest_url( 'wordforge/v1/opencode/proxy' ),
-			'nonce'    => wp_create_nonce( 'wp_rest' ),
+			'proxyUrl'           => rest_url( 'wordforge/v1/opencode/proxy' ),
+			'restUrl'            => rest_url( 'wordforge/v1' ),
+			'siteUrl'            => site_url(),
+			'nonce'              => wp_create_nonce( 'wp_rest' ),
+			'localServerPort'    => $local_settings['port'],
+			'localServerEnabled' => $local_settings['enabled'],
 		);
 
 		wp_add_inline_script(

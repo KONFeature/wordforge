@@ -7,6 +7,7 @@ namespace WordForge\Admin;
 use WordForge\OpenCode\ActivityMonitor;
 use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\LocalServerConfig;
 use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ServerProcess;
 use WP_REST_Request;
@@ -200,6 +201,33 @@ class OpenCodeController {
 				array(
 					'methods'             => 'POST',
 					'callback'            => array( $this, 'save_auto_shutdown_settings' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/local-config',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'download_local_config' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/opencode/local-settings',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_local_settings' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'save_local_settings' ),
 					'permission_callback' => array( $this, 'check_permission' ),
 				),
 			)
@@ -787,6 +815,87 @@ class OpenCodeController {
 		ServerProcess::start(
 			array(
 				'mcp_auth_token' => $token,
+			)
+		);
+	}
+
+	public function download_local_config(): void {
+		$config    = LocalServerConfig::generate();
+		$agents_md = LocalServerConfig::generate_agents_md();
+		$site_name = \sanitize_title( \get_bloginfo( 'name' ) );
+
+		if ( empty( $site_name ) ) {
+			$site_name = 'wordpress-site';
+		}
+
+		$zip_filename = 'wordforge-' . $site_name . '-config.zip';
+		$temp_file    = \wp_tempnam( $zip_filename );
+
+		$zip = new \ZipArchive();
+		if ( true !== $zip->open( $temp_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+			\status_header( 500 );
+			header( 'Content-Type: application/json' );
+			echo \wp_json_encode( array( 'error' => 'Failed to create ZIP archive' ) );
+			exit;
+		}
+
+		$zip->addFromString( 'opencode.json', \wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+		$zip->addFromString( 'AGENTS.md', $agents_md );
+		$zip->close();
+
+		header( 'Content-Type: application/zip' );
+		header( 'Content-Disposition: attachment; filename="' . $zip_filename . '"' );
+		header( 'Content-Length: ' . filesize( $temp_file ) );
+		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		readfile( $temp_file );
+		\wp_delete_file( $temp_file );
+		exit;
+	}
+
+	public function get_local_settings(): WP_REST_Response {
+		$settings = LocalServerConfig::get_settings();
+
+		return new WP_REST_Response(
+			array(
+				'port'    => $settings['port'],
+				'enabled' => $settings['enabled'],
+			)
+		);
+	}
+
+	public function save_local_settings( WP_REST_Request $request ): WP_REST_Response {
+		$port    = $request->get_param( 'port' );
+		$enabled = $request->get_param( 'enabled' );
+
+		$settings = array();
+
+		if ( null !== $port ) {
+			$settings['port'] = absint( $port );
+		}
+
+		if ( null !== $enabled ) {
+			$settings['enabled'] = (bool) $enabled;
+		}
+
+		$result = LocalServerConfig::save_settings( $settings );
+
+		if ( ! $result ) {
+			return new WP_REST_Response(
+				array( 'error' => 'Failed to save settings' ),
+				500
+			);
+		}
+
+		$updated = LocalServerConfig::get_settings();
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'port'    => $updated['port'],
+				'enabled' => $updated['enabled'],
 			)
 		);
 	}

@@ -1,0 +1,174 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+}
+
+.introCard,
+.stepsCard,
+.settingsCard {
+  background: var(--color-background, #fff);
+  border-radius: 8px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text, #1e1e1e);
+}
+
+.introText {
+  margin: 0 0 16px 0;
+  color: var(--color-text-secondary, #757575);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.statusOnline {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusOffline {
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.statusChecking {
+  background: #e2e3e5;
+  color: #383d41;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3858e9;
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stepContent {
+  flex: 1;
+}
+
+.stepTitle {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text, #1e1e1e);
+}
+
+.stepDescription {
+  margin: 0 0 12px 0;
+  color: var(--color-text-secondary, #757575);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.stepNote {
+  margin: 8px 0 0 0;
+  color: var(--color-text-secondary, #757575);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #3858e9;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.externalLink:hover {
+  text-decoration: underline;
+}
+
+.downloadButton {
+  margin-bottom: 12px;
+}
+
+.downloadButton svg {
+  margin-right: 8px;
+}
+
+.securityNote {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.securityNote p {
+  margin: 0;
+}
+
+.commandList {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-text-secondary, #757575);
+  font-size: 14px;
+  line-height: 2;
+}
+
+.commandList code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.command {
+  display: block;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  margin: 8px 0;
+  overflow-x: auto;
+}
+
+.portInput {
+  max-width: 200px;
+}
+
+.checkButton {
+  margin-top: 12px;
+}
+
+.checkButton svg {
+  margin-right: 8px;
+}

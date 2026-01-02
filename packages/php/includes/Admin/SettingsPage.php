@@ -8,6 +8,7 @@ use WordForge\OpenCode\ActivityMonitor;
 use WordForge\OpenCode\AgentConfig;
 use WordForge\OpenCode\BinaryManager;
 use WordForge\OpenCode\ExecCapability;
+use WordForge\OpenCode\LocalServerConfig;
 use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ServerProcess;
 
@@ -108,7 +109,8 @@ class SettingsPage {
 		$server_status = ServerProcess::get_status();
 		$abilities     = $this->get_registered_abilities();
 
-		$exec_capabilities = ExecCapability::get_capabilities();
+		$exec_capabilities  = ExecCapability::get_capabilities();
+		$local_settings     = LocalServerConfig::get_settings();
 
 		$config = array(
 			'restUrl'             => \rest_url( 'wordforge/v1' ),
@@ -135,6 +137,8 @@ class SettingsPage {
 					'version'      => $binary_info['version'] ?? null,
 				),
 				'execEnabled'           => $exec_capabilities['can_exec'],
+				'localServerPort'       => $local_settings['port'],
+				'localServerEnabled'    => $local_settings['enabled'],
 			),
 			'abilities'           => $abilities,
 			'configuredProviders' => $exec_capabilities['can_exec'] ? ProviderConfig::get_configured_providers() : array(),

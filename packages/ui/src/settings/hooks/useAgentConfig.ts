@@ -1,7 +1,7 @@
 import type { Provider } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useOpencodeClient } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
-import { opencodeClient } from '../../lib/openCodeClient';
 import type { AgentInfo } from '../../types';
 
 interface AgentsResponse {
@@ -32,15 +32,18 @@ export const useAgents = (restUrl: string, nonce: string) => {
 };
 
 export const useOpenCodeConfiguredProviders = () => {
+  const client = useOpencodeClient();
+
   return useQuery({
     queryKey: OPENCODE_PROVIDERS_KEY,
     queryFn: async (): Promise<Provider[]> => {
-      const response = await opencodeClient.config.providers();
+      const response = await client!.config.providers();
       const providers = Array.isArray(response?.data?.providers)
         ? response?.data?.providers
         : [];
       return filterProviders(providers);
     },
+    enabled: !!client,
     staleTime: 30000,
   });
 };

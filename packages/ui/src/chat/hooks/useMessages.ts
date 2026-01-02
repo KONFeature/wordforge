@@ -4,7 +4,7 @@ import type {
   SessionStatus,
 } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { opencodeClient } from '../../lib/openCodeClient';
+import { useOpencodeClient } from '../../lib/ClientProvider';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
 import {
@@ -18,17 +18,18 @@ export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
 
 export const useMessages = (sessionId: string | null) => {
+  const client = useOpencodeClient();
   const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: messagesKey(sessionId!),
     queryFn: async () => {
-      const result = await opencodeClient.session.messages({
+      const result = await client!.session.messages({
         path: { id: sessionId! },
       });
       return (result.data || []) as ChatMessage[];
     },
-    enabled: !!opencodeClient && !!sessionId,
+    enabled: !!client && !!sessionId,
     refetchInterval: () => {
       if (!sessionId) return false;
       const statuses =
@@ -53,8 +54,10 @@ export interface SendMessageResult {
   isNewSession: boolean;
 }
 
-export const useSendMessage = () =>
-  useMutation({
+export const useSendMessage = () => {
+  const client = useOpencodeClient();
+
+  return useMutation({
     mutationFn: async (
       {
         text,
@@ -65,10 +68,13 @@ export const useSendMessage = () =>
       }: SendMessageParams,
       { client: queryClient },
     ): Promise<SendMessageResult> => {
+      if (!client) {
+        throw new Error('OpenCode client not available');
+      }
+
       let sessionId = providedSessionId;
       let isNewSession = false;
 
-      // Build user msg
       const parts: { type: 'text'; text: string }[] = [];
       if (context) {
         const contextXml = formatContextXml(context);
@@ -83,18 +89,16 @@ export const useSendMessage = () =>
       };
 
       if (!sessionId) {
-        const createResult = await opencodeClient.session.create({ body: {} });
+        const createResult = await client.session.create({ body: {} });
         const newSession = createResult.data!;
         sessionId = newSession.id;
         isNewSession = true;
 
-        // Add the session to the list
         queryClient.setQueryData<Session[]>(SESSIONS_KEY, (old) =>
           old ? [newSession, ...old] : [newSession],
         );
       }
 
-      // Add the user msg to the session list (for reactive update)
       const tempUserMsg: ChatMessage = {
         info: {
           id: `temp-user-${Date.now()}`,
@@ -117,7 +121,7 @@ export const useSendMessage = () =>
         tempUserMsg,
       ]);
 
-      await opencodeClient.session.promptAsync({
+      await client.session.promptAsync({
         path: { id: sessionId },
         body,
       });
@@ -143,10 +147,17 @@ export const useSendMessage = () =>
       await Promise.allSettled(promises);
     },
   });
+};
 
-export const useAbortSession = () =>
-  useMutation({
+export const useAbortSession = () => {
+  const client = useOpencodeClient();
+
+  return useMutation({
     mutationFn: async (sessionId: string) => {
-      await opencodeClient.session.abort({ path: { id: sessionId } });
+      if (!client) {
+        throw new Error('OpenCode client not available');
+      }
+      await client.session.abort({ path: { id: sessionId } });
     },
   });
+};
