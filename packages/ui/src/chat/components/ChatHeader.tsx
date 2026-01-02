@@ -1,6 +1,6 @@
 import { Button, Tooltip } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useClientOptional } from '../../lib/ClientProvider';
+import { useClient } from '../../lib/ClientProvider';
 import type { ConnectionMode } from '../../lib/openCodeClient';
 import type { ExportFormat } from '../hooks/useExport';
 import styles from './ChatHeader.module.css';
@@ -78,19 +78,8 @@ const getConnectionStyle = (mode: ConnectionMode): string => {
 };
 
 const ConnectionBadge = () => {
-  const clientContext = useClientOptional();
-
-  if (!clientContext) {
-    return null;
-  }
-
-  const { connectionStatus, setPreference } = clientContext;
-  const { mode, localAvailable, remoteAvailable, isChecking } =
-    connectionStatus;
-
-  if (isChecking) {
-    return null;
-  }
+  const { connectionStatus, setPreference } = useClient();
+  const { mode, localAvailable, remoteAvailable } = connectionStatus;
 
   const canSwitch =
     (mode === 'local' && remoteAvailable) ||

@@ -75,16 +75,11 @@ export const ConnectionBanner = ({
           <Button
             variant="tertiary"
             onClick={onRefresh}
-            disabled={connectionStatus.isChecking}
             className={styles.refreshButton}
             size="small"
             label={__('Refresh connection status', 'wordforge')}
           >
-            {connectionStatus.isChecking ? (
-              <Spinner />
-            ) : (
-              <Icon icon={update} size={18} />
-            )}
+            <Icon icon={update} size={18} />
           </Button>
         )}
       </div>

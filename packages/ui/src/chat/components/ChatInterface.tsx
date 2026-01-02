@@ -1,7 +1,7 @@
 import { Notice } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { useClientOptional } from '../../lib/ClientProvider';
+import { useClient } from '../../lib/ClientProvider';
 import type { ChatState } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';
 import styles from './ChatInterface.module.css';
@@ -39,7 +39,7 @@ export const ChatInterface = ({
 }: ChatInterfaceProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
-  const clientContext = useClientOptional();
+  const clientContext = useClient();
 
   useEffect(() => {
     const updateHeight = () => {
@@ -60,15 +60,9 @@ export const ChatInterface = ({
   const displayMessages =
     isSearching && filteredMessages ? filteredMessages : chat.messages;
 
-  const connectionStatus = clientContext?.connectionStatus ?? {
-    mode: 'disconnected' as const,
-    localAvailable: false,
-    remoteAvailable: false,
-    localPort: 4096,
-    isChecking: false,
-  };
+  const connectionStatus = clientContext.connectionStatus;
   const isConnected = connectionStatus.mode !== 'disconnected';
-  const showConnectionBanner = !isConnected && !connectionStatus.isChecking;
+  const showConnectionBanner = !isConnected;
 
   const config =
     window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
@@ -84,7 +78,7 @@ export const ChatInterface = ({
           isStartingRemote={chat.isStartingServer}
           remoteError={chat.serverError}
           siteUrl={siteUrl}
-          onRefresh={clientContext?.refreshStatus}
+          onRefresh={clientContext.refetchConnectionStatus}
         />
       </div>
     );

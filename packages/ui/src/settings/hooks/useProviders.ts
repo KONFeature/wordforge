@@ -1,6 +1,6 @@
 import type { ProviderListResponses } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useOpencodeClient } from '../../lib/ClientProvider';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { hasProviderFreeModels } from '../../lib/filterModels';
 import { getProviderMeta, sortProviders } from '../../lib/providerHelpers';
 import type { ConfiguredProvider, ProviderDisplayInfo } from '../../types';
@@ -37,7 +37,7 @@ const mergeProviders = (
 };
 
 export const useProviders = (restUrl: string, nonce: string) => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   const configuredQuery = useQuery({
     queryKey: CONFIGURED_PROVIDERS_KEY,

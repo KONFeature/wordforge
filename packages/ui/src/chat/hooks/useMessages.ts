@@ -4,7 +4,7 @@ import type {
   SessionStatus,
 } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOpencodeClient } from '../../lib/ClientProvider';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
 import {
@@ -18,7 +18,7 @@ export const messagesKey = (sessionId: string) =>
   ['messages', sessionId] as const;
 
 export const useMessages = (sessionId: string | null) => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
   const queryClient = useQueryClient();
 
   return useQuery({
@@ -55,7 +55,7 @@ export interface SendMessageResult {
 }
 
 export const useSendMessage = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useMutation({
     mutationFn: async (
@@ -150,7 +150,7 @@ export const useSendMessage = () => {
 };
 
 export const useAbortSession = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useMutation({
     mutationFn: async (sessionId: string) => {

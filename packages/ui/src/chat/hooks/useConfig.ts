@@ -1,6 +1,6 @@
 import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
 import { useQuery } from '@tanstack/react-query';
-import { useOpencodeClient } from '../../lib/ClientProvider';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
 import type { SelectedModel } from '../components/ModelSelector';
 
@@ -13,7 +13,7 @@ interface ConfigData {
 }
 
 export const useProvidersConfig = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useQuery({
     queryKey: CONFIG_KEY,
@@ -50,7 +50,7 @@ export const useProvidersConfig = () => {
 };
 
 export const useMcpStatus = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useQuery({
     queryKey: MCP_STATUS_KEY,

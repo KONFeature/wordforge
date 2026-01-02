@@ -829,7 +829,7 @@ class OpenCodeController {
 		}
 
 		$zip_filename = 'wordforge-' . $site_name . '-config.zip';
-		$temp_file    = \wp_tempnam( $zip_filename );
+		$temp_file    = tempnam( sys_get_temp_dir(), 'wordforge_' );
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $temp_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
@@ -851,7 +851,7 @@ class OpenCodeController {
 		header( 'Expires: 0' );
 
 		readfile( $temp_file );
-		\wp_delete_file( $temp_file );
+		unlink( $temp_file );
 		exit;
 	}
 

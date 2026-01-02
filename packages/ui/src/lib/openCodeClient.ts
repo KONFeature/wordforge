@@ -3,34 +3,56 @@ import type { OpencodeClient } from '@opencode-ai/sdk/client';
 
 export type ConnectionMode = 'local' | 'remote' | 'disconnected';
 
-interface ProxyConfig {
-  url: string;
+export interface WordforgeConfig {
+  proxyUrl: string;
   nonce: string;
+  restUrl: string;
+  localPort: number;
+  localEnabled: boolean;
 }
 
-export function getProxyConfig(): ProxyConfig | null {
+/**
+ * Get WordPress config from window globals.
+ * Throws if no config is available.
+ */
+export function getConfig(): WordforgeConfig {
   const chatConfig =
     window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
+  const settingsConfig = window.wordforgeSettings;
 
+  if (!chatConfig && !settingsConfig) {
+    throw new Error(
+      'WordForge configuration not found. Ensure the provider is used within a WordPress admin page.',
+    );
+  }
+
+  const nonce = chatConfig?.nonce ?? settingsConfig?.nonce ?? '';
+  const restUrl = settingsConfig?.restUrl ?? '';
+
+  let proxyUrl = '';
   if (chatConfig) {
-    return {
-      url: chatConfig.proxyUrl,
-      nonce: chatConfig.nonce,
-    };
+    proxyUrl = chatConfig.proxyUrl;
+  } else if (settingsConfig) {
+    proxyUrl = `${settingsConfig.restUrl}/opencode/proxy`;
   }
 
-  if (window.wordforgeSettings) {
-    return {
-      url: `${window.wordforgeSettings.restUrl}/opencode/proxy`,
-      nonce: window.wordforgeSettings.nonce,
-    };
-  }
+  const localPort =
+    chatConfig?.localServerPort ??
+    settingsConfig?.settings?.localServerPort ??
+    4096;
 
-  return null;
-}
+  const localEnabled =
+    chatConfig?.localServerEnabled ??
+    settingsConfig?.settings?.localServerEnabled ??
+    true;
 
-export function getLocalPort(): number {
-  return window.wordforgeSettings?.settings?.localServerPort ?? 4096;
+  return {
+    proxyUrl,
+    nonce,
+    restUrl,
+    localPort,
+    localEnabled,
+  };
 }
 
 function createWpFetch(nonce: string) {
@@ -74,7 +96,23 @@ export async function checkLocalServerHealth(port = 4096): Promise<boolean> {
   }
 }
 
-const defaultProxyConfig = getProxyConfig();
-export const opencodeClient = defaultProxyConfig
-  ? createProxyClient(defaultProxyConfig.url, defaultProxyConfig.nonce)
-  : null;
+export async function checkRemoteServerStatus(
+  restUrl: string,
+  nonce: string,
+): Promise<boolean> {
+  try {
+    const response = await fetch(`${restUrl}/opencode/status`, {
+      method: 'GET',
+      headers: { 'X-WP-Nonce': nonce },
+      credentials: 'include',
+      signal: AbortSignal.timeout(3000),
+    });
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    return data?.server?.running === true;
+  } catch {
+    return false;
+  }
+}

@@ -1,19 +1,21 @@
 import type { OpencodeClient } from '@opencode-ai/sdk/client';
+import { useQuery } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from '@wordpress/element';
 import type { ReactNode } from 'react';
 import {
   type ConnectionMode,
+  type WordforgeConfig,
   checkLocalServerHealth,
+  checkRemoteServerStatus,
   createLocalClient,
   createProxyClient,
-  getProxyConfig,
+  getConfig,
 } from './openCodeClient';
 
 export interface ConnectionStatus {
@@ -21,7 +23,6 @@ export interface ConnectionStatus {
   localAvailable: boolean;
   remoteAvailable: boolean;
   localPort: number;
-  isChecking: boolean;
 }
 
 interface ClientContextValue {
@@ -29,56 +30,15 @@ interface ClientContextValue {
   connectionStatus: ConnectionStatus;
   preferLocal: boolean;
   setPreference: (prefer: 'local' | 'remote') => void;
-  refreshStatus: () => void;
+  refetchConnectionStatus: () => void;
 }
 
 const ClientContext = createContext<ClientContextValue | null>(null);
 
 const STORAGE_KEY = 'wordforge_prefer_local';
+const CONNECTION_STATUS_KEY = ['connection-status'] as const;
 
-async function checkRemoteServer(
-  restUrl: string,
-  nonce: string,
-): Promise<boolean> {
-  try {
-    const response = await fetch(`${restUrl}/opencode/status`, {
-      method: 'GET',
-      headers: {
-        'X-WP-Nonce': nonce,
-      },
-      credentials: 'include',
-      signal: AbortSignal.timeout(3000),
-    });
-
-    if (!response.ok) return false;
-
-    const data = await response.json();
-    return data?.server?.running === true;
-  } catch {
-    return false;
-  }
-}
-
-interface ClientProviderProps {
-  children: ReactNode;
-}
-
-export const ClientProvider = ({ children }: ClientProviderProps) => {
-  const config =
-    window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
-  const settingsConfig = window.wordforgeSettings;
-
-  const restUrl = settingsConfig?.restUrl ?? '';
-  const nonce = config?.nonce ?? settingsConfig?.nonce ?? '';
-  const localPort =
-    config?.localServerPort ??
-    settingsConfig?.settings?.localServerPort ??
-    4096;
-  const localEnabled =
-    config?.localServerEnabled ??
-    settingsConfig?.settings?.localServerEnabled ??
-    true;
-
+function useLocalPreference() {
   const [preferLocal, setPreferLocalState] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -86,72 +46,86 @@ export const ClientProvider = ({ children }: ClientProviderProps) => {
     return false;
   });
 
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
-    mode: 'disconnected',
-    localAvailable: false,
-    remoteAvailable: false,
-    localPort,
-    isChecking: true,
+  const setPreference = useCallback((prefer: 'local' | 'remote') => {
+    const value = prefer === 'local';
+    setPreferLocalState(value);
+    localStorage.setItem(STORAGE_KEY, String(value));
+  }, []);
+
+  return { preferLocal, setPreference };
+}
+
+function useConnectionStatusQuery(config: WordforgeConfig) {
+  return useQuery({
+    queryKey: CONNECTION_STATUS_KEY,
+    queryFn: async () => {
+      const [localAvailable, remoteAvailable] = await Promise.all([
+        config.localEnabled
+          ? checkLocalServerHealth(config.localPort)
+          : Promise.resolve(false),
+        config.restUrl
+          ? checkRemoteServerStatus(config.restUrl, config.nonce)
+          : Promise.resolve(false),
+      ]);
+      return { localAvailable, remoteAvailable };
+    },
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data?.localAvailable && !data?.remoteAvailable) return 5000;
+      return 30000;
+    },
   });
+}
 
-  const checkConnections = useCallback(async () => {
-    setConnectionStatus((prev) => ({ ...prev, isChecking: true }));
+function deriveConnectionMode(
+  localAvailable: boolean,
+  remoteAvailable: boolean,
+  preferLocal: boolean,
+): ConnectionMode {
+  if (preferLocal && localAvailable) return 'local';
+  if (remoteAvailable) return 'remote';
+  if (localAvailable) return 'local';
+  return 'disconnected';
+}
 
-    const [localAvailable, remoteAvailable] = await Promise.all([
-      localEnabled ? checkLocalServerHealth(localPort) : Promise.resolve(false),
-      restUrl ? checkRemoteServer(restUrl, nonce) : Promise.resolve(false),
-    ]);
+interface ClientProviderProps {
+  children: ReactNode;
+}
 
-    let mode: ConnectionMode = 'disconnected';
+export const ClientProvider = ({ children }: ClientProviderProps) => {
+  const config = getConfig();
+  const { preferLocal, setPreference } = useLocalPreference();
 
-    if (preferLocal && localAvailable) {
-      mode = 'local';
-    } else if (remoteAvailable) {
-      mode = 'remote';
-    } else if (localAvailable) {
-      mode = 'local';
-    }
+  const { data: healthData, refetch: refetchConnectionStatus } =
+    useConnectionStatusQuery(config);
 
-    setConnectionStatus({
+  const localAvailable = healthData?.localAvailable ?? false;
+  const remoteAvailable = healthData?.remoteAvailable ?? false;
+  const mode = deriveConnectionMode(
+    localAvailable,
+    remoteAvailable,
+    preferLocal,
+  );
+
+  const connectionStatus: ConnectionStatus = useMemo(
+    () => ({
       mode,
       localAvailable,
       remoteAvailable,
-      localPort,
-      isChecking: false,
-    });
-  }, [localEnabled, localPort, restUrl, nonce, preferLocal]);
-
-  useEffect(() => {
-    checkConnections();
-
-    const pollInterval =
-      connectionStatus.mode === 'disconnected' ? 5000 : 30000;
-    const interval = setInterval(checkConnections, pollInterval);
-    return () => clearInterval(interval);
-  }, [checkConnections, connectionStatus.mode]);
-
-  const setPreference = useCallback(
-    (prefer: 'local' | 'remote') => {
-      const preferLocalValue = prefer === 'local';
-      setPreferLocalState(preferLocalValue);
-      localStorage.setItem(STORAGE_KEY, String(preferLocalValue));
-      checkConnections();
-    },
-    [checkConnections],
+      localPort: config.localPort,
+    }),
+    [mode, localAvailable, remoteAvailable, config.localPort],
   );
 
   const client = useMemo(() => {
-    if (connectionStatus.mode === 'local') {
-      return createLocalClient(localPort);
+    if (mode === 'local') {
+      return createLocalClient(config.localPort);
     }
-    if (connectionStatus.mode === 'remote') {
-      const proxyConfig = getProxyConfig();
-      if (proxyConfig) {
-        return createProxyClient(proxyConfig.url, proxyConfig.nonce);
-      }
+    if (mode === 'remote') {
+      return createProxyClient(config.proxyUrl, config.nonce);
     }
     return null;
-  }, [connectionStatus.mode, localPort]);
+  }, [mode, config.localPort, config.proxyUrl, config.nonce]);
 
   const value = useMemo(
     () => ({
@@ -159,9 +133,17 @@ export const ClientProvider = ({ children }: ClientProviderProps) => {
       connectionStatus,
       preferLocal,
       setPreference,
-      refreshStatus: checkConnections,
+      refetchConnectionStatus: () => {
+        refetchConnectionStatus();
+      },
     }),
-    [client, connectionStatus, preferLocal, setPreference, checkConnections],
+    [
+      client,
+      connectionStatus,
+      preferLocal,
+      setPreference,
+      refetchConnectionStatus,
+    ],
   );
 
   return (
@@ -177,31 +159,32 @@ export const useClient = (): ClientContextValue => {
   return context;
 };
 
-export const useClientOptional = (): ClientContextValue | null => {
-  return useContext(ClientContext);
+export const useOpencodeClient = (): OpencodeClient => {
+  const { client } = useClient();
+  if (!client) {
+    throw new Error(
+      'OpenCode client not available. Server may be disconnected.',
+    );
+  }
+  return client;
 };
 
-const fallbackProxyConfig = getProxyConfig();
-const fallbackProxyClient = fallbackProxyConfig
-  ? createProxyClient(fallbackProxyConfig.url, fallbackProxyConfig.nonce)
-  : null;
-
-export const useOpencodeClient = (): OpencodeClient | null => {
-  const context = useContext(ClientContext);
-  if (context) {
-    return context.client;
-  }
-
-  return fallbackProxyClient;
+export const useOpencodeClientOptional = (): OpencodeClient | null => {
+  const { client } = useClient();
+  return client;
 };
 
 export const useConnectionStatus = () => {
-  const { connectionStatus, preferLocal, setPreference, refreshStatus } =
-    useClient();
+  const {
+    connectionStatus,
+    preferLocal,
+    setPreference,
+    refetchConnectionStatus,
+  } = useClient();
   return {
     ...connectionStatus,
     preferLocal,
     setPreference,
-    refreshStatus,
+    refetchConnectionStatus,
   };
 };

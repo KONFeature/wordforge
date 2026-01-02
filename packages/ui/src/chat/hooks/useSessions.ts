@@ -1,12 +1,12 @@
 import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useOpencodeClient } from '../../lib/ClientProvider';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 
 export const SESSIONS_KEY = ['sessions'] as const;
 export const STATUSES_KEY = ['session-statuses'] as const;
 
 export const useSessions = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useQuery({
     queryKey: SESSIONS_KEY,
@@ -20,7 +20,7 @@ export const useSessions = () => {
 };
 
 export const useSessionStatuses = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useQuery({
     queryKey: STATUSES_KEY,
@@ -43,7 +43,7 @@ export const useSessionStatuses = () => {
 };
 
 export const useCreateSession = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useMutation({
     mutationFn: async () => {
@@ -59,7 +59,7 @@ export const useCreateSession = () => {
 };
 
 export const useDeleteSession = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useMutation({
     mutationFn: async (sessionId: string) => {

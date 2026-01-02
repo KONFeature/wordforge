@@ -1,6 +1,6 @@
 import type { Provider } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOpencodeClient } from '../../lib/ClientProvider';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
 import type { AgentInfo } from '../../types';
 
@@ -32,7 +32,7 @@ export const useAgents = (restUrl: string, nonce: string) => {
 };
 
 export const useOpenCodeConfiguredProviders = () => {
-  const client = useOpencodeClient();
+  const client = useOpencodeClientOptional();
 
   return useQuery({
     queryKey: OPENCODE_PROVIDERS_KEY,
