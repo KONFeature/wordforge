@@ -2,7 +2,8 @@ import type { Model, Provider } from '@opencode-ai/sdk/client';
 import { Button, Popover, TextControl } from '@wordpress/components';
 import { memo, useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { sortProviders } from '../../lib/providerHelpers';
+import { isModelFree } from '../lib/filterModels';
+import { sortProviders } from '../lib/providerHelpers';
 import styles from './ModelSelector.module.css';
 
 export interface SelectedModel {
@@ -37,37 +38,48 @@ const ModelButton = memo(
     modelID: string;
     isSelected: boolean;
     onClick: () => void;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`${styles.modelButton} ${isSelected ? styles.selected : ''}`}
-      aria-pressed={isSelected}
-    >
-      <div className={styles.modelInfo}>
-        <div className={styles.modelName}>{model.name}</div>
-        <div className={styles.modelMeta}>
-          {model.capabilities?.reasoning && <span title="Reasoning">🧠</span>}
-          {model.capabilities?.toolcall && <span title="Tool calls">🔧</span>}
-          {model.capabilities?.attachment && (
-            <span title="Attachments">📎</span>
-          )}
-          {model.status !== 'active' && (
-            <span
-              className={
-                model.status === 'deprecated'
-                  ? styles.statusDeprecated
-                  : styles.statusPreview
-              }
-            >
-              {model.status}
-            </span>
-          )}
+  }) => {
+    const isFree = isModelFree(model);
+
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${styles.modelButton} ${isSelected ? styles.selected : ''}`}
+        aria-pressed={isSelected}
+      >
+        <div className={styles.modelInfo}>
+          <div className={styles.modelName}>
+            {model.name}
+            {isFree && (
+              <span className={styles.freeBadge}>
+                {__('free', 'wordforge')}
+              </span>
+            )}
+          </div>
+          <div className={styles.modelMeta}>
+            {model.capabilities?.reasoning && <span title="Reasoning">🧠</span>}
+            {model.capabilities?.toolcall && <span title="Tool calls">🔧</span>}
+            {model.capabilities?.attachment && (
+              <span title="Attachments">📎</span>
+            )}
+            {model.status !== 'active' && (
+              <span
+                className={
+                  model.status === 'deprecated'
+                    ? styles.statusDeprecated
+                    : styles.statusPreview
+                }
+              >
+                {model.status}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      {isSelected && <span className={styles.checkmark}>✓</span>}
-    </button>
-  ),
+        {isSelected && <span className={styles.checkmark}>✓</span>}
+      </button>
+    );
+  },
 );
 
 const ProviderGroup = memo(

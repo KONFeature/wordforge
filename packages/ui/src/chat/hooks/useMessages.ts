@@ -4,9 +4,9 @@ import type {
   SessionStatus,
 } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { opencodeClient } from '../../lib/openCodeClient';
 import type { ChatMessage } from '../components/MessageList';
 import type { SelectedModel } from '../components/ModelSelector';
-import { opencodeClient } from '../openCodeClient';
 import {
   type ScopedContext,
   formatContextXml,

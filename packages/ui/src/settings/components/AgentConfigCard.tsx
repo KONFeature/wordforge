@@ -5,15 +5,18 @@ import {
   CardBody,
   CardHeader,
   Notice,
-  SelectControl,
   Spinner,
 } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import {
+  ModelSelector,
+  type SelectedModel,
+} from '../../components/ModelSelector';
 import type { AgentInfo } from '../../types';
 import {
   useAgents,
-  useOpenCodeProviders,
+  useOpenCodeConfiguredProviders,
   useResetAgents,
   useSaveAgents,
 } from '../hooks/useAgentConfig';
@@ -27,6 +30,36 @@ interface AgentConfigCardProps {
   onStartServer: () => void;
 }
 
+const parseModelString = (modelString: string): SelectedModel | null => {
+  const parts = modelString.split('/');
+  if (parts.length < 2) return null;
+  return {
+    providerID: parts[0],
+    modelID: parts.slice(1).join('/'),
+  };
+};
+
+const toModelString = (model: SelectedModel): string => {
+  return `${model.providerID}/${model.modelID}`;
+};
+
+const isModelRecommended = (
+  modelValue: string,
+  recommendations: string[],
+): boolean => {
+  for (const rec of recommendations) {
+    if (modelValue === rec) return true;
+    if (modelValue.startsWith(rec)) return true;
+    if (rec.startsWith(modelValue)) return true;
+  }
+  return false;
+};
+
+const hasAnyModels = (providers: Provider[] | undefined): boolean => {
+  if (!providers) return false;
+  return providers.some((p) => p.models && Object.keys(p.models).length > 0);
+};
+
 export const AgentConfigCard = ({
   restUrl,
   nonce,
@@ -38,10 +71,8 @@ export const AgentConfigCard = ({
     restUrl,
     nonce,
   );
-  const { data: providers, isLoading: providersLoading } = useOpenCodeProviders(
-    restUrl,
-    nonce,
-  );
+  const { data: providers, isLoading: providersLoading } =
+    useOpenCodeConfiguredProviders();
   const saveAgents = useSaveAgents(restUrl, nonce);
   const resetAgents = useResetAgents(restUrl, nonce);
 
@@ -54,18 +85,19 @@ export const AgentConfigCard = ({
 
   const hasChanges = Object.keys(pendingChanges).length > 0;
 
-  const handleModelChange = (agentId: string, modelId: string) => {
+  const handleModelChange = (agentId: string, model: SelectedModel) => {
+    const modelString = toModelString(model);
     const agent = agents.find((a) => a.id === agentId);
     if (!agent) return;
 
-    if (modelId === agent.effectiveModel && !agent.currentModel) {
+    if (modelString === agent.effectiveModel && !agent.currentModel) {
       setPendingChanges((prev) => {
         const next = { ...prev };
         delete next[agentId];
         return next;
       });
     } else {
-      setPendingChanges((prev) => ({ ...prev, [agentId]: modelId }));
+      setPendingChanges((prev) => ({ ...prev, [agentId]: modelString }));
     }
   };
 
@@ -99,46 +131,9 @@ export const AgentConfigCard = ({
       .catch(() => {});
   };
 
-  const isModelRecommended = (
-    modelValue: string,
-    recommendations: string[],
-  ): boolean => {
-    for (const rec of recommendations) {
-      if (modelValue === rec) return true;
-      if (modelValue.startsWith(rec)) return true;
-      if (rec.startsWith(modelValue)) return true;
-    }
-    return false;
-  };
-
-  const getModelOptions = (
-    providerList: Provider[] | undefined,
-    recommendations: string[],
-  ) => {
-    const options: Array<{ label: string; value: string }> = [];
-
-    if (!providerList) return options;
-
-    for (const provider of providerList) {
-      for (const [modelId, model] of Object.entries(provider.models || {})) {
-        const value = `${provider.id}/${modelId}`;
-        const isRec = isModelRecommended(value, recommendations);
-        const label = isRec
-          ? `${provider.name} / ${model.name} (Recommended)`
-          : `${provider.name} / ${model.name}`;
-        options.push({ label, value });
-      }
-    }
-
-    return options;
-  };
-
-  const getAgentModelOptions = (agent: AgentInfo) =>
-    getModelOptions(providers, agent.recommendations ?? []);
-
   const error = saveAgents.error || resetAgents.error;
   const errorMessage = error instanceof Error ? error.message : null;
-  const noProviders = !isLoading && getModelOptions(providers, []).length === 0;
+  const noProviders = !isLoading && !hasAnyModels(providers);
 
   return (
     <Card className="wordforge-card">
@@ -198,43 +193,23 @@ export const AgentConfigCard = ({
         ) : (
           <div className={styles.agentsList}>
             {agents.map((agent) => {
-              const currentValue =
+              const currentModelString =
                 pendingChanges[agent.id] ?? agent.effectiveModel;
-              const agentOptions = getAgentModelOptions(agent);
+              const currentModel = parseModelString(currentModelString);
               const isRecommended = isModelRecommended(
-                currentValue,
+                currentModelString,
                 agent.recommendations ?? [],
               );
 
               return (
-                <div key={agent.id} className={styles.agentItem}>
-                  <div className={styles.agentHeader}>
-                    <div
-                      className={styles.agentColor}
-                      style={{ backgroundColor: agent.color }}
-                    />
-                    <div className={styles.agentInfo}>
-                      <span className={styles.agentName}>{agent.name}</span>
-                      <span className={styles.agentDescription}>
-                        {agent.description}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className={styles.modelSelector}>
-                    <SelectControl
-                      value={currentValue}
-                      options={agentOptions}
-                      onChange={(value) => handleModelChange(agent.id, value)}
-                      className={styles.select}
-                    />
-                    {isRecommended && (
-                      <span className={styles.recommendedBadge}>
-                        {__('Recommended', 'wordforge')}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <AgentItem
+                  key={agent.id}
+                  agent={agent}
+                  providers={providers ?? []}
+                  currentModel={currentModel}
+                  isRecommended={isRecommended}
+                  onModelChange={(model) => handleModelChange(agent.id, model)}
+                />
               );
             })}
           </div>
@@ -269,5 +244,49 @@ export const AgentConfigCard = ({
         )}
       </CardBody>
     </Card>
+  );
+};
+
+interface AgentItemProps {
+  agent: AgentInfo;
+  providers: Provider[];
+  currentModel: SelectedModel | null;
+  isRecommended: boolean;
+  onModelChange: (model: SelectedModel) => void;
+}
+
+const AgentItem = ({
+  agent,
+  providers,
+  currentModel,
+  isRecommended,
+  onModelChange,
+}: AgentItemProps) => {
+  return (
+    <div className={styles.agentItem}>
+      <div className={styles.agentHeader}>
+        <div
+          className={styles.agentColor}
+          style={{ backgroundColor: agent.color }}
+        />
+        <div className={styles.agentInfo}>
+          <span className={styles.agentName}>{agent.name}</span>
+          <span className={styles.agentDescription}>{agent.description}</span>
+        </div>
+      </div>
+
+      <div className={styles.modelSelector}>
+        <ModelSelector
+          providers={providers}
+          selectedModel={currentModel}
+          onSelectModel={onModelChange}
+        />
+        {isRecommended && (
+          <span className={styles.recommendedBadge}>
+            {__('Recommended', 'wordforge')}
+          </span>
+        )}
+      </div>
+    </div>
   );
 };

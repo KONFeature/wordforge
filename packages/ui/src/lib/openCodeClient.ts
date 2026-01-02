@@ -1,7 +1,15 @@
 import { createOpencodeClient } from '@opencode-ai/sdk/client';
 
-const config =
+let config =
   window.wordforgeChat ?? window.wordforgeWidget ?? window.wordforgeEditor;
+
+if (!config && window.wordforgeSettings) {
+  config = {
+    proxyUrl: `${window.wordforgeSettings.restUrl}/opencode/proxy`,
+    nonce: window.wordforgeSettings.nonce,
+  };
+}
+
 if (!config) {
   throw new Error('CLient not configured');
 }

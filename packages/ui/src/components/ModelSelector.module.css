@@ -195,6 +195,17 @@
   text-transform: uppercase;
 }
 
+.freeBadge {
+  margin-left: var(--wf-spacing-xs);
+  padding: 1px 6px;
+  background: var(--wf-color-success-bg);
+  color: var(--wf-color-success-text);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
 @media (max-width: 480px) {
   .popoverContent {
     width: 100%;

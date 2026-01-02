@@ -1,8 +1,8 @@
 import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
 import { useQuery } from '@tanstack/react-query';
 import { filterProviders } from '../../lib/filterModels';
+import { opencodeClient } from '../../lib/openCodeClient';
 import type { SelectedModel } from '../components/ModelSelector';
-import { opencodeClient } from '../openCodeClient';
 
 export const CONFIG_KEY = ['config'] as const;
 export const MCP_STATUS_KEY = ['mcp-status'] as const;

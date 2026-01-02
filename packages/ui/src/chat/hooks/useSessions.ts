@@ -1,6 +1,6 @@
 import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { opencodeClient } from '../openCodeClient';
+import { opencodeClient } from '../../lib/openCodeClient';
 
 export const SESSIONS_KEY = ['sessions'] as const;
 export const STATUSES_KEY = ['session-statuses'] as const;

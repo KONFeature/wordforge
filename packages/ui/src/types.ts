@@ -58,6 +58,7 @@ export interface ProviderDisplayInfo {
   helpUrl: string;
   helpText: string;
   placeholder: string;
+  hasFreeModels: boolean;
 }
 
 export interface AgentInfo {

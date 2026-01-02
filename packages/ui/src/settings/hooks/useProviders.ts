@@ -1,5 +1,7 @@
-import type { Provider } from '@opencode-ai/sdk/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ProviderListResponses } from '@opencode-ai/sdk/client';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { hasProviderFreeModels } from '../../lib/filterModels';
+import { opencodeClient } from '../../lib/openCodeClient';
 import { getProviderMeta, sortProviders } from '../../lib/providerHelpers';
 import type { ConfiguredProvider, ProviderDisplayInfo } from '../../types';
 
@@ -7,50 +9,12 @@ interface ConfiguredProvidersResponse {
   configuredProviders: Record<string, ConfiguredProvider>;
 }
 
-interface OpenCodeProvidersResponse {
-  providers: Provider[];
-}
-
 const CONFIGURED_PROVIDERS_KEY = ['configured-providers'] as const;
 const OPENCODE_PROVIDERS_KEY = ['opencode-providers'] as const;
 export const MERGED_PROVIDERS_KEY = ['merged-providers'] as const;
 
-const fetchConfiguredProviders = async (
-  restUrl: string,
-  nonce: string,
-): Promise<Record<string, ConfiguredProvider>> => {
-  const response = await fetch(`${restUrl}/opencode/providers`, {
-    headers: { 'X-WP-Nonce': nonce },
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch configured providers');
-  }
-
-  const data: ConfiguredProvidersResponse = await response.json();
-  return data.configuredProviders ?? {};
-};
-
-const fetchOpenCodeProviders = async (
-  restUrl: string,
-  nonce: string,
-): Promise<Provider[]> => {
-  const response = await fetch(`${restUrl}/opencode/proxy/config/providers`, {
-    headers: { 'X-WP-Nonce': nonce },
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const data: OpenCodeProvidersResponse = await response.json();
-  return data.providers ?? [];
-};
-
 const mergeProviders = (
-  openCodeProviders: Provider[],
+  openCodeProviders: ProviderListResponses['200']['all'],
   configuredProviders: Record<string, ConfiguredProvider>,
 ): ProviderDisplayInfo[] => {
   const merged: ProviderDisplayInfo[] = openCodeProviders.map((provider) => {
@@ -65,6 +29,7 @@ const mergeProviders = (
       helpUrl: meta.helpUrl,
       helpText: meta.helpText,
       placeholder: meta.placeholder ?? '',
+      hasFreeModels: hasProviderFreeModels(provider),
     };
   });
 
@@ -74,13 +39,28 @@ const mergeProviders = (
 export const useProviders = (restUrl: string, nonce: string) => {
   const configuredQuery = useQuery({
     queryKey: CONFIGURED_PROVIDERS_KEY,
-    queryFn: () => fetchConfiguredProviders(restUrl, nonce),
+    queryFn: async () => {
+      const response = await fetch(`${restUrl}/opencode/providers`, {
+        headers: { 'X-WP-Nonce': nonce },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch configured providers');
+      }
+
+      const data: ConfiguredProvidersResponse = await response.json();
+      return data.configuredProviders ?? {};
+    },
     staleTime: 60000,
   });
 
   const openCodeQuery = useQuery({
     queryKey: OPENCODE_PROVIDERS_KEY,
-    queryFn: () => fetchOpenCodeProviders(restUrl, nonce),
+    queryFn: async () => {
+      const response = await opencodeClient.provider.list();
+      return response.data?.all ?? [];
+    },
     staleTime: 300000,
   });
 
@@ -97,8 +77,6 @@ export const useProviders = (restUrl: string, nonce: string) => {
 };
 
 export const useSaveProvider = (restUrl: string, nonce: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       providerId,
@@ -124,7 +102,7 @@ export const useSaveProvider = (restUrl: string, nonce: string) => {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _var, _err, { client: queryClient }) => {
       queryClient.setQueryData(
         CONFIGURED_PROVIDERS_KEY,
         data.configuredProviders ?? {},
@@ -135,8 +113,6 @@ export const useSaveProvider = (restUrl: string, nonce: string) => {
 };
 
 export const useRemoveProvider = (restUrl: string, nonce: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (providerId: string) => {
       const response = await fetch(
@@ -155,7 +131,7 @@ export const useRemoveProvider = (restUrl: string, nonce: string) => {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _var, _err, { client: queryClient }) => {
       queryClient.setQueryData(
         CONFIGURED_PROVIDERS_KEY,
         data.configuredProviders ?? {},
