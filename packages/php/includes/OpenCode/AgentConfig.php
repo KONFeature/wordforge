@@ -11,67 +11,67 @@ namespace WordForge\OpenCode;
 
 class AgentConfig {
 
-	public const AGENTS = [
-		'wordpress-manager'         => [
+	public const AGENTS = array(
+		'wordpress-manager'          => array(
 			'id'          => 'wordpress-manager',
 			'name'        => 'WordPress Manager',
 			'description' => 'Primary site orchestrator - delegates to specialized subagents',
 			'color'       => '#3858E9',
-		],
-		'wordpress-content-creator' => [
+		),
+		'wordpress-content-creator'  => array(
 			'id'          => 'wordpress-content-creator',
 			'name'        => 'Content Creator',
 			'description' => 'Blog posts, landing pages, legal pages with SEO optimization',
 			'color'       => '#10B981',
-		],
-		'wordpress-auditor'         => [
+		),
+		'wordpress-auditor'          => array(
 			'id'          => 'wordpress-auditor',
 			'name'        => 'Auditor',
 			'description' => 'SEO audits, content reviews, performance recommendations',
 			'color'       => '#F59E0B',
-		],
-		'wordpress-commerce-manager' => [
+		),
+		'wordpress-commerce-manager' => array(
 			'id'          => 'wordpress-commerce-manager',
 			'name'        => 'Commerce Manager',
 			'description' => 'WooCommerce product management, inventory, pricing',
 			'color'       => '#8B5CF6',
 			'requires'    => 'woocommerce',
-		],
-	];
+		),
+	);
 
-	public const MODEL_RECOMMENDATIONS = [
-		'wordpress-manager'         => [
+	public const MODEL_RECOMMENDATIONS = array(
+		'wordpress-manager'          => array(
 			'anthropic/claude-opus-4-5',
 			'opencode/big-pickle',
-		],
-		'wordpress-content-creator' => [
+		),
+		'wordpress-content-creator'  => array(
 			'google/gemini-3-pro-high',
 			'google/gemini-3-pro',
 			'anthropic/claude-sonnet-4-5',
 			'openai/gpt-4o',
 			'opencode/big-pickle',
-		],
-		'wordpress-auditor'         => [
+		),
+		'wordpress-auditor'          => array(
 			'anthropic/claude-haiku-4-5',
 			'google/gemini-3-flash',
 			'opencode/big-pickle',
-		],
-		'wordpress-commerce-manager' => [
+		),
+		'wordpress-commerce-manager' => array(
 			'anthropic/claude-sonnet-4-5',
 			'google/gemini-3-pro',
 			'opencode/big-pickle',
-		],
-	];
+		),
+	);
 
 	private const OPTION_KEY = 'wordforge_agent_models';
 
 	public static function get_agent_models(): array {
-		$stored = get_option( self::OPTION_KEY, [] );
-		return is_array( $stored ) ? $stored : [];
+		$stored = get_option( self::OPTION_KEY, array() );
+		return is_array( $stored ) ? $stored : array();
 	}
 
 	public static function save_agent_models( array $mappings ): bool {
-		$sanitized = [];
+		$sanitized = array();
 		foreach ( $mappings as $agent_id => $model ) {
 			if ( isset( self::AGENTS[ $agent_id ] ) && is_string( $model ) ) {
 				$sanitized[ $agent_id ] = sanitize_text_field( $model );
@@ -86,8 +86,8 @@ class AgentConfig {
 	}
 
 	public static function get_recommended_model( string $agent_id ): string {
-		$recommendations   = self::MODEL_RECOMMENDATIONS[ $agent_id ] ?? [ 'opencode/big-pickle' ];
-		$configured        = ProviderConfig::get_configured_provider_ids();
+		$recommendations = self::MODEL_RECOMMENDATIONS[ $agent_id ] ?? array( 'opencode/big-pickle' );
+		$configured      = ProviderConfig::get_configured_provider_ids();
 
 		foreach ( $recommendations as $model ) {
 			$provider = explode( '/', $model )[0];
@@ -115,7 +115,7 @@ class AgentConfig {
 	public static function get_agents_for_display(): array {
 		$stored     = self::get_agent_models();
 		$woo_active = class_exists( 'WooCommerce' );
-		$result     = [];
+		$result     = array();
 
 		foreach ( self::AGENTS as $agent_id => $meta ) {
 			if ( isset( $meta['requires'] ) && 'woocommerce' === $meta['requires'] && ! $woo_active ) {
@@ -125,16 +125,16 @@ class AgentConfig {
 			$current_model     = $stored[ $agent_id ] ?? null;
 			$recommended_model = self::get_recommended_model( $agent_id );
 
-			$result[] = [
-				'id'                => $agent_id,
-				'name'              => $meta['name'],
-				'description'       => $meta['description'],
-				'color'             => $meta['color'],
-				'currentModel'      => $current_model,
-				'effectiveModel'    => $current_model ?? $recommended_model,
-				'recommendedModel'  => $recommended_model,
-				'recommendations'   => self::MODEL_RECOMMENDATIONS[ $agent_id ] ?? [],
-			];
+			$result[] = array(
+				'id'               => $agent_id,
+				'name'             => $meta['name'],
+				'description'      => $meta['description'],
+				'color'            => $meta['color'],
+				'currentModel'     => $current_model,
+				'effectiveModel'   => $current_model ?? $recommended_model,
+				'recommendedModel' => $recommended_model,
+				'recommendations'  => self::MODEL_RECOMMENDATIONS[ $agent_id ] ?? array(),
+			);
 		}
 
 		return $result;

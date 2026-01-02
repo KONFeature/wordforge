@@ -1,6 +1,21 @@
-import type { Model, Provider } from '@opencode-ai/sdk/client';
+import type {
+  Model,
+  Provider,
+  ProviderListResponses,
+} from '@opencode-ai/sdk/client';
 
 type ModelWithReleaseDate = Model & { release_date?: string };
+
+export const isModelFree = (model: Model): boolean => {
+  return model.cost?.input === 0 && model.cost?.output === 0;
+};
+
+export const hasProviderFreeModels = (
+  provider: Provider | ProviderListResponses['200']['all'][number],
+): boolean => {
+  if (!provider.models) return false;
+  return Object.values(provider.models).some(isModelFree);
+};
 
 const MONTHS_CUTOFF = 18;
 

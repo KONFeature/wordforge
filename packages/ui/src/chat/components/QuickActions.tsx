@@ -160,6 +160,28 @@ const MEDIA_LIST_ACTIONS: QuickAction[] = [
   },
 ];
 
+const COMMENT_ACTIONS: QuickAction[] = [
+  {
+    id: 'pending-comments',
+    icon: '⏳',
+    label: __('Pending comments', 'wordforge'),
+    prompt: 'Show me all pending comments that need moderation.',
+  },
+  {
+    id: 'spam-check',
+    icon: '🛡️',
+    label: __('Check spam', 'wordforge'),
+    prompt:
+      'Review my spam folder and help me identify any legitimate comments.',
+  },
+  {
+    id: 'reply-suggestions',
+    icon: '💬',
+    label: __('Reply help', 'wordforge'),
+    prompt: 'Help me draft thoughtful replies to recent comments.',
+  },
+];
+
 const DEFAULT_ACTIONS: QuickAction[] = [
   {
     id: 'help',
@@ -172,7 +194,19 @@ const DEFAULT_ACTIONS: QuickAction[] = [
     icon: '📊',
     label: __('Site overview', 'wordforge'),
     prompt:
-      'Give me an overview of my WordPress site content: posts, pages, and media.',
+      'Give me an overview of my WordPress site: content counts, user activity, and recent changes.',
+  },
+  {
+    id: 'pending-comments',
+    icon: '💬',
+    label: __('Check comments', 'wordforge'),
+    prompt: 'Show me comments awaiting moderation and help me respond.',
+  },
+  {
+    id: 'site-health',
+    icon: '🏥',
+    label: __('Site health', 'wordforge'),
+    prompt: 'Review my site settings and suggest optimizations.',
   },
 ];
 
@@ -190,6 +224,8 @@ function getActionsForContext(context: ScopedContext | null): QuickAction[] {
       return PAGE_LIST_ACTIONS;
     case 'media-list':
       return MEDIA_LIST_ACTIONS;
+    case 'comment-list':
+      return COMMENT_ACTIONS;
     case 'page-editor':
       return [
         {

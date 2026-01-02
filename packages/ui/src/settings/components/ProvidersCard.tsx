@@ -5,12 +5,13 @@ import {
   CardHeader,
   ExternalLink,
   Notice,
+  SelectControl,
   Spinner,
   TextControl,
 } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import type { ProviderInfo } from '../../types';
+import type { ProviderDisplayInfo } from '../../types';
 import {
   useProviders,
   useRemoveProvider,
@@ -21,43 +22,262 @@ import styles from './ProvidersCard.module.css';
 interface ProvidersCardProps {
   restUrl: string;
   nonce: string;
-  initialProviders: ProviderInfo[];
 }
 
-export const ProvidersCard = ({
-  restUrl,
-  nonce,
-  initialProviders,
-}: ProvidersCardProps) => {
+interface ConfiguredProviderItemProps {
+  provider: ProviderDisplayInfo;
+  onEdit: () => void;
+  onRemove: () => void;
+  isRemoving: boolean;
+}
+
+const ConfiguredProviderItem = ({
+  provider,
+  onEdit,
+  onRemove,
+  isRemoving,
+}: ConfiguredProviderItemProps) => (
+  <div className={styles.configuredItem}>
+    <div className={styles.configuredInfo}>
+      <span className={styles.providerName}>{provider.name}</span>
+      <code className={styles.maskedKey}>{provider.apiKeyMasked}</code>
+    </div>
+    <div className={styles.actions}>
+      <Button variant="secondary" size="small" onClick={onEdit}>
+        {__('Change', 'wordforge')}
+      </Button>
+      <Button
+        variant="secondary"
+        size="small"
+        isDestructive
+        onClick={onRemove}
+        isBusy={isRemoving}
+      >
+        {__('Remove', 'wordforge')}
+      </Button>
+    </div>
+  </div>
+);
+
+interface AddProviderFormProps {
+  availableProviders: ProviderDisplayInfo[];
+  onSave: (providerId: string, apiKey: string) => Promise<void>;
+  isSaving: boolean;
+  savingProviderId: string | null;
+}
+
+const AddProviderForm = ({
+  availableProviders,
+  onSave,
+  isSaving,
+  savingProviderId,
+}: AddProviderFormProps) => {
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+
+  const selectedProvider = useMemo(
+    () => availableProviders.find((p) => p.id === selectedProviderId),
+    [availableProviders, selectedProviderId],
+  );
+
+  const providerOptions = useMemo(
+    () => [
+      { value: '', label: __('Select a provider...', 'wordforge') },
+      ...availableProviders.map((p) => ({
+        value: p.id,
+        label: p.hasFreeModels
+          ? `${p.name} (${__('free models available', 'wordforge')})`
+          : p.name,
+      })),
+    ],
+    [availableProviders],
+  );
+
+  const handleSave = async () => {
+    if (!selectedProviderId || !apiKey) return;
+    await onSave(selectedProviderId, apiKey);
+    setSelectedProviderId('');
+    setApiKey('');
+    setShowKey(false);
+  };
+
+  const handleCancel = () => {
+    setSelectedProviderId('');
+    setApiKey('');
+    setShowKey(false);
+  };
+
+  if (availableProviders.length === 0) {
+    return (
+      <p className={styles.allConfigured}>
+        {__('All known providers are configured.', 'wordforge')}
+      </p>
+    );
+  }
+
+  return (
+    <div className={styles.addProviderForm}>
+      <SelectControl
+        label={__('Provider', 'wordforge')}
+        value={selectedProviderId}
+        options={providerOptions}
+        onChange={setSelectedProviderId}
+        className={styles.providerSelect}
+      />
+
+      {selectedProvider && (
+        <div className={styles.providerConfig}>
+          {selectedProvider.helpUrl && (
+            <div className={styles.helpRow}>
+              <ExternalLink href={selectedProvider.helpUrl}>
+                {__('Get API Key', 'wordforge')}
+              </ExternalLink>
+              {selectedProvider.helpText && (
+                <span className={styles.helpText}>
+                  {selectedProvider.helpText}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className={styles.inputWrapper}>
+            <TextControl
+              label={__('API Key', 'wordforge')}
+              type={showKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={setApiKey}
+              placeholder={selectedProvider.placeholder || 'Enter API key...'}
+              className={styles.apiKeyInput}
+            />
+            <Button
+              icon={showKey ? 'hidden' : 'visibility'}
+              onClick={() => setShowKey(!showKey)}
+              className={styles.toggleVisibility}
+              label={
+                showKey ? __('Hide', 'wordforge') : __('Show', 'wordforge')
+              }
+            />
+          </div>
+
+          <div className={styles.formActions}>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={!apiKey}
+              isBusy={isSaving && savingProviderId === selectedProviderId}
+            >
+              {__('Save Provider', 'wordforge')}
+            </Button>
+            <Button variant="secondary" onClick={handleCancel}>
+              {__('Cancel', 'wordforge')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface EditProviderFormProps {
+  provider: ProviderDisplayInfo;
+  onSave: (apiKey: string) => Promise<void>;
+  onCancel: () => void;
+  isSaving: boolean;
+}
+
+const EditProviderForm = ({
+  provider,
+  onSave,
+  onCancel,
+  isSaving,
+}: EditProviderFormProps) => {
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+
+  const handleSave = async () => {
+    if (!apiKey) return;
+    await onSave(apiKey);
+  };
+
+  return (
+    <div className={styles.editForm}>
+      <div className={styles.editHeader}>
+        <span className={styles.providerName}>{provider.name}</span>
+        {provider.helpUrl && (
+          <ExternalLink href={provider.helpUrl}>
+            {__('Get API Key', 'wordforge')}
+          </ExternalLink>
+        )}
+      </div>
+
+      <div className={styles.inputWrapper}>
+        <TextControl
+          type={showKey ? 'text' : 'password'}
+          value={apiKey}
+          onChange={setApiKey}
+          placeholder={provider.placeholder || 'Enter new API key...'}
+          className={styles.apiKeyInput}
+        />
+        <Button
+          icon={showKey ? 'hidden' : 'visibility'}
+          onClick={() => setShowKey(!showKey)}
+          className={styles.toggleVisibility}
+          label={showKey ? __('Hide', 'wordforge') : __('Show', 'wordforge')}
+        />
+      </div>
+
+      <div className={styles.formActions}>
+        <Button
+          variant="primary"
+          onClick={handleSave}
+          disabled={!apiKey}
+          isBusy={isSaving}
+        >
+          {__('Update', 'wordforge')}
+        </Button>
+        <Button variant="secondary" onClick={onCancel}>
+          {__('Cancel', 'wordforge')}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export const ProvidersCard = ({ restUrl, nonce }: ProvidersCardProps) => {
   const { data, isLoading } = useProviders(restUrl, nonce);
   const saveProvider = useSaveProvider(restUrl, nonce);
   const removeProvider = useRemoveProvider(restUrl, nonce);
 
-  const [editingProvider, setEditingProvider] = useState<string | null>(null);
-  const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [editingProviderId, setEditingProviderId] = useState<string | null>(
+    null,
+  );
 
-  const providers = data?.providers ?? initialProviders;
+  const providers = data?.providers ?? [];
 
-  const handleSave = async (providerId: string) => {
-    const apiKey = apiKeyInputs[providerId];
-    if (!apiKey) return;
+  const { configuredProviders, availableProviders } = useMemo(() => {
+    const configured = providers.filter((p) => p.configured);
+    const available = providers.filter((p) => !p.configured);
+    return { configuredProviders: configured, availableProviders: available };
+  }, [providers]);
 
-    await saveProvider
-      .mutateAsync({ providerId, apiKey })
-      .then(() => {
-        setEditingProvider(null);
-        setApiKeyInputs((prev) => ({ ...prev, [providerId]: '' }));
-      })
-      .catch(() => {});
+  const editingProvider = useMemo(
+    () => providers.find((p) => p.id === editingProviderId),
+    [providers, editingProviderId],
+  );
+
+  const handleSaveNew = async (providerId: string, apiKey: string) => {
+    await saveProvider.mutateAsync({ providerId, apiKey });
+  };
+
+  const handleSaveEdit = async (apiKey: string) => {
+    if (!editingProviderId) return;
+    await saveProvider.mutateAsync({ providerId: editingProviderId, apiKey });
+    setEditingProviderId(null);
   };
 
   const handleRemove = (providerId: string) => {
     removeProvider.mutate(providerId);
-  };
-
-  const toggleShowKey = (providerId: string) => {
-    setShowKeys((prev) => ({ ...prev, [providerId]: !prev[providerId] }));
   };
 
   const error = saveProvider.error || removeProvider.error;
@@ -71,7 +291,7 @@ export const ProvidersCard = ({
       <CardBody>
         <p className={styles.description}>
           {__(
-            'Configure API keys to use models from these providers. OpenCode Zen (free) is always available.',
+            'Configure API keys to enable AI models from different providers.',
             'wordforge',
           )}
         </p>
@@ -94,133 +314,63 @@ export const ProvidersCard = ({
             <Spinner />
           </div>
         ) : (
-          <div className={styles.providersList}>
-            {providers.map((provider) => (
-              <div key={provider.id} className={styles.providerItem}>
-                <div className={styles.providerHeader}>
-                  <div className={styles.providerInfo}>
-                    <span className={styles.providerName}>{provider.name}</span>
-                    {provider.configured ? (
-                      <span className={`${styles.badge} ${styles.configured}`}>
-                        {__('Configured', 'wordforge')}
-                      </span>
-                    ) : (
-                      <span
-                        className={`${styles.badge} ${styles.notConfigured}`}
-                      >
-                        {__('Not configured', 'wordforge')}
-                      </span>
-                    )}
-                  </div>
-                  <ExternalLink
-                    href={provider.help_url}
-                    className={styles.helpLink}
-                  >
-                    {__('Get API Key', 'wordforge')}
-                  </ExternalLink>
-                </div>
+          <>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                {__('Configured Providers', 'wordforge')}
+              </h3>
 
-                {provider.configured && editingProvider !== provider.id ? (
-                  <div className={styles.configuredState}>
-                    <code className={styles.maskedKey}>
-                      {provider.api_key_masked}
-                    </code>
-                    <div className={styles.actions}>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => setEditingProvider(provider.id)}
-                      >
-                        {__('Change', 'wordforge')}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        isDestructive
-                        onClick={() => handleRemove(provider.id)}
-                        isBusy={
+              {configuredProviders.length === 0 ? (
+                <p className={styles.emptyState}>
+                  {__('No providers configured yet.', 'wordforge')}
+                </p>
+              ) : (
+                <div className={styles.configuredList}>
+                  {configuredProviders.map((provider) =>
+                    editingProviderId === provider.id && editingProvider ? (
+                      <EditProviderForm
+                        key={provider.id}
+                        provider={editingProvider}
+                        onSave={handleSaveEdit}
+                        onCancel={() => setEditingProviderId(null)}
+                        isSaving={saveProvider.isPending}
+                      />
+                    ) : (
+                      <ConfiguredProviderItem
+                        key={provider.id}
+                        provider={provider}
+                        onEdit={() => setEditingProviderId(provider.id)}
+                        onRemove={() => handleRemove(provider.id)}
+                        isRemoving={
                           removeProvider.isPending &&
                           removeProvider.variables === provider.id
                         }
-                      >
-                        {__('Remove', 'wordforge')}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.inputState}>
-                    <div className={styles.inputWrapper}>
-                      <TextControl
-                        type={showKeys[provider.id] ? 'text' : 'password'}
-                        value={apiKeyInputs[provider.id] || ''}
-                        onChange={(value) =>
-                          setApiKeyInputs((prev) => ({
-                            ...prev,
-                            [provider.id]: value,
-                          }))
-                        }
-                        placeholder={
-                          provider.id === 'openai'
-                            ? 'sk-...'
-                            : provider.id === 'anthropic'
-                              ? 'sk-ant-...'
-                              : 'AI...'
-                        }
-                        className={styles.apiKeyInput}
                       />
-                      <Button
-                        icon={showKeys[provider.id] ? 'hidden' : 'visibility'}
-                        onClick={() => toggleShowKey(provider.id)}
-                        className={styles.toggleVisibility}
-                        label={
-                          showKeys[provider.id]
-                            ? __('Hide', 'wordforge')
-                            : __('Show', 'wordforge')
-                        }
-                      />
-                    </div>
-                    <div className={styles.actions}>
-                      <Button
-                        variant="primary"
-                        size="small"
-                        onClick={() => handleSave(provider.id)}
-                        disabled={!apiKeyInputs[provider.id]}
-                        isBusy={
-                          saveProvider.isPending &&
-                          saveProvider.variables?.providerId === provider.id
-                        }
-                      >
-                        {__('Save', 'wordforge')}
-                      </Button>
-                      {editingProvider === provider.id && (
-                        <Button
-                          variant="secondary"
-                          size="small"
-                          onClick={() => {
-                            setEditingProvider(null);
-                            setApiKeyInputs((prev) => ({
-                              ...prev,
-                              [provider.id]: '',
-                            }));
-                          }}
-                        >
-                          {__('Cancel', 'wordforge')}
-                        </Button>
-                      )}
-                    </div>
-                    <p className={styles.helpText}>{provider.help_text}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                {__('Add Provider', 'wordforge')}
+              </h3>
+              <AddProviderForm
+                availableProviders={availableProviders}
+                onSave={handleSaveNew}
+                isSaving={saveProvider.isPending}
+                savingProviderId={saveProvider.variables?.providerId ?? null}
+              />
+            </div>
+          </>
         )}
 
         <div className={styles.zenNote}>
           <strong>{__('OpenCode Zen', 'wordforge')}</strong>
           <p>
             {__(
-              'Free models like Big Pickle and GPT-5 Nano are always available without an API key.',
+              'Free models are always available without an API key.',
               'wordforge',
             )}
           </p>

@@ -1,6 +1,7 @@
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
+import { ClientProvider } from '../lib/ClientProvider';
 import { QueryProvider } from '../lib/QueryProvider';
 import '../styles/variables.css';
 import { EditorSidebar } from './components/EditorSidebar';
@@ -24,7 +25,9 @@ const WordForgeSidebarPlugin = () => {
         icon={SIDEBAR_ICON}
       >
         <QueryProvider>
-          <EditorSidebar context={context} />
+          <ClientProvider>
+            <EditorSidebar context={context} />
+          </ClientProvider>
         </QueryProvider>
       </PluginSidebar>
     </>
@@ -34,7 +37,9 @@ const WordForgeSidebarPlugin = () => {
 registerPlugin('wordforge', {
   render: () => (
     <QueryProvider>
-      <WordForgeSidebarPlugin />
+      <ClientProvider>
+        <WordForgeSidebarPlugin />
+      </ClientProvider>
     </QueryProvider>
   ),
   icon: SIDEBAR_ICON,

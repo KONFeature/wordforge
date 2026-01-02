@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace WordForge;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 define( 'WORDFORGE_VERSION', '1.2.0' );
@@ -31,60 +31,62 @@ define( 'WORDFORGE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 $autoloader_loaded = false;
 if ( file_exists( WORDFORGE_PLUGIN_DIR . 'vendor/autoload_packages.php' ) ) {
-    require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload_packages.php';
-    $autoloader_loaded = true;
+	require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload_packages.php';
+	$autoloader_loaded = true;
 } elseif ( file_exists( WORDFORGE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
-    require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload.php';
-    $autoloader_loaded = true;
+	require_once WORDFORGE_PLUGIN_DIR . 'vendor/autoload.php';
+	$autoloader_loaded = true;
 }
 
-spl_autoload_register( function ( string $class ): void {
-    $prefix = 'WordForge\\';
-    $base_dir = WORDFORGE_PLUGIN_DIR . 'includes/';
+spl_autoload_register(
+	function ( string $class ): void {
+		$prefix   = 'WordForge\\';
+		$base_dir = WORDFORGE_PLUGIN_DIR . 'includes/';
 
-    $len = strlen( $prefix );
-    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-        return;
-    }
+		$len = strlen( $prefix );
+		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+				return;
+		}
 
-    $relative_class = substr( $class, $len );
-    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+		$relative_class = substr( $class, $len );
+		$file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
 
-    if ( file_exists( $file ) ) {
-        require_once $file;
-    }
-} );
+		if ( file_exists( $file ) ) {
+			require_once $file;
+		}
+	}
+);
 
 if ( $autoloader_loaded ) {
-    $abilities_api_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/abilities-api/abilities-api.php';
-    if ( file_exists( $abilities_api_file ) && ! defined( 'WP_ABILITIES_API_DIR' ) ) {
-        require_once $abilities_api_file;
-    }
+	$abilities_api_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/abilities-api/abilities-api.php';
+	if ( file_exists( $abilities_api_file ) && ! defined( 'WP_ABILITIES_API_DIR' ) ) {
+		require_once $abilities_api_file;
+	}
 
-    $mcp_adapter_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/mcp-adapter/mcp-adapter.php';
-    if ( file_exists( $mcp_adapter_file ) && ! defined( 'WP_MCP_DIR' ) ) {
-        if ( ! defined( 'WP_MCP_AUTOLOAD' ) ) {
-            define( 'WP_MCP_AUTOLOAD', false );
-        }
-        require_once $mcp_adapter_file;
-    }
+	$mcp_adapter_file = WORDFORGE_PLUGIN_DIR . 'vendor/wordpress/mcp-adapter/mcp-adapter.php';
+	if ( file_exists( $mcp_adapter_file ) && ! defined( 'WP_MCP_DIR' ) ) {
+		if ( ! defined( 'WP_MCP_AUTOLOAD' ) ) {
+			define( 'WP_MCP_AUTOLOAD', false );
+		}
+		require_once $mcp_adapter_file;
+	}
 }
 
 function get_settings(): array {
-    return wp_parse_args(
-        get_option( 'wordforge_settings', [] ),
-        [
-            'mcp_enabled'             => true,
-            'mcp_namespace'           => 'wordforge',
-            'mcp_route'               => 'mcp',
-            'auto_shutdown_enabled'   => true,
-            'auto_shutdown_threshold' => 1800,
-        ]
-    );
+	return wp_parse_args(
+		get_option( 'wordforge_settings', array() ),
+		array(
+			'mcp_enabled'             => true,
+			'mcp_namespace'           => 'wordforge',
+			'mcp_route'               => 'mcp',
+			'auto_shutdown_enabled'   => true,
+			'auto_shutdown_threshold' => 1800,
+		)
+	);
 }
 
 function get_endpoint_url(): string {
-    return Mcp\ServerManager::get_endpoint_url();
+	return Mcp\ServerManager::get_endpoint_url();
 }
 
 function init(): void {
@@ -94,17 +96,17 @@ function init(): void {
 	new Admin\WidgetManager();
 	new Admin\EditorSidebarManager();
 
-    OpenCode\ActivityMonitor::schedule_cron();
+	OpenCode\ActivityMonitor::schedule_cron();
 
-    if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
-        add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
-        return;
-    }
+	if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
+		add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );
+		return;
+	}
 
-    new Mcp\ServerManager();
+	new Mcp\ServerManager();
 
-    add_action( 'wp_abilities_api_categories_init', __NAMESPACE__ . '\\register_ability_categories' );
-    add_action( 'wp_abilities_api_init', __NAMESPACE__ . '\\register_abilities' );
+	add_action( 'wp_abilities_api_categories_init', __NAMESPACE__ . '\\register_ability_categories' );
+	add_action( 'wp_abilities_api_init', __NAMESPACE__ . '\\register_abilities' );
 }
 
 /**
@@ -112,108 +114,111 @@ function init(): void {
  * Categories must be registered before abilities that use them.
  */
 function register_ability_categories(): void {
-    if ( ! function_exists( 'wp_register_ability_category' ) ) {
-        return;
-    }
+	if ( ! function_exists( 'wp_register_ability_category' ) ) {
+		return;
+	}
 
-    wp_register_ability_category(
-        'wordforge-content',
-        [
-            'label'       => __( 'Content Management', 'wordforge' ),
-            'description' => __( 'Abilities for managing WordPress posts, pages, and custom post types.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-content',
+		array(
+			'label'       => __( 'Content Management', 'wordforge' ),
+			'description' => __( 'Abilities for managing WordPress posts, pages, and custom post types.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-blocks',
-        [
-            'label'       => __( 'Block Editor', 'wordforge' ),
-            'description' => __( 'Abilities for working with Gutenberg blocks and page structures.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-blocks',
+		array(
+			'label'       => __( 'Block Editor', 'wordforge' ),
+			'description' => __( 'Abilities for working with Gutenberg blocks and page structures.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-styles',
-        [
-            'label'       => __( 'Theme Styling', 'wordforge' ),
-            'description' => __( 'Abilities for managing global styles and block styles.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-styles',
+		array(
+			'label'       => __( 'Theme Styling', 'wordforge' ),
+			'description' => __( 'Abilities for managing global styles and block styles.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-prompts',
-        [
-            'label'       => __( 'AI Prompts', 'wordforge' ),
-            'description' => __( 'Prompt templates for AI-assisted content generation and optimization.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-prompts',
+		array(
+			'label'       => __( 'AI Prompts', 'wordforge' ),
+			'description' => __( 'Prompt templates for AI-assisted content generation and optimization.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-media',
-        [
-            'label'       => __( 'Media Library', 'wordforge' ),
-            'description' => __( 'Abilities for managing media files, images, and attachments.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-media',
+		array(
+			'label'       => __( 'Media Library', 'wordforge' ),
+			'description' => __( 'Abilities for managing media files, images, and attachments.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-taxonomy',
-        [
-            'label'       => __( 'Taxonomy Management', 'wordforge' ),
-            'description' => __( 'Abilities for managing categories, tags, and custom taxonomies.', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-taxonomy',
+		array(
+			'label'       => __( 'Taxonomy Management', 'wordforge' ),
+			'description' => __( 'Abilities for managing categories, tags, and custom taxonomies.', 'wordforge' ),
+		)
+	);
 
-    wp_register_ability_category(
-        'wordforge-templates',
-        [
-            'label'       => __( 'Templates', 'wordforge' ),
-            'description' => __( 'Abilities for managing block templates and template parts (FSE).', 'wordforge' ),
-        ]
-    );
+	wp_register_ability_category(
+		'wordforge-templates',
+		array(
+			'label'       => __( 'Templates', 'wordforge' ),
+			'description' => __( 'Abilities for managing block templates and template parts (FSE).', 'wordforge' ),
+		)
+	);
 
-    if ( is_woocommerce_active() ) {
-        wp_register_ability_category(
-            'wordforge-woocommerce',
-            [
-                'label'       => __( 'WooCommerce', 'wordforge' ),
-                'description' => __( 'Abilities for managing WooCommerce products and store data.', 'wordforge' ),
-            ]
-        );
-    }
+	if ( is_woocommerce_active() ) {
+		wp_register_ability_category(
+			'wordforge-woocommerce',
+			array(
+				'label'       => __( 'WooCommerce', 'wordforge' ),
+				'description' => __( 'Abilities for managing WooCommerce products and store data.', 'wordforge' ),
+			)
+		);
+	}
 }
 
 function register_abilities(): void {
-    $registry = new AbilityRegistry();
-    $registry->register_all();
+	$registry = new AbilityRegistry();
+	$registry->register_all();
 }
 
 function missing_mcp_adapter_notice(): void {
-    ?>
-    <div class="notice notice-error">
-        <p>
-            <strong><?php esc_html_e( 'WordForge:', 'wordforge' ); ?></strong>
-            <?php esc_html_e( 'MCP Adapter failed to load. Please run composer install.', 'wordforge' ); ?>
-        </p>
-    </div>
-    <?php
+	?>
+	<div class="notice notice-error">
+		<p>
+			<strong><?php esc_html_e( 'WordForge:', 'wordforge' ); ?></strong>
+			<?php esc_html_e( 'MCP Adapter failed to load. Please run composer install.', 'wordforge' ); ?>
+		</p>
+	</div>
+	<?php
 }
 
 function is_woocommerce_active(): bool {
-    return class_exists( 'WooCommerce' );
+	return class_exists( 'WooCommerce' );
 }
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
 
-add_filter( 'cron_schedules', function ( array $schedules ): array {
-    $schedules[ OpenCode\ActivityMonitor::get_cron_interval() ] = [
-        'interval' => 300,
-        'display'  => __( 'Every 5 Minutes', 'wordforge' ),
-    ];
-    return $schedules;
-} );
+add_filter(
+	'cron_schedules',
+	function ( array $schedules ): array {
+		$schedules[ OpenCode\ActivityMonitor::get_cron_interval() ] = array(
+			'interval' => 300,
+			'display'  => __( 'Every 5 Minutes', 'wordforge' ),
+		);
+		return $schedules;
+	}
+);
 
-add_action( OpenCode\ActivityMonitor::get_cron_hook(), [ OpenCode\ActivityMonitor::class, 'check_and_stop_if_inactive' ] );
+add_action( OpenCode\ActivityMonitor::get_cron_hook(), array( OpenCode\ActivityMonitor::class, 'check_and_stop_if_inactive' ) );
 
 /**
  * Add Settings link to plugins page.
@@ -222,24 +227,24 @@ add_action( OpenCode\ActivityMonitor::get_cron_hook(), [ OpenCode\ActivityMonito
  * @return array Modified links with Settings added.
  */
 function add_settings_link( array $links ): array {
-    $settings_link = sprintf(
-        '<a href="%s">%s</a>',
-        esc_url( admin_url( 'admin.php?page=' . Admin\MenuManager::MENU_SLUG ) ),
-        esc_html__( 'Settings', 'wordforge' )
-    );
-    array_unshift( $links, $settings_link );
-    return $links;
+	$settings_link = sprintf(
+		'<a href="%s">%s</a>',
+		esc_url( admin_url( 'admin.php?page=' . Admin\MenuManager::MENU_SLUG ) ),
+		esc_html__( 'Settings', 'wordforge' )
+	);
+	array_unshift( $links, $settings_link );
+	return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), __NAMESPACE__ . '\\add_settings_link' );
 
 function cleanup_opencode_on_deactivate(): void {
-    OpenCode\ServerProcess::stop();
-    OpenCode\ActivityMonitor::unschedule_cron();
+	OpenCode\ServerProcess::stop();
+	OpenCode\ActivityMonitor::unschedule_cron();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\cleanup_opencode_on_deactivate' );
 
 function schedule_activity_monitor(): void {
-    OpenCode\ActivityMonitor::schedule_cron();
+	OpenCode\ActivityMonitor::schedule_cron();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\schedule_activity_monitor' );
 
@@ -251,8 +256,8 @@ function cleanup_opencode_on_uninstall(): void {
 }
 
 if ( ! function_exists( 'wordforge_uninstall' ) ) {
-    function wordforge_uninstall(): void {
-        \WordForge\cleanup_opencode_on_uninstall();
-    }
+	function wordforge_uninstall(): void {
+		\WordForge\cleanup_opencode_on_uninstall();
+	}
 }
 register_uninstall_hook( __FILE__, 'wordforge_uninstall' );

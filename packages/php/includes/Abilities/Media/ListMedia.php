@@ -1,7 +1,5 @@
 <?php
 /**
- * List Media Ability - List media library items with filtering.
- *
  * @package WordForge
  */
 
@@ -10,11 +8,11 @@ declare(strict_types=1);
 namespace WordForge\Abilities\Media;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\PaginationSchemaTrait;
 
-/**
- * Ability to list media library items.
- */
 class ListMedia extends AbstractAbility {
+
+	use PaginationSchemaTrait;
 
 	public function get_category(): string {
 		return 'wordforge-media';
@@ -42,149 +40,74 @@ class ListMedia extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
-			'type'       => 'object',
-			'properties' => [
-				'success' => [
-					'type'        => 'boolean',
-					'description' => 'Whether the query executed successfully.',
-				],
-				'data' => [
-					'type'       => 'object',
-					'properties' => [
-						'items' => [
-							'type'        => 'array',
-							'description' => 'Array of media items.',
-							'items'       => [
-								'type'       => 'object',
-								'properties' => [
-									'id'          => [ 'type' => 'integer' ],
-									'title'       => [ 'type' => 'string' ],
-									'filename'    => [ 'type' => 'string' ],
-									'url'         => [ 'type' => 'string' ],
-									'alt'         => [ 'type' => 'string' ],
-									'caption'     => [ 'type' => 'string' ],
-									'description' => [ 'type' => 'string' ],
-									'mime_type'   => [ 'type' => 'string' ],
-									'date'        => [ 'type' => 'string' ],
-									'modified'    => [ 'type' => 'string' ],
-									'author'      => [ 'type' => 'integer' ],
-									'parent'      => [ 'type' => 'integer' ],
-									'width'       => [ 'type' => [ 'integer', 'null' ] ],
-									'height'      => [ 'type' => [ 'integer', 'null' ] ],
-									'filesize'    => [ 'type' => [ 'integer', 'null' ] ],
-								],
-							],
-						],
-						'total' => [
-							'type'        => 'integer',
-							'description' => 'Total number of media items.',
-						],
-						'total_pages' => [
-							'type'        => 'integer',
-							'description' => 'Total number of pages.',
-						],
-						'page' => [
-							'type'        => 'integer',
-							'description' => 'Current page number.',
-						],
-						'per_page' => [
-							'type'        => 'integer',
-							'description' => 'Items per page.',
-						],
-					],
-					'required' => [ 'items', 'total', 'total_pages', 'page', 'per_page' ],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+		return $this->get_pagination_output_schema(
+			$this->get_media_item_schema(),
+			'Array of media items.'
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'mime_type' => [
-					'type'        => 'string',
-					'description' => 'Filter by MIME type (image, video, audio, application, or specific like image/jpeg).',
-				],
-				'search' => [
-					'type'        => 'string',
-					'description' => 'Search term to filter media by title or filename.',
-				],
-				'per_page' => [
-					'type'        => 'integer',
-					'description' => 'Number of items per page.',
-					'default'     => 20,
-					'minimum'     => 1,
-					'maximum'     => 100,
-				],
-				'page' => [
-					'type'        => 'integer',
-					'description' => 'Page number.',
-					'default'     => 1,
-					'minimum'     => 1,
-				],
-				'orderby' => [
-					'type'        => 'string',
-					'description' => 'Field to order by.',
-					'enum'        => [ 'date', 'title', 'modified', 'id' ],
-					'default'     => 'date',
-				],
-				'order' => [
-					'type'        => 'string',
-					'description' => 'Order direction.',
-					'enum'        => [ 'asc', 'desc' ],
-					'default'     => 'desc',
-				],
-				'author' => [
-					'type'        => 'integer',
-					'description' => 'Filter by author ID.',
-				],
-				'parent' => [
-					'type'        => 'integer',
-					'description' => 'Filter by parent post ID (attached to).',
-				],
-				'unattached' => [
-					'type'        => 'boolean',
-					'description' => 'Only show unattached media.',
-					'default'     => false,
-				],
-			],
-		];
+			'properties' => array_merge(
+				array(
+					'mime_type'  => array(
+						'type'        => 'string',
+						'description' => 'Filter by MIME type (image, video, audio, application, or specific like image/jpeg).',
+					),
+					'search'     => array(
+						'type'        => 'string',
+						'description' => 'Search term to filter media by title or filename.',
+					),
+					'author'     => array(
+						'type'        => 'integer',
+						'description' => 'Filter by author ID.',
+					),
+					'parent'     => array(
+						'type'        => 'integer',
+						'description' => 'Filter by parent post ID (attached to).',
+					),
+					'unattached' => array(
+						'type'        => 'boolean',
+						'description' => 'Only show unattached media.',
+						'default'     => false,
+					),
+				),
+				$this->get_pagination_input_schema(
+					array( 'date', 'title', 'modified', 'id' )
+				)
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
-		$query_args = [
+		$pagination = $this->normalize_pagination_args( $args );
+
+		$query_args = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
-			'posts_per_page' => min( (int) ( $args['per_page'] ?? 20 ), 100 ),
-			'paged'          => max( (int) ( $args['page'] ?? 1 ), 1 ),
-			'orderby'        => $args['orderby'] ?? 'date',
-			'order'          => strtoupper( $args['order'] ?? 'desc' ),
-		];
+			'posts_per_page' => $pagination['per_page'],
+			'paged'          => $pagination['page'],
+			'orderby'        => $pagination['orderby'],
+			'order'          => $pagination['order'],
+		);
 
-		// MIME type filter.
 		if ( ! empty( $args['mime_type'] ) ) {
 			$query_args['post_mime_type'] = $args['mime_type'];
 		}
 
-		// Search filter.
 		if ( ! empty( $args['search'] ) ) {
 			$query_args['s'] = sanitize_text_field( $args['search'] );
 		}
 
-		// Author filter.
 		if ( ! empty( $args['author'] ) ) {
 			$query_args['author'] = (int) $args['author'];
 		}
 
-		// Parent filter.
 		if ( ! empty( $args['parent'] ) ) {
 			$query_args['post_parent'] = (int) $args['parent'];
 		}
 
-		// Unattached filter.
 		if ( ! empty( $args['unattached'] ) && $args['unattached'] ) {
 			$query_args['post_parent'] = 0;
 		}
@@ -196,25 +119,13 @@ class ListMedia extends AbstractAbility {
 			$query->posts
 		);
 
-		return $this->success( [
-			'items'       => $items,
-			'total'       => $query->found_posts,
-			'total_pages' => $query->max_num_pages,
-			'page'        => $query_args['paged'],
-			'per_page'    => $query_args['posts_per_page'],
-		] );
+		return $this->paginated_success( $items, $query->found_posts, $query->max_num_pages, $pagination );
 	}
 
-	/**
-	 * Format attachment for response.
-	 *
-	 * @param \WP_Post $attachment The attachment post.
-	 * @return array<string, mixed>
-	 */
 	protected function format_attachment( \WP_Post $attachment ): array {
 		$metadata = wp_get_attachment_metadata( $attachment->ID );
 
-		return [
+		return array(
 			'id'          => $attachment->ID,
 			'title'       => $attachment->post_title,
 			'filename'    => basename( get_attached_file( $attachment->ID ) ),
@@ -230,6 +141,32 @@ class ListMedia extends AbstractAbility {
 			'width'       => $metadata['width'] ?? null,
 			'height'      => $metadata['height'] ?? null,
 			'filesize'    => $metadata['filesize'] ?? null,
-		];
+		);
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function get_media_item_schema(): array {
+		return array(
+			'type'       => 'object',
+			'properties' => array(
+				'id'          => array( 'type' => 'integer' ),
+				'title'       => array( 'type' => 'string' ),
+				'filename'    => array( 'type' => 'string' ),
+				'url'         => array( 'type' => 'string' ),
+				'alt'         => array( 'type' => 'string' ),
+				'caption'     => array( 'type' => 'string' ),
+				'description' => array( 'type' => 'string' ),
+				'mime_type'   => array( 'type' => 'string' ),
+				'date'        => array( 'type' => 'string' ),
+				'modified'    => array( 'type' => 'string' ),
+				'author'      => array( 'type' => 'integer' ),
+				'parent'      => array( 'type' => 'integer' ),
+				'width'       => array( 'type' => array( 'integer', 'null' ) ),
+				'height'      => array( 'type' => array( 'integer', 'null' ) ),
+				'filesize'    => array( 'type' => array( 'integer', 'null' ) ),
+			),
+		);
 	}
 }

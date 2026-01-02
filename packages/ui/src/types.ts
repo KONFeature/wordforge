@@ -1,3 +1,5 @@
+import type { Message, Part } from '@opencode-ai/sdk';
+
 export type {
   Session,
   Message,
@@ -11,7 +13,11 @@ export type {
 
 export interface WordForgeChatConfig {
   proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
   nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
   i18n: {
     newSession: string;
     untitled: string;
@@ -42,16 +48,41 @@ export interface WordForgeChatConfig {
 }
 export interface WordForgeEditorConfig {
   proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
   nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
 }
 
-export interface ProviderInfo {
+export interface WordForgeWidgetConfig {
+  proxyUrl: string;
+  restUrl?: string;
+  siteUrl?: string;
+  nonce: string;
+  localServerPort?: number;
+  localServerEnabled?: boolean;
+  context?: {
+    type: string;
+    postType?: string;
+    postId?: number;
+  };
+}
+
+export interface ConfiguredProvider {
+  configured: boolean;
+  api_key_masked: string | null;
+}
+
+export interface ProviderDisplayInfo {
   id: string;
   name: string;
   configured: boolean;
-  api_key_masked: string | null;
-  help_url: string;
-  help_text: string;
+  apiKeyMasked: string | null;
+  helpUrl: string;
+  helpText: string;
+  placeholder: string;
+  hasFreeModels: boolean;
 }
 
 export interface AgentInfo {
@@ -90,6 +121,9 @@ export interface WordForgeSettingsConfig {
     serverId: string;
     autoShutdownEnabled: boolean;
     autoShutdownThreshold: number;
+    execEnabled: boolean;
+    localServerPort: number;
+    localServerEnabled: boolean;
     platformInfo: {
       os: string;
       arch: string;
@@ -100,7 +134,7 @@ export interface WordForgeSettingsConfig {
     };
   };
   abilities: Record<string, Array<{ name: string; description: string }>>;
-  providers: ProviderInfo[];
+  configuredProviders: Record<string, ConfiguredProvider>;
   agents: AgentInfo[];
   activity: ActivityStatus;
   integrations: {
@@ -119,6 +153,7 @@ declare global {
   interface Window {
     wordforgeChat?: WordForgeChatConfig;
     wordforgeEditor?: WordForgeEditorConfig;
+    wordforgeWidget?: WordForgeWidgetConfig;
     wordforgeSettings?: WordForgeSettingsConfig;
   }
 }

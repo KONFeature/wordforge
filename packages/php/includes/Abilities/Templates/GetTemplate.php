@@ -34,56 +34,62 @@ class GetTemplate extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'id'          => [ 'type' => 'integer' ],
-						'slug'        => [ 'type' => 'string' ],
-						'title'       => [ 'type' => 'string' ],
-						'description' => [ 'type' => 'string' ],
-						'content'     => [ 'type' => 'string' ],
-						'blocks'      => [ 'type' => 'array' ],
-						'status'      => [ 'type' => 'string' ],
-						'type'        => [ 'type' => 'string' ],
-						'modified'    => [ 'type' => 'string' ],
-						'area'        => [ 'type' => 'string' ],
-					],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+					'properties' => array(
+						'id'          => array( 'type' => 'integer' ),
+						'slug'        => array( 'type' => 'string' ),
+						'title'       => array( 'type' => 'string' ),
+						'description' => array( 'type' => 'string' ),
+						'content'     => array( 'type' => 'string' ),
+						'blocks'      => array( 'type' => 'array' ),
+						'status'      => array( 'type' => 'string' ),
+						'type'        => array( 'type' => 'string' ),
+						'modified'    => array( 'type' => 'string' ),
+						'area'        => array( 'type' => 'string' ),
+					),
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'id' ],
-			'properties' => [
-				'id' => [
-					'oneOf' => [
-						[ 'type' => 'integer', 'description' => 'Template post ID.' ],
-						[ 'type' => 'string', 'description' => 'Template slug.' ],
-					],
+			'required'   => array( 'id' ),
+			'properties' => array(
+				'id'         => array(
+					'oneOf'       => array(
+						array(
+							'type'        => 'integer',
+							'description' => 'Template post ID.',
+						),
+						array(
+							'type'        => 'string',
+							'description' => 'Template slug.',
+						),
+					),
 					'description' => 'Template ID or slug.',
-				],
-				'type' => [
+				),
+				'type'       => array(
 					'type'        => 'string',
 					'description' => 'Template type (required when using slug).',
-					'enum'        => [ 'wp_template', 'wp_template_part' ],
+					'enum'        => array( 'wp_template', 'wp_template_part' ),
 					'default'     => 'wp_template',
-				],
-				'parse_mode' => [
+				),
+				'parse_mode' => array(
 					'type'        => 'string',
 					'description' => 'How to return blocks.',
-					'enum'        => [ 'full', 'simplified' ],
+					'enum'        => array( 'full', 'simplified' ),
 					'default'     => 'full',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -93,14 +99,14 @@ class GetTemplate extends AbstractAbility {
 			return $this->error( 'Template not found.', 'not_found' );
 		}
 
-		$blocks = parse_blocks( $template->post_content );
+		$blocks     = parse_blocks( $template->post_content );
 		$parse_mode = $args['parse_mode'] ?? 'full';
 
 		if ( 'simplified' === $parse_mode ) {
 			$blocks = $this->simplify_blocks( $blocks );
 		}
 
-		$data = [
+		$data = array(
 			'id'          => $template->ID,
 			'slug'        => $template->post_name,
 			'title'       => $template->post_title ?: $template->post_name,
@@ -110,7 +116,7 @@ class GetTemplate extends AbstractAbility {
 			'status'      => $template->post_status,
 			'type'        => $template->post_type,
 			'modified'    => $template->post_modified,
-		];
+		);
 
 		if ( 'wp_template_part' === $template->post_type ) {
 			$data['area'] = get_post_meta( $template->ID, 'wp_template_part_area', true ) ?: 'uncategorized';
@@ -124,35 +130,40 @@ class GetTemplate extends AbstractAbility {
 
 		if ( is_numeric( $id ) ) {
 			$template = get_post( (int) $id );
-			if ( $template && in_array( $template->post_type, [ 'wp_template', 'wp_template_part' ], true ) ) {
+			if ( $template && in_array( $template->post_type, array( 'wp_template', 'wp_template_part' ), true ) ) {
 				return $template;
 			}
 			return null;
 		}
 
-		$type = $args['type'] ?? 'wp_template';
-		$templates = get_posts( [
-			'post_type'      => $type,
-			'post_status'    => [ 'publish', 'auto-draft' ],
-			'name'           => $id,
-			'posts_per_page' => 1,
-		] );
+		$type      = $args['type'] ?? 'wp_template';
+		$templates = get_posts(
+			array(
+				'post_type'      => $type,
+				'post_status'    => array( 'publish', 'auto-draft' ),
+				'name'           => $id,
+				'posts_per_page' => 1,
+			)
+		);
 
 		return ! empty( $templates ) ? $templates[0] : null;
 	}
 
 	private function simplify_blocks( array $blocks ): array {
-		return array_map( function ( $block ) {
-			$simplified = [
-				'name'  => $block['blockName'],
-				'attrs' => $block['attrs'] ?? [],
-			];
+		return array_map(
+			function ( $block ) {
+				$simplified = array(
+					'name'  => $block['blockName'],
+					'attrs' => $block['attrs'] ?? array(),
+				);
 
-			if ( ! empty( $block['innerBlocks'] ) ) {
-				$simplified['innerBlocks'] = $this->simplify_blocks( $block['innerBlocks'] );
-			}
+				if ( ! empty( $block['innerBlocks'] ) ) {
+					$simplified['innerBlocks'] = $this->simplify_blocks( $block['innerBlocks'] );
+				}
 
-			return $simplified;
-		}, array_filter( $blocks, fn( $b ) => ! empty( $b['blockName'] ) ) );
+				return $simplified;
+			},
+			array_filter( $blocks, fn( $b ) => ! empty( $b['blockName'] ) )
+		);
 	}
 }

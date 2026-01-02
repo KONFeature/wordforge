@@ -427,6 +427,17 @@
   font-size: 0.9em;
 }
 
+.virtualList {
+  overflow-y: auto !important;
+}
+
+.virtualList > div {
+  padding: var(--wf-spacing-lg);
+  padding-bottom: 0;
+  max-width: var(--wf-content-max-width);
+  margin: 0 auto;
+}
+
 .thinking {
   margin-bottom: var(--wf-spacing-lg);
   padding: var(--wf-spacing-md) var(--wf-spacing-lg);

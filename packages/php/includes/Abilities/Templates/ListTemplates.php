@@ -1,12 +1,21 @@
 <?php
+/**
+ * @package WordForge
+ */
 
 declare(strict_types=1);
 
 namespace WordForge\Abilities\Templates;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\CacheableTrait;
 
 class ListTemplates extends AbstractAbility {
+
+	use CacheableTrait;
+
+	private const CACHE_KEY = 'templates';
+	private const CACHE_TTL = 300;
 
 	public function get_category(): string {
 		return 'wordforge-templates';
@@ -34,88 +43,94 @@ class ListTemplates extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [
-					'type'        => 'boolean',
-					'description' => 'Whether the query executed successfully.',
-				],
-				'data' => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'type' => [
-							'type'        => 'string',
-							'description' => 'Template type (wp_template or wp_template_part).',
-						],
-						'items' => [
-							'type'        => 'array',
-							'description' => 'Array of templates.',
-							'items'       => [
+					'properties' => array(
+						'type'  => array( 'type' => 'string' ),
+						'items' => array(
+							'type'  => 'array',
+							'items' => array(
 								'type'       => 'object',
-								'properties' => [
-									'id'          => [ 'type' => 'integer' ],
-									'slug'        => [ 'type' => 'string' ],
-									'title'       => [ 'type' => 'string' ],
-									'description' => [ 'type' => 'string' ],
-									'status'      => [ 'type' => 'string' ],
-									'type'        => [ 'type' => 'string' ],
-									'modified'    => [ 'type' => 'string' ],
-									'source'      => [ 'type' => 'string' ],
-									'area'        => [ 'type' => 'string' ],
-								],
-							],
-						],
-						'total' => [
-							'type'        => 'integer',
-							'description' => 'Total number of templates.',
-						],
-					],
-					'required' => [ 'type', 'items', 'total' ],
-				],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+								'properties' => array(
+									'id'          => array( 'type' => 'integer' ),
+									'slug'        => array( 'type' => 'string' ),
+									'title'       => array( 'type' => 'string' ),
+									'description' => array( 'type' => 'string' ),
+									'status'      => array( 'type' => 'string' ),
+									'type'        => array( 'type' => 'string' ),
+									'modified'    => array( 'type' => 'string' ),
+									'source'      => array( 'type' => 'string' ),
+									'area'        => array( 'type' => 'string' ),
+								),
+							),
+						),
+						'total' => array( 'type' => 'integer' ),
+					),
+					'required'   => array( 'type', 'items', 'total' ),
+				),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'type' => [
-					'type'        => 'string',
-					'description' => 'Template type.',
-					'enum'        => [ 'wp_template', 'wp_template_part' ],
-					'default'     => 'wp_template',
-				],
-				'area' => [
+			'properties' => array(
+				'type' => array(
+					'type'    => 'string',
+					'enum'    => array( 'wp_template', 'wp_template_part' ),
+					'default' => 'wp_template',
+				),
+				'area' => array(
 					'type'        => 'string',
 					'description' => 'Filter template parts by area (header, footer, sidebar, etc.).',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
 		$type = $args['type'] ?? 'wp_template';
+		$area = $args['area'] ?? null;
 
 		if ( ! current_theme_supports( 'block-templates' ) ) {
 			return $this->error( 'Current theme does not support block templates.', 'not_supported' );
 		}
 
-		$query_args = [
-			'post_type'      => $type,
-			'post_status'    => [ 'publish', 'auto-draft' ],
-			'posts_per_page' => 100,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		];
+		return $this->cached_success(
+			self::CACHE_KEY,
+			fn() => $this->fetch_templates( $type, $area ),
+			self::CACHE_TTL,
+			array(
+				'type' => $type,
+				'area' => $area,
+			)
+		);
+	}
 
-		$templates = get_posts( $query_args );
-		$items = [];
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function fetch_templates( string $type, ?string $area ): array {
+		$templates = get_posts(
+			array(
+				'post_type'      => $type,
+				'post_status'    => array( 'publish', 'auto-draft' ),
+				'posts_per_page' => 100,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		$items = array();
 
 		foreach ( $templates as $template ) {
-			$item = [
+			$item = array(
 				'id'          => $template->ID,
 				'slug'        => $template->post_name,
 				'title'       => $template->post_title ?: $template->post_name,
@@ -123,32 +138,25 @@ class ListTemplates extends AbstractAbility {
 				'status'      => $template->post_status,
 				'type'        => $type,
 				'modified'    => $template->post_modified,
-				'source'      => $this->get_template_source( $template ),
-			];
+				'source'      => 'auto-draft' === $template->post_status ? 'theme' : 'custom',
+			);
 
 			if ( 'wp_template_part' === $type ) {
-				$area = get_post_meta( $template->ID, 'wp_template_part_area', true );
-				$item['area'] = $area ?: 'uncategorized';
+				$item_area    = get_post_meta( $template->ID, 'wp_template_part_area', true );
+				$item['area'] = $item_area ?: 'uncategorized';
 			}
 
-			if ( ! empty( $args['area'] ) && isset( $item['area'] ) && $item['area'] !== $args['area'] ) {
+			if ( $area && isset( $item['area'] ) && $item['area'] !== $area ) {
 				continue;
 			}
 
 			$items[] = $item;
 		}
 
-		return $this->success( [
+		return array(
 			'type'  => $type,
 			'items' => $items,
 			'total' => count( $items ),
-		] );
-	}
-
-	private function get_template_source( \WP_Post $template ): string {
-		if ( 'auto-draft' === $template->post_status ) {
-			return 'theme';
-		}
-		return 'custom';
+		);
 	}
 }

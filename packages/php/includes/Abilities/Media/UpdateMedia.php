@@ -39,64 +39,67 @@ class UpdateMedia extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'id'             => [ 'type' => 'integer' ],
-						'title'          => [ 'type' => 'string' ],
-						'alt'            => [ 'type' => 'string' ],
-						'caption'        => [ 'type' => 'string' ],
-						'description'    => [ 'type' => 'string' ],
-						'parent'         => [ 'type' => 'integer' ],
-						'updated_fields' => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
-					],
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+					'properties' => array(
+						'id'             => array( 'type' => 'integer' ),
+						'title'          => array( 'type' => 'string' ),
+						'alt'            => array( 'type' => 'string' ),
+						'caption'        => array( 'type' => 'string' ),
+						'description'    => array( 'type' => 'string' ),
+						'parent'         => array( 'type' => 'integer' ),
+						'updated_fields' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'message' => array( 'type' => 'string' ),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'id' ],
-			'properties' => [
-				'id' => [
+			'required'   => array( 'id' ),
+			'properties' => array(
+				'id'          => array(
 					'type'        => 'integer',
 					'description' => 'The media/attachment ID.',
-				],
-				'title' => [
+				),
+				'title'       => array(
 					'type'        => 'string',
 					'description' => 'Media title.',
-				],
-				'alt' => [
+				),
+				'alt'         => array(
 					'type'        => 'string',
 					'description' => 'Alt text for images (critical for SEO and accessibility).',
-				],
-				'caption' => [
+				),
+				'caption'     => array(
 					'type'        => 'string',
 					'description' => 'Media caption (displayed below images).',
-				],
-				'description' => [
+				),
+				'description' => array(
 					'type'        => 'string',
 					'description' => 'Media description.',
-				],
-				'parent_id' => [
+				),
+				'parent_id'   => array(
 					'type'        => 'integer',
 					'description' => 'Post ID to attach the media to (0 to detach).',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
 		$attachment_id = (int) $args['id'];
-		$attachment = get_post( $attachment_id );
+		$attachment    = get_post( $attachment_id );
 
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
 			return $this->error( 'Media not found.', 'not_found' );
@@ -106,31 +109,31 @@ class UpdateMedia extends AbstractAbility {
 			return $this->error( 'You do not have permission to edit this media.', 'forbidden' );
 		}
 
-		$update_data = [ 'ID' => $attachment_id ];
-		$updated_fields = [];
+		$update_data    = array( 'ID' => $attachment_id );
+		$updated_fields = array();
 
 		// Update title.
 		if ( isset( $args['title'] ) ) {
 			$update_data['post_title'] = sanitize_text_field( $args['title'] );
-			$updated_fields[] = 'title';
+			$updated_fields[]          = 'title';
 		}
 
 		// Update caption (excerpt).
 		if ( isset( $args['caption'] ) ) {
 			$update_data['post_excerpt'] = sanitize_textarea_field( $args['caption'] );
-			$updated_fields[] = 'caption';
+			$updated_fields[]            = 'caption';
 		}
 
 		// Update description (content).
 		if ( isset( $args['description'] ) ) {
 			$update_data['post_content'] = wp_kses_post( $args['description'] );
-			$updated_fields[] = 'description';
+			$updated_fields[]            = 'description';
 		}
 
 		// Update parent.
 		if ( isset( $args['parent_id'] ) ) {
 			$update_data['post_parent'] = (int) $args['parent_id'];
-			$updated_fields[] = 'parent';
+			$updated_fields[]           = 'parent';
 		}
 
 		// Update post data.
@@ -150,14 +153,17 @@ class UpdateMedia extends AbstractAbility {
 		// Get updated attachment.
 		$updated = get_post( $attachment_id );
 
-		return $this->success( [
-			'id'             => $attachment_id,
-			'title'          => $updated->post_title,
-			'alt'            => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'caption'        => $updated->post_excerpt,
-			'description'    => $updated->post_content,
-			'parent'         => $updated->post_parent,
-			'updated_fields' => $updated_fields,
-		], 'Media updated successfully.' );
+		return $this->success(
+			array(
+				'id'             => $attachment_id,
+				'title'          => $updated->post_title,
+				'alt'            => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+				'caption'        => $updated->post_excerpt,
+				'description'    => $updated->post_content,
+				'parent'         => $updated->post_parent,
+				'updated_fields' => $updated_fields,
+			),
+			'Media updated successfully.'
+		);
 	}
 }

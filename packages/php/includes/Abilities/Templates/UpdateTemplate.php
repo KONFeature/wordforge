@@ -30,71 +30,71 @@ class UpdateTemplate extends AbstractAbility {
 	}
 
 	public function get_output_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'success' => [ 'type' => 'boolean' ],
-				'data'    => [
+			'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'data'    => array(
 					'type'       => 'object',
-					'properties' => [
-						'id'          => [ 'type' => 'integer' ],
-						'slug'        => [ 'type' => 'string' ],
-						'title'       => [ 'type' => 'string' ],
-						'description' => [ 'type' => 'string' ],
-						'status'      => [ 'type' => 'string' ],
-						'type'        => [ 'type' => 'string' ],
-						'modified'    => [ 'type' => 'string' ],
-					],
-				],
-				'message' => [ 'type' => 'string' ],
-			],
-			'required' => [ 'success', 'data' ],
-		];
+					'properties' => array(
+						'id'          => array( 'type' => 'integer' ),
+						'slug'        => array( 'type' => 'string' ),
+						'title'       => array( 'type' => 'string' ),
+						'description' => array( 'type' => 'string' ),
+						'status'      => array( 'type' => 'string' ),
+						'type'        => array( 'type' => 'string' ),
+						'modified'    => array( 'type' => 'string' ),
+					),
+				),
+				'message' => array( 'type' => 'string' ),
+			),
+			'required'   => array( 'success', 'data' ),
+		);
 	}
 
 	public function get_input_schema(): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'required'   => [ 'id' ],
-			'properties' => [
-				'id' => [
+			'required'   => array( 'id' ),
+			'properties' => array(
+				'id'          => array(
 					'type'        => 'integer',
 					'description' => 'Template post ID.',
-				],
-				'content' => [
+				),
+				'content'     => array(
 					'type'        => 'string',
 					'description' => 'New template content (block markup).',
-				],
-				'blocks' => [
+				),
+				'blocks'      => array(
 					'type'        => 'array',
 					'description' => 'Array of block objects to set as template content.',
-					'items'       => [
+					'items'       => array(
 						'type'       => 'object',
-						'properties' => [
-							'name'        => [ 'type' => 'string' ],
-							'attrs'       => [ 'type' => 'object' ],
-							'innerBlocks' => [ 'type' => 'array' ],
-							'innerHTML'   => [ 'type' => 'string' ],
-						],
-					],
-				],
-				'title' => [
+						'properties' => array(
+							'name'        => array( 'type' => 'string' ),
+							'attrs'       => array( 'type' => 'object' ),
+							'innerBlocks' => array( 'type' => 'array' ),
+							'innerHTML'   => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'title'       => array(
 					'type'        => 'string',
 					'description' => 'Template title.',
-				],
-				'description' => [
+				),
+				'description' => array(
 					'type'        => 'string',
 					'description' => 'Template description.',
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	public function execute( array $args ): array {
 		$template_id = (int) $args['id'];
-		$template = get_post( $template_id );
+		$template    = get_post( $template_id );
 
-		if ( ! $template || ! in_array( $template->post_type, [ 'wp_template', 'wp_template_part' ], true ) ) {
+		if ( ! $template || ! in_array( $template->post_type, array( 'wp_template', 'wp_template_part' ), true ) ) {
 			return $this->error( 'Template not found.', 'not_found' );
 		}
 
@@ -102,7 +102,7 @@ class UpdateTemplate extends AbstractAbility {
 			return $this->error( 'You do not have permission to edit this template.', 'forbidden' );
 		}
 
-		$update_data = [ 'ID' => $template_id ];
+		$update_data = array( 'ID' => $template_id );
 
 		if ( isset( $args['content'] ) ) {
 			$update_data['post_content'] = wp_kses_post( $args['content'] );
@@ -130,15 +130,18 @@ class UpdateTemplate extends AbstractAbility {
 
 		$updated = get_post( $template_id );
 
-		return $this->success( [
-			'id'          => $template_id,
-			'slug'        => $updated->post_name,
-			'title'       => $updated->post_title,
-			'description' => $updated->post_excerpt,
-			'status'      => $updated->post_status,
-			'type'        => $updated->post_type,
-			'modified'    => $updated->post_modified,
-		], 'Template updated successfully.' );
+		return $this->success(
+			array(
+				'id'          => $template_id,
+				'slug'        => $updated->post_name,
+				'title'       => $updated->post_title,
+				'description' => $updated->post_excerpt,
+				'status'      => $updated->post_status,
+				'type'        => $updated->post_type,
+				'modified'    => $updated->post_modified,
+			),
+			'Template updated successfully.'
+		);
 	}
 
 	private function blocks_to_content( array $blocks ): string {
@@ -150,10 +153,10 @@ class UpdateTemplate extends AbstractAbility {
 	}
 
 	private function serialize_block( array $block ): string {
-		$name = $block['name'] ?? $block['blockName'] ?? '';
-		$attrs = $block['attrs'] ?? [];
-		$inner_html = $block['innerHTML'] ?? '';
-		$inner_blocks = $block['innerBlocks'] ?? [];
+		$name         = $block['name'] ?? $block['blockName'] ?? '';
+		$attrs        = $block['attrs'] ?? array();
+		$inner_html   = $block['innerHTML'] ?? '';
+		$inner_blocks = $block['innerBlocks'] ?? array();
 
 		if ( empty( $name ) ) {
 			return $inner_html;

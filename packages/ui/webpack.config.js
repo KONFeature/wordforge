@@ -18,4 +18,18 @@ module.exports = {
       'react-dom': require.resolve('@wordpress/element'),
     },
   },
+  optimization: {
+    ...defaultConfig.optimization,
+    splitChunks: {
+      cacheGroups: {
+        wordforgeVendor: {
+          test: /[\\/]node_modules[\\/](@opencode-ai|@tanstack|react-markdown|react-window)[\\/]/,
+          name: 'wordforge-vendor',
+          chunks: 'all',
+          priority: 20,
+          enforce: true,
+        },
+      },
+    },
+  },
 };

@@ -1,17 +1,48 @@
-import { useState } from '@wordpress/element';
+import { TabPanel } from '@wordpress/components';
+import { useMemo, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import type { WordForgeSettingsConfig } from '../types';
 import styles from './SettingsApp.module.css';
 import { AbilitiesCard } from './components/AbilitiesCard';
 import { AgentConfigCard } from './components/AgentConfigCard';
 import { ConnectionCard } from './components/ConnectionCard';
+import { OpenCodeLocalTab } from './components/OpenCodeLocalTab';
 import { ProvidersCard } from './components/ProvidersCard';
 import { SettingsFormCard } from './components/SettingsFormCard';
 import { StatusCard } from './components/StatusCard';
+
+interface Tab {
+  name: string;
+  title: string;
+  className: string;
+}
 
 export const SettingsApp = () => {
   const [config] = useState<WordForgeSettingsConfig | undefined>(
     () => window.wordforgeSettings,
   );
+
+  const tabs = useMemo<Tab[]>(() => {
+    const baseTabs: Tab[] = [
+      { name: 'mcp', title: __('MCP', 'wordforge'), className: 'tab-mcp' },
+    ];
+
+    if (config?.settings.execEnabled) {
+      baseTabs.push({
+        name: 'server',
+        title: __('OpenCode Server', 'wordforge'),
+        className: 'tab-server',
+      });
+    }
+
+    baseTabs.push({
+      name: 'local',
+      title: __('OpenCode Local', 'wordforge'),
+      className: 'tab-local',
+    });
+
+    return baseTabs;
+  }, [config?.settings.execEnabled]);
 
   if (!config) {
     return (
@@ -42,56 +73,81 @@ export const SettingsApp = () => {
   };
 
   const serverRunning = config.settings.serverRunning;
+  const execEnabled = config.settings.execEnabled;
+
+  const renderMcpTab = () => (
+    <div className={styles.tabContent}>
+      <div className={styles.fullWidth}>
+        <ConnectionCard
+          settings={{
+            mcpEnabled: config.settings.mcpEnabled,
+            mcpEndpoint: config.settings.mcpEndpoint,
+            serverId: config.settings.serverId,
+          }}
+        />
+      </div>
+
+      <SettingsFormCard
+        settings={{
+          mcpEnabled: config.settings.mcpEnabled,
+          mcpNamespace: config.settings.mcpNamespace,
+          mcpRoute: config.settings.mcpRoute,
+          mcpEndpoint: config.settings.mcpEndpoint,
+        }}
+        optionsNonce={config.optionsNonce}
+      />
+
+      <AbilitiesCard
+        abilities={config.abilities}
+        wooCommerceActive={config.integrations.woocommerce}
+      />
+    </div>
+  );
+
+  const renderServerTab = () => (
+    <div className={styles.tabContent}>
+      <div className={styles.fullWidth}>
+        <StatusCard status={statusProps} onStatusChange={handleStatusChange} />
+      </div>
+
+      <ProvidersCard restUrl={config.restUrl} nonce={config.nonce} />
+
+      <AgentConfigCard
+        restUrl={config.restUrl}
+        nonce={config.nonce}
+        initialAgents={config.agents}
+        serverRunning={serverRunning}
+        onStartServer={() => handleStatusChange()}
+      />
+    </div>
+  );
+
+  const renderLocalTab = () => (
+    <div className={styles.tabContent}>
+      <OpenCodeLocalTab initialPort={config.settings.localServerPort} />
+    </div>
+  );
 
   return (
     <div className="wordforge-settings-container">
-      <div className={`wordforge-cards ${styles.cards}`}>
-        <div className={styles.fullWidth}>
-          <StatusCard
-            status={statusProps}
-            onStatusChange={handleStatusChange}
-          />
-        </div>
-
-        <ProvidersCard
-          restUrl={config.restUrl}
-          nonce={config.nonce}
-          initialProviders={config.providers}
-        />
-
-        <AgentConfigCard
-          restUrl={config.restUrl}
-          nonce={config.nonce}
-          initialAgents={config.agents}
-          serverRunning={serverRunning}
-          onStartServer={() => handleStatusChange()}
-        />
-
-        <div className={styles.fullWidth}>
-          <ConnectionCard
-            settings={{
-              mcpEnabled: config.settings.mcpEnabled,
-              mcpEndpoint: config.settings.mcpEndpoint,
-              serverId: config.settings.serverId,
-            }}
-          />
-        </div>
-
-        <SettingsFormCard
-          settings={{
-            mcpEnabled: config.settings.mcpEnabled,
-            mcpNamespace: config.settings.mcpNamespace,
-            mcpRoute: config.settings.mcpRoute,
-            mcpEndpoint: config.settings.mcpEndpoint,
-          }}
-          optionsNonce={config.optionsNonce}
-        />
-
-        <AbilitiesCard
-          abilities={config.abilities}
-          wooCommerceActive={config.integrations.woocommerce}
-        />
-      </div>
+      <TabPanel
+        className={styles.tabPanel}
+        tabs={tabs}
+        initialTabName={execEnabled ? 'server' : 'local'}
+      >
+        {(tab) => {
+          switch (tab.name) {
+            case 'mcp':
+              return renderMcpTab();
+            case 'server':
+              return renderServerTab();
+            case 'local':
+              return renderLocalTab();
+            default:
+              return null;
+          }
+        }}
+      </TabPanel>
     </div>
   );
 };

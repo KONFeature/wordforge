@@ -1,6 +1,7 @@
 import { createRoot } from '@wordpress/element';
 import { ChatWidget } from '../chat/components/ChatWidget';
 import type { ScopedContext } from '../chat/hooks/useContextInjection';
+import { ClientProvider } from '../lib/ClientProvider';
 import { QueryProvider } from '../lib/QueryProvider';
 import '../styles/variables.css';
 
@@ -31,7 +32,9 @@ const container = document.getElementById('wordforge-widget-root');
 if (container) {
   createRoot(container).render(
     <QueryProvider>
-      <WidgetApp />
+      <ClientProvider>
+        <WidgetApp />
+      </ClientProvider>
     </QueryProvider>,
   );
 }

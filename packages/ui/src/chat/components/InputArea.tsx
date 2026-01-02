@@ -7,8 +7,11 @@ import {
   useState,
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import {
+  ModelSelector,
+  type SelectedModel,
+} from '../../components/ModelSelector';
 import styles from './InputArea.module.css';
-import { ModelSelector, type SelectedModel } from './ModelSelector';
 
 interface InputAreaProps {
   onSend: (text: string) => void;

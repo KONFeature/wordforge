@@ -45,7 +45,7 @@ class BinaryManager {
 	private static function get_arch(): string {
 		$machine = strtolower( php_uname( 'm' ) );
 
-		if ( in_array( $machine, [ 'arm64', 'aarch64' ], true ) ) {
+		if ( in_array( $machine, array( 'arm64', 'aarch64' ), true ) ) {
 			return 'arm64';
 		}
 		return 'x64';
@@ -72,13 +72,13 @@ class BinaryManager {
 	public static function fetch_latest_release() {
 		$response = wp_remote_get(
 			self::GITHUB_API_LATEST,
-			[
-				'headers' => [
+			array(
+				'headers' => array(
 					'Accept'     => 'application/vnd.github.v3+json',
 					'User-Agent' => 'WordForge/' . WORDFORGE_VERSION,
-				],
+				),
 				'timeout' => 30,
-			]
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -99,15 +99,15 @@ class BinaryManager {
 			return new \WP_Error( 'invalid_response', 'Invalid GitHub API response' );
 		}
 
-		$version       = ltrim( $body['tag_name'], 'v' );
-		$archive_name  = self::get_archive_name();
-		$download_url  = self::DOWNLOAD_BASE_URL . "/v{$version}/{$archive_name}";
+		$version      = ltrim( $body['tag_name'], 'v' );
+		$archive_name = self::get_archive_name();
+		$download_url = self::DOWNLOAD_BASE_URL . "/v{$version}/{$archive_name}";
 
-		return [
+		return array(
 			'version'      => $version,
 			'download_url' => $download_url,
 			'tag_name'     => $body['tag_name'],
-		];
+		);
 	}
 
 	/**
@@ -122,11 +122,11 @@ class BinaryManager {
 
 		$current = self::get_installed_version();
 
-		return [
+		return array(
 			'available' => null === $current || version_compare( $current, $latest['version'], '<' ),
 			'current'   => $current,
 			'latest'    => $latest['version'],
-		];
+		);
 	}
 
 	/**
@@ -197,9 +197,9 @@ class BinaryManager {
 	 * @return true|\WP_Error
 	 */
 	private static function extract_binary( string $archive_path, string $dest_dir ) {
-		$os           = self::get_os();
-		$binary_name  = self::get_binary_name();
-		$binary_path  = $dest_dir . '/' . $binary_name;
+		$os          = self::get_os();
+		$binary_name = self::get_binary_name();
+		$binary_path = $dest_dir . '/' . $binary_name;
 
 		if ( file_exists( $binary_path ) ) {
 			unlink( $binary_path );
@@ -210,7 +210,7 @@ class BinaryManager {
 			$escaped_dest    = escapeshellarg( $dest_dir );
 
 			$cmd    = "tar -xzf {$escaped_archive} -C {$escaped_dest} opencode 2>&1";
-			$output = [];
+			$output = array();
 			$code   = 0;
 			exec( $cmd, $output, $code );
 
@@ -223,7 +223,7 @@ class BinaryManager {
 				return new \WP_Error( 'zip_open_failed', 'Could not open zip archive' );
 			}
 
-			$extracted = $zip->extractTo( $dest_dir, [ $binary_name ] );
+			$extracted = $zip->extractTo( $dest_dir, array( $binary_name ) );
 			$zip->close();
 
 			if ( ! $extracted ) {
@@ -263,7 +263,7 @@ class BinaryManager {
 	}
 
 	public static function get_platform_info(): array {
-		return [
+		return array(
 			'os'           => self::get_os(),
 			'arch'         => self::get_arch(),
 			'archive_name' => self::get_archive_name(),
@@ -274,6 +274,6 @@ class BinaryManager {
 			'version'      => self::get_installed_version(),
 			'php_uname_s'  => php_uname( 's' ),
 			'php_uname_m'  => php_uname( 'm' ),
-		];
+		);
 	}
 }

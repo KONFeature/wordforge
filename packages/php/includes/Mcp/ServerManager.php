@@ -23,7 +23,7 @@ class ServerManager {
 			return;
 		}
 
-		add_filter( 'mcp_adapter_default_server_config', [ $this, 'configure_server' ] );
+		add_filter( 'mcp_adapter_default_server_config', array( $this, 'configure_server' ) );
 	}
 
 	private function is_mcp_adapter_available(): bool {

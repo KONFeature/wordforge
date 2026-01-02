@@ -61,6 +61,7 @@
   /* Shadows */
   --wf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --wf-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --wf-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
 
   /* Transitions */
   --wf-transition-fast: 0.15s ease;
@@ -68,6 +69,30 @@
 
   /* Layout */
   --wf-sidebar-width: 280px;
+  --wf-sidebar-width-collapsed: 0px;
   --wf-content-max-width: 900px;
   --wf-input-min-height: 40px;
+  --wf-header-height: 48px;
+
+  /* Z-index layers */
+  --wf-z-sidebar: 100;
+  --wf-z-overlay: 200;
+  --wf-z-modal: 300;
+  --wf-z-tooltip: 400;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --wf-sidebar-width: 100%;
+    --wf-spacing-lg: 12px;
+    --wf-spacing-xl: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --wf-spacing-md: 8px;
+    --wf-spacing-lg: 10px;
+    --wf-font-size-base: 14px;
+  }
 }

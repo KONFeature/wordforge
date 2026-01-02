@@ -1,5 +1,6 @@
 import type { Provider } from '@opencode-ai/sdk/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { filterProviders } from '../../lib/filterModels';
 import type { AgentInfo } from '../../types';
 
@@ -7,12 +8,8 @@ interface AgentsResponse {
   agents: AgentInfo[];
 }
 
-interface OpenCodeProvidersResponse {
-  providers: Provider[];
-}
-
 const AGENTS_KEY = ['agents'] as const;
-const OPENCODE_PROVIDERS_KEY = ['opencode-providers'] as const;
+const OPENCODE_PROVIDERS_KEY = ['opencode-config-providers'] as const;
 
 export const useAgents = (restUrl: string, nonce: string) => {
   return useQuery({
@@ -34,28 +31,19 @@ export const useAgents = (restUrl: string, nonce: string) => {
   });
 };
 
-export const useOpenCodeProviders = (restUrl: string, nonce: string) => {
+export const useOpenCodeConfiguredProviders = () => {
+  const client = useOpencodeClientOptional();
+
   return useQuery({
     queryKey: OPENCODE_PROVIDERS_KEY,
     queryFn: async (): Promise<Provider[]> => {
-      const response = await fetch(
-        `${restUrl}/opencode/proxy/config/providers`,
-        {
-          headers: {
-            'X-WP-Nonce': nonce,
-          },
-          credentials: 'include',
-        },
-      );
-
-      if (!response.ok) {
-        return [];
-      }
-
-      const data: OpenCodeProvidersResponse = await response.json();
-      const providers = Array.isArray(data?.providers) ? data.providers : [];
+      const response = await client!.config.providers();
+      const providers = Array.isArray(response?.data?.providers)
+        ? response?.data?.providers
+        : [];
       return filterProviders(providers);
     },
+    enabled: !!client,
     staleTime: 30000,
   });
 };

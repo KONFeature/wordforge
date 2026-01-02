@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\BinaryManager;
+use WordForge\OpenCode\ExecCapability;
+use WordForge\OpenCode\LocalServerConfig;
 use WordForge\OpenCode\ServerProcess;
 
 class WidgetManager {
 
 	public function __construct() {
-		add_action( 'admin_enqueue_scripts', [ $this, 'maybe_enqueue_widget' ] );
-		add_action( 'admin_footer', [ $this, 'render_widget_container' ] );
+		add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_widget' ) );
+		add_action( 'admin_footer', array( $this, 'render_widget_container' ) );
 	}
 
 	public function maybe_enqueue_widget( string $hook ): void {
+		if ( ! ExecCapability::can_exec() ) {
+			return;
+		}
+
 		if ( ! $this->should_show_widget_for_hook( $hook ) ) {
 			return;
 		}
@@ -23,6 +29,10 @@ class WidgetManager {
 	}
 
 	public function render_widget_container(): void {
+		if ( ! ExecCapability::can_exec() ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen ) {
 			return;
@@ -43,7 +53,7 @@ class WidgetManager {
 				return true;
 			}
 
-			if ( in_array( $post_type, [ 'post', 'page' ], true ) ) {
+			if ( in_array( $post_type, array( 'post', 'page' ), true ) ) {
 				return true;
 			}
 
@@ -83,7 +93,7 @@ class WidgetManager {
 			return true;
 		}
 
-		if ( in_array( $screen->id, [ 'edit-post', 'edit-page', 'upload' ], true ) ) {
+		if ( in_array( $screen->id, array( 'edit-post', 'edit-page', 'upload' ), true ) ) {
 			return true;
 		}
 
@@ -96,12 +106,24 @@ class WidgetManager {
 			return;
 		}
 
-		$asset_file = include $asset_path;
+		$asset_file   = include $asset_path;
+		$vendor_asset = include WORDFORGE_PLUGIN_DIR . 'assets/js/wordforge-vendor.asset.php';
+
+		wp_register_script(
+			'wordforge-vendor',
+			plugins_url( 'assets/js/wordforge-vendor.js', WORDFORGE_PLUGIN_FILE ),
+			$vendor_asset['dependencies'],
+			$vendor_asset['version'],
+			true
+		);
+
+		$dependencies   = $asset_file['dependencies'];
+		$dependencies[] = 'wordforge-vendor';
 
 		wp_enqueue_script(
 			'wordforge-chat-widget',
 			plugins_url( 'assets/js/chat-widget.js', WORDFORGE_PLUGIN_FILE ),
-			$asset_file['dependencies'],
+			$dependencies,
 			$asset_file['version'],
 			true
 		);
@@ -111,17 +133,22 @@ class WidgetManager {
 		wp_enqueue_style(
 			'wordforge-chat-widget',
 			plugins_url( 'assets/js/chat-widget.css', WORDFORGE_PLUGIN_FILE ),
-			[ 'wp-components' ],
+			array( 'wp-components' ),
 			$asset_file['version']
 		);
 
-		$context       = ContextDetector::get_context( $hook );
+		$context        = ContextDetector::get_context( $hook );
+		$local_settings = LocalServerConfig::get_settings();
 
-		$config = [
-			'proxyUrl'     => rest_url( 'wordforge/v1/opencode/proxy' ),
-			'nonce'        => wp_create_nonce( 'wp_rest' ),
-			'context'      => $context,
-		];
+		$config = array(
+			'proxyUrl'           => rest_url( 'wordforge/v1/opencode/proxy' ),
+			'restUrl'            => rest_url( 'wordforge/v1' ),
+			'siteUrl'            => site_url(),
+			'nonce'              => wp_create_nonce( 'wp_rest' ),
+			'context'            => $context,
+			'localServerPort'    => $local_settings['port'],
+			'localServerEnabled' => $local_settings['enabled'],
+		);
 
 		wp_add_inline_script(
 			'wordforge-chat-widget',

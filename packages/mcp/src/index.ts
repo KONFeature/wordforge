@@ -62,7 +62,7 @@ function registerTool(
             content: [
               { type: 'text' as const, text: JSON.stringify(result, null, 2) },
             ],
-            structuredContent: result as any,
+            structuredContent: result as Record<string, unknown>,
           };
         }
 
