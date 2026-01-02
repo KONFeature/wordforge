@@ -34,8 +34,8 @@
     }
   },
   "scripts": {
-    "lint:php": "phpcs --standard=WordPress -s",
-    "lint:php:fix": "phpcbf --standard=WordPress"
+    "lint:php": "phpcs --standard=WordPress -s includes/",
+    "lint:php:fix": "phpcbf --standard=WordPress includes/"
   },
   "minimum-stability": "stable",
   "prefer-stable": true

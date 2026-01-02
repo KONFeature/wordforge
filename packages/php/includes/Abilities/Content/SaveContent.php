@@ -17,7 +17,12 @@ class SaveContent extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Create or update a post, page, or custom post type. Provide "id" to update, omit to create.', 'wordforge' );
+		return __(
+			'Create or update WordPress content (posts, pages, custom post types). Omit "id" to create new; provide "id" to ' .
+			'update existing. Supports title, content (HTML/Gutenberg blocks), excerpt, status, featured image, categories, ' .
+			'tags, and custom meta fields. New content defaults to draft status.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string|array {

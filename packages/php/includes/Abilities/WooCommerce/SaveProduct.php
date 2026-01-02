@@ -22,7 +22,12 @@ class SaveProduct extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Create or update a WooCommerce product. Provide "id" to update, omit to create.', 'wordforge' );
+		return __(
+			'Create or update WooCommerce products. Omit "id" to create new; provide "id" to update existing. Supports name, ' .
+			'pricing (regular/sale), inventory, dimensions, categories, tags, images, and attributes. Product type ' .
+			'(simple/variable/grouped/external) is set on creation only.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string|array {

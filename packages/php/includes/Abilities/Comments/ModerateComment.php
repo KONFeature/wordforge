@@ -1,6 +1,6 @@
 <?php
 /**
- * Moderate Comment Ability - Approve, spam, or trash comments.
+ * Moderate Comment Ability - Approve, spam, trash, or reply to comments.
  *
  * @package WordForge
  */
@@ -27,9 +27,9 @@ class ModerateComment extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Moderate a WordPress comment by changing its status. Approve pending comments to make them visible, mark as ' .
-			'spam to move to spam queue, trash to soft-delete, or untrash/unspam to restore. Supports bulk operations on ' .
-			'multiple comments. Use this to manage comment moderation workflow and keep discussions clean.',
+			'Moderate WordPress comments: approve, spam, trash, restore, delete, or reply. Use "reply" action to post an ' .
+			'admin response to a comment. Supports bulk operations for status changes (not replies). Replies are auto-approved ' .
+			'and linked as child comments.',
 			'wordforge'
 		);
 	}
@@ -42,30 +42,31 @@ class ModerateComment extends AbstractAbility {
 		return array(
 			'type'       => 'object',
 			'required'   => array( 'action' ),
-			'oneOf'      => array(
-				array( 'required' => array( 'id' ) ),
-				array( 'required' => array( 'ids' ) ),
-			),
 			'properties' => array(
-				'id'     => array(
+				'id'      => array(
 					'type'        => 'integer',
-					'description' => 'Single comment ID to moderate.',
+					'description' => 'Comment ID to moderate or reply to.',
 					'minimum'     => 1,
 				),
-				'ids'    => array(
+				'ids'     => array(
 					'type'        => 'array',
 					'items'       => array(
 						'type'    => 'integer',
 						'minimum' => 1,
 					),
-					'description' => 'Array of comment IDs for bulk moderation.',
+					'description' => 'Comment IDs for bulk moderation (not for replies).',
 					'minItems'    => 1,
 					'maxItems'    => 100,
 				),
-				'action' => array(
+				'action'  => array(
 					'type'        => 'string',
-					'description' => 'Moderation action to perform.',
-					'enum'        => array( 'approve', 'unapprove', 'spam', 'unspam', 'trash', 'untrash', 'delete' ),
+					'description' => 'Moderation action: status change or "reply" to respond.',
+					'enum'        => array( 'approve', 'unapprove', 'spam', 'unspam', 'trash', 'untrash', 'delete', 'reply' ),
+				),
+				'content' => array(
+					'type'        => 'string',
+					'description' => 'Reply content (required when action is "reply"). Supports HTML.',
+					'minLength'   => 1,
 				),
 			),
 		);
@@ -77,7 +78,12 @@ class ModerateComment extends AbstractAbility {
 
 	public function execute( array $args ): array {
 		$action = $args['action'];
-		$ids    = ! empty( $args['ids'] ) ? array_map( 'absint', $args['ids'] ) : array( absint( $args['id'] ) );
+
+		if ( 'reply' === $action ) {
+			return $this->handle_reply( $args );
+		}
+
+		$ids = ! empty( $args['ids'] ) ? array_map( 'absint', $args['ids'] ) : array( absint( $args['id'] ) );
 
 		$results = array(
 			'success' => array(),
@@ -120,6 +126,57 @@ class ModerateComment extends AbstractAbility {
 		return $this->success( $results, $message );
 	}
 
+	private function handle_reply( array $args ): array {
+		if ( empty( $args['id'] ) ) {
+			return $this->error( 'Comment ID is required for replies.', 'missing_id' );
+		}
+
+		if ( empty( $args['content'] ) ) {
+			return $this->error( 'Reply content is required.', 'missing_content' );
+		}
+
+		$parent_id = absint( $args['id'] );
+		$parent    = get_comment( $parent_id );
+
+		if ( ! $parent ) {
+			return $this->error( 'Parent comment not found.', 'not_found' );
+		}
+
+		$current_user = wp_get_current_user();
+
+		$comment_data = array(
+			'comment_post_ID'      => $parent->comment_post_ID,
+			'comment_content'      => wp_kses_post( $args['content'] ),
+			'comment_parent'       => $parent_id,
+			'comment_author'       => $current_user->display_name,
+			'comment_author_email' => $current_user->user_email,
+			'comment_author_url'   => $current_user->user_url,
+			'user_id'              => $current_user->ID,
+			'comment_approved'     => 1,
+		);
+
+		$comment_id = wp_insert_comment( $comment_data );
+
+		if ( ! $comment_id ) {
+			return $this->error( 'Failed to create reply.', 'insert_failed' );
+		}
+
+		$comment = get_comment( $comment_id );
+
+		return $this->success(
+			array(
+				'id'         => $comment_id,
+				'post_id'    => (int) $parent->comment_post_ID,
+				'post_title' => get_the_title( $parent->comment_post_ID ),
+				'parent_id'  => $parent_id,
+				'content'    => $comment->comment_content,
+				'author'     => $comment->comment_author,
+				'date'       => $comment->comment_date,
+			),
+			'Reply posted successfully.'
+		);
+	}
+
 	private function perform_action( int $comment_id, string $action ): bool {
 		switch ( $action ) {
 			case 'approve':
@@ -157,6 +214,7 @@ class ModerateComment extends AbstractAbility {
 			'trash'     => 'trashed',
 			'untrash'   => 'restored',
 			'delete'    => 'permanently deleted',
+			'reply'     => 'replied to',
 		);
 		return $map[ $action ] ?? $action;
 	}

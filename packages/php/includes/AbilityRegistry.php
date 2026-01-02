@@ -10,9 +10,8 @@ use WordForge\Abilities\Content\SaveContent;
 use WordForge\Abilities\Content\DeleteContent;
 use WordForge\Abilities\Blocks\GetPageBlocks;
 use WordForge\Abilities\Blocks\UpdatePageBlocks;
-use WordForge\Abilities\Styles\GetGlobalStyles;
+use WordForge\Abilities\Styles\GetStyles;
 use WordForge\Abilities\Styles\UpdateGlobalStyles;
-use WordForge\Abilities\Styles\GetBlockStyles;
 use WordForge\Abilities\Media\ListMedia;
 use WordForge\Abilities\Media\GetMedia;
 use WordForge\Abilities\Media\UploadMedia;
@@ -36,7 +35,6 @@ use WordForge\Abilities\Users\GetUser;
 use WordForge\Abilities\Comments\ListComments;
 use WordForge\Abilities\Comments\GetComment;
 use WordForge\Abilities\Comments\ModerateComment;
-use WordForge\Abilities\Comments\ReplyToComment;
 use WordForge\Abilities\Settings\GetSettings;
 use WordForge\Abilities\Settings\UpdateSettings;
 use WordForge\Abilities\Analytics\GetSiteStats;
@@ -53,9 +51,8 @@ class AbilityRegistry {
 		'wordforge/delete-content'       => DeleteContent::class,
 		'wordforge/get-page-blocks'      => GetPageBlocks::class,
 		'wordforge/update-page-blocks'   => UpdatePageBlocks::class,
-		'wordforge/get-global-styles'    => GetGlobalStyles::class,
+		'wordforge/get-styles'           => GetStyles::class,
 		'wordforge/update-global-styles' => UpdateGlobalStyles::class,
-		'wordforge/get-block-styles'     => GetBlockStyles::class,
 	);
 
 	private const MEDIA_ABILITIES = array(
@@ -100,7 +97,6 @@ class AbilityRegistry {
 		'wordforge/list-comments'    => ListComments::class,
 		'wordforge/get-comment'      => GetComment::class,
 		'wordforge/moderate-comment' => ModerateComment::class,
-		'wordforge/reply-to-comment' => ReplyToComment::class,
 	);
 
 	private const SETTINGS_ABILITIES = array(

@@ -11,7 +11,11 @@ class ContentGeneratorPrompt extends AbstractPrompt {
 	}
 
 	public function get_description(): string {
-		return __( 'Generate a blog post, page, or article based on a topic, keywords, and desired tone.', 'wordforge' );
+		return __(
+			'Generate SEO-optimized content (blog posts, pages, landing pages, product descriptions) from a topic and keywords. ' .
+			'Outputs Gutenberg block format ready for WordPress. Customize tone, target audience, word count, and call-to-action.',
+			'wordforge'
+		);
 	}
 
 	public function get_input_schema(): array {

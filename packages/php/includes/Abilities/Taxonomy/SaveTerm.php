@@ -17,7 +17,11 @@ class SaveTerm extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __( 'Create or update a taxonomy term. Provide "id" to update, omit to create.', 'wordforge' );
+		return __(
+			'Create or update taxonomy terms (categories, tags, product categories, custom taxonomies). Omit "id" to create ' .
+			'new; provide "id" to update existing. Supports name, slug, description, and parent for hierarchical taxonomies.',
+			'wordforge'
+		);
 	}
 
 	public function get_capability(): string {

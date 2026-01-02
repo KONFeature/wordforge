@@ -24,10 +24,8 @@ class DeleteMedia extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Permanently delete a media file from the WordPress media library. This action deletes the physical file from the server ' .
-			'and removes all metadata. WARNING: This is irreversible and cannot be undone. If the media is used in posts, pages, or as ' .
-			'a featured image, those references will break. Media files are always permanently deleted (no trash). Use with caution - ' .
-			'consider checking where media is used before deletion.',
+			'Permanently delete a media file. Removes the physical file and all metadata. WARNING: Cannot be undone; ' .
+			'references in posts/pages will break. No trash for media - always permanent.',
 			'wordforge'
 		);
 	}
