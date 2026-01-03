@@ -41,18 +41,11 @@ export class AbilitiesApiClient {
     const path = `/abilities/${name}/run`;
     logger.debug(`Executing ability: ${name} [${method}]`, input);
 
-    switch (method) {
-      case 'GET': {
-        const query = input ? `?${this.serializeInput(input)}` : '';
-        return this.get(path + query);
-      }
-      case 'POST':
-        return this.post(path, input ? { input } : undefined);
-      case 'DELETE': {
-        const query = input ? `?${this.serializeInput(input)}` : '';
-        return this.delete(path + query);
-      }
+    if (method === 'GET') {
+      const query = input ? `?${this.serializeInput(input)}` : '';
+      return this.get(path + query);
     }
+    return this.post(path, input ? { input } : undefined);
   }
 
   /**
@@ -105,10 +98,6 @@ export class AbilitiesApiClient {
 
   private async post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>('POST', path, body);
-  }
-
-  private async delete<T>(path: string): Promise<T> {
-    return this.request<T>('DELETE', path);
   }
 
   private async request<T>(

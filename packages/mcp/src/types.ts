@@ -82,7 +82,7 @@ export interface WPError {
 /**
  * HTTP method to use for ability execution based on annotations.
  */
-export type HttpMethod = 'GET' | 'POST' | 'DELETE';
+export type HttpMethod = 'GET' | 'POST';
 
 export interface LoadedAbility {
   name: string;

@@ -95,7 +95,7 @@ describe('loadAbilities', () => {
 });
 
 describe('HTTP method detection', () => {
-  it('should use DELETE for destructive abilities', async () => {
+  it('should use POST for destructive abilities', async () => {
     const client = createMockClient([
       createAbility({
         name: 'wordforge/delete-thing',
@@ -104,7 +104,7 @@ describe('HTTP method detection', () => {
     ]);
     const loaded = await loadAbilities(client, []);
 
-    expect(loaded[0].httpMethod).toBe('DELETE');
+    expect(loaded[0].httpMethod).toBe('POST');
   });
 
   it('should use GET for readonly abilities', async () => {
@@ -134,7 +134,7 @@ describe('HTTP method detection', () => {
     expect(loaded[0].httpMethod).toBe('POST');
   });
 
-  it('should use GET for abilities without input schema', async () => {
+  it('should use POST for non-readonly abilities without input schema', async () => {
     const client = createMockClient([
       createAbility({
         name: 'wordforge/list-thing',
@@ -143,10 +143,10 @@ describe('HTTP method detection', () => {
     ]);
     const loaded = await loadAbilities(client, []);
 
-    expect(loaded[0].httpMethod).toBe('GET');
+    expect(loaded[0].httpMethod).toBe('POST');
   });
 
-  it('should prioritize destructive over readonly', async () => {
+  it('should use GET when readonly is true regardless of destructive flag', async () => {
     const client = createMockClient([
       createAbility({
         name: 'wordforge/thing',
@@ -155,7 +155,7 @@ describe('HTTP method detection', () => {
     ]);
     const loaded = await loadAbilities(client, []);
 
-    expect(loaded[0].httpMethod).toBe('DELETE');
+    expect(loaded[0].httpMethod).toBe('GET');
   });
 });
 

@@ -56,23 +56,8 @@ function getMcpType(ability: Ability): 'tool' | 'prompt' | 'resource' {
 }
 
 function getHttpMethod(ability: Ability): HttpMethod {
-  const annotations = ability.meta?.annotations;
-
-  if (annotations?.destructive) {
-    return 'DELETE';
-  }
-
-  if (annotations?.readonly) {
-    return 'GET';
-  }
-
-  const hasInput =
-    ability.input_schema &&
-    ability.input_schema.type === 'object' &&
-    ability.input_schema.properties &&
-    Object.keys(ability.input_schema.properties).length > 0;
-
-  return hasInput ? 'POST' : 'GET';
+  const isReadOnly = ability.meta?.annotations?.readonly;
+  return isReadOnly ? 'GET' : 'POST';
 }
 
 /**
@@ -110,8 +95,11 @@ function makeIntegersAcceptStrings(schema: JsonSchema): JsonSchema {
   if (madeUnion) {
     delete result.minimum;
     delete result.maximum;
+    // @ts-ignore
     delete result.exclusiveMinimum;
+    // @ts-ignore
     delete result.exclusiveMaximum;
+    // @ts-ignore
     delete result.multipleOf;
   }
 

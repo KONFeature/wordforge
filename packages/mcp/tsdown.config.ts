@@ -2,11 +2,11 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig([
   {
-    entry: ['./src/index.ts'],
+    entry: { 'wordforge-mcp': './src/index.ts' },
     format: ['cjs'],
     outDir: 'dist',
     platform: 'node',
-    target: 'node22',
+    target: 'node18',
     clean: true,
     sourcemap: false,
     minify: true,
@@ -20,7 +20,7 @@ export default defineConfig([
     outDir: '../php/assets/bin',
     platform: 'node',
     target: 'node18',
-    clean: false,
+    clean: true,
     sourcemap: false,
     minify: true,
     treeshake: true,

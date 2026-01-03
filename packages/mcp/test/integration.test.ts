@@ -123,7 +123,7 @@ describe('AbilityLoader', () => {
       false,
     );
     expect(
-      abilities.some((a) => a.name === 'wordforge/get-global-styles'),
+      abilities.some((a) => a.name === 'wordforge/get-styles'),
     ).toBe(true);
   });
 });
