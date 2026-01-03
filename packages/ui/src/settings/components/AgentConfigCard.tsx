@@ -208,7 +208,9 @@ export const AgentConfigCard = ({
                   providers={providers ?? []}
                   currentModel={currentModel}
                   isRecommended={isRecommended}
-                  onModelChange={(model) => handleModelChange(agent.id, model)}
+                  onModelChange={(model) =>
+                    model && handleModelChange(agent.id, model)
+                  }
                 />
               );
             })}
@@ -252,7 +254,7 @@ interface AgentItemProps {
   providers: Provider[];
   currentModel: SelectedModel | null;
   isRecommended: boolean;
-  onModelChange: (model: SelectedModel) => void;
+  onModelChange: (model: SelectedModel | null) => void;
 }
 
 const AgentItem = ({

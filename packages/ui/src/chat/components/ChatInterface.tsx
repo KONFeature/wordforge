@@ -1,12 +1,7 @@
 import { Notice } from '@wordpress/components';
-import {
-  Component,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from '@wordpress/element';
+import { Component, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import type { ReactNode } from 'react';
 import { useClient } from '../../lib/ClientProvider';
 import type { ChatState } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';

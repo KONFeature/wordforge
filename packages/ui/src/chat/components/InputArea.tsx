@@ -1,12 +1,8 @@
 import type { Agent, Provider } from '@opencode-ai/sdk/client';
 import { Button } from '@wordpress/components';
-import {
-  type KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import type { KeyboardEvent } from 'react';
 import { AgentSelector } from '../../components/AgentSelector';
 import {
   ModelSelector,
@@ -21,10 +17,10 @@ interface InputAreaProps {
   isBusy: boolean;
   providers: Provider[];
   selectedModel: SelectedModel | null;
-  onSelectModel: (model: SelectedModel) => void;
+  onSelectModel: (model: SelectedModel | null) => void;
   agents: Agent[];
   selectedAgent: string | null;
-  onSelectAgent: (agent: string) => void;
+  onSelectAgent: (agent: string | null) => void;
   placeholder?: string;
   compact?: boolean;
 }

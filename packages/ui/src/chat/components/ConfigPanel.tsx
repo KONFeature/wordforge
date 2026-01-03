@@ -51,7 +51,7 @@ const getMcpStatusLabel = (status: McpStatus): string => {
     case 'needs_client_registration':
       return __('Needs Registration', 'wordforge');
     default:
-      return status.status;
+      return 'Unknown';
   }
 };
 

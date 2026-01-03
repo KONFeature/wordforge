@@ -1,174 +1,303 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg, 24px);
+  gap: var(--wf-spacing-lg, 24px);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.introCard,
-.stepsCard,
-.settingsCard {
-  background: var(--color-background, #fff);
-  border-radius: 8px;
+/* Hero / Intro */
+.introCard {
+  background: linear-gradient(135deg, var(--wf-color-primary) 0%, #135e96 100%);
+  color: white;
+  border: none;
+  overflow: hidden;
+  position: relative;
 }
 
-.cardTitle {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text, #1e1e1e);
+.introContent {
+  padding: var(--wf-spacing-xl);
+  position: relative;
+  z-index: 1;
+}
+
+.introTitle {
+  color: white;
+  font-size: 24px;
+  margin: 0 0 var(--wf-spacing-md) 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .introText {
-  margin: 0 0 16px 0;
-  color: var(--color-text-secondary, #757575);
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
   line-height: 1.6;
+  max-width: 600px;
+  margin: 0;
 }
 
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
+/* OS Selector */
+.osSelector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: var(--wf-spacing-lg);
+  justify-content: center;
 }
 
-.statusOnline {
-  background: #d4edda;
-  color: #155724;
-}
-
-.statusOffline {
-  background: #f8f9fa;
-  color: #6c757d;
-}
-
-.statusChecking {
-  background: #e2e3e5;
-  color: #383d41;
+.osButton {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 2px solid var(--wf-color-border-light);
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--wf-color-text-muted);
+  transition: all 0.2s ease;
 }
 
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.osButton:hover {
+  border-color: var(--wf-color-primary);
+  color: var(--wf-color-primary);
 }
 
-.step {
+.osButtonActive {
+  background: var(--wf-color-bg-selected);
+  border-color: var(--wf-color-primary);
+  color: var(--wf-color-primary);
+  box-shadow: 0 0 0 1px var(--wf-color-primary);
+}
+
+/* Wizard Steps */
+.wizardStep {
+  background: white;
+  border: 1px solid var(--wf-color-border-light);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.wizardStepActive {
+  border-color: var(--wf-color-primary);
+  box-shadow: var(--wf-shadow-md);
+}
+
+.wizardStepCompleted {
+  border-color: var(--wf-color-success);
+}
+
+.stepHeader {
+  padding: 16px 20px;
   display: flex;
+  align-items: center;
   gap: 16px;
+  background: white;
+  cursor: pointer;
+  user-select: none;
 }
 
-.stepNumber {
-  flex-shrink: 0;
+.stepHeaderDisabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.stepIndicator {
   width: 32px;
   height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #3858e9;
-  color: white;
-  border-radius: 50%;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
+  transition: all 0.3s ease;
 }
 
-.stepContent {
-  flex: 1;
+.wizardStepActive .stepIndicator {
+  background: var(--wf-color-primary);
+  color: white;
+}
+
+.wizardStepCompleted .stepIndicator {
+  background: var(--wf-color-success);
+  color: white;
+}
+
+.wizardStep:not(.wizardStepActive):not(.wizardStepCompleted) .stepIndicator {
+  background: var(--wf-color-bg-alt);
+  color: var(--wf-color-text-muted);
+  border: 1px solid var(--wf-color-border);
 }
 
 .stepTitle {
-  margin: 0 0 8px 0;
-  font-size: 15px;
+  flex: 1;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--color-text, #1e1e1e);
+  margin: 0;
+  color: var(--wf-color-text);
+}
+
+.stepCheck {
+  color: var(--wf-color-success);
+}
+
+.stepBody {
+  padding: 0 20px 24px 68px; /* Align with title */
+  border-top: 1px solid var(--wf-color-border-light);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .stepDescription {
-  margin: 0 0 12px 0;
-  color: var(--color-text-secondary, #757575);
-  font-size: 14px;
-  line-height: 1.5;
+  margin: 16px 0;
+  color: var(--wf-color-text-secondary);
+  line-height: 1.6;
 }
 
-.stepNote {
-  margin: 8px 0 0 0;
-  color: var(--color-text-secondary, #757575);
-  font-size: 13px;
-  font-style: italic;
-}
-
-.externalLink {
-  display: inline-flex;
+/* Actions Area */
+.stepActions {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wf-color-border-light);
+}
+
+/* Code Blocks */
+.codeBlock {
+  background: #1e1e1e;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.codeContent {
+  color: #d4d4d4;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.copyButton {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  color: white !important;
+}
+
+.copyButton:hover {
+  opacity: 1;
+}
+
+/* Status Banner */
+.statusBanner {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.statusBannerOffline {
+  background: var(--wf-color-bg-alt);
+  border: 1px dashed var(--wf-color-border);
+}
+
+.statusBannerOnline {
+  background: var(--wf-color-success-bg);
+  border: 1px solid var(--wf-color-success);
+}
+
+.statusText {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  color: #3858e9;
-  font-weight: 500;
-  text-decoration: none;
 }
 
-.externalLink:hover {
+.statusTitle {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.statusSubtitle {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Runtime Toggle */
+.advancedToggle {
+  background: none;
+  border: none;
+  color: var(--wf-color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
   text-decoration: underline;
-}
-
-.downloadButton {
   margin-bottom: 12px;
 }
 
-.downloadButton svg {
-  margin-right: 8px;
+.runtimeConfig {
+  background: var(--wf-color-bg-alt);
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
 }
 
-.securityNote {
+/* Troubleshooting */
+.troubleshooting {
+  margin-top: 32px;
+}
+
+.troubleDetails {
+  padding: 16px;
+  background: var(--wf-color-bg-alt);
+  border-radius: 8px;
   margin-top: 12px;
-  font-size: 13px;
 }
 
-.securityNote p {
-  margin: 0;
-}
-
-.commandList {
+.troubleList {
   margin: 0;
   padding-left: 20px;
-  color: var(--color-text-secondary, #757575);
-  font-size: 14px;
-  line-height: 2;
 }
 
-.commandList code {
-  background: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 13px;
+.troubleList li {
+  margin-bottom: 8px;
+  color: var(--wf-color-text-secondary);
 }
 
-.command {
-  display: block;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-family: monospace;
-  font-size: 13px;
-  margin: 8px 0;
-  overflow-x: auto;
-}
+@media (max-width: 600px) {
+  .stepBody {
+    padding: 0 16px 20px 16px;
+  }
 
-.portInput {
-  max-width: 200px;
-}
-
-.checkButton {
-  margin-top: 12px;
-}
-
-.checkButton svg {
-  margin-right: 8px;
+  .statusBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

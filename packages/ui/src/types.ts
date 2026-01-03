@@ -1,4 +1,5 @@
 import type { Message, Part } from '@opencode-ai/sdk';
+import type { ScopedContext } from './chat/hooks/useContextInjection';
 
 export type {
   Session,
@@ -62,11 +63,7 @@ export interface WordForgeWidgetConfig {
   nonce: string;
   localServerPort?: number;
   localServerEnabled?: boolean;
-  context?: {
-    type: string;
-    postType?: string;
-    postId?: number;
-  };
+  context?: ScopedContext;
 }
 
 export interface ConfiguredProvider {

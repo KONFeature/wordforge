@@ -28,7 +28,7 @@ export const CompactChat = ({
 
   const chat = useChat({ context });
   const search = useMessageSearch(chat.messages);
-  const { exportConversation } = useExport(chat.session, chat.messages);
+  const { exportConversation } = useExport(chat.session ?? null, chat.messages);
 
   const handleDeleteSession = async () => {
     await chat.deleteSession();

@@ -86,7 +86,6 @@ export const RevertedHistory = ({
               <UserMessage message={turn.userMessage} />
               <AssistantMessage
                 messages={turn.assistantMessages}
-                isComplete={turn.isComplete}
                 onOpenSession={onOpenSession}
               />
             </div>

@@ -38,7 +38,6 @@ const SessionTurn = ({ turn, onRevert, onOpenSession }: SessionTurnProps) => {
       <UserMessage message={turn.userMessage} onRevert={onRevert} />
       <AssistantMessage
         messages={turn.assistantMessages}
-        isComplete={turn.isComplete}
         onOpenSession={onOpenSession}
       />
     </div>

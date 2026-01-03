@@ -41,7 +41,7 @@ export const ChatApp = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const search = useMessageSearch(chat.messages);
-  const { exportConversation } = useExport(chat.session, chat.messages);
+  const { exportConversation } = useExport(chat.session ?? null, chat.messages);
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 

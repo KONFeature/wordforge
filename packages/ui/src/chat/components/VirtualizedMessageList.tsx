@@ -68,7 +68,10 @@ export const VirtualizedMessageList = ({
 
   useEffect(() => {
     if (turns.length > MIN_VIRTUALIZATION_THRESHOLD && listRef.current) {
-      listRef.current.scrollToItem(turns.length - 1);
+      listRef.current.scrollToRow({
+        behavior: 'smooth',
+        index: turns.length - 1,
+      });
     } else {
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -138,14 +141,14 @@ export const VirtualizedMessageList = ({
   return (
     <div className={styles.root}>
       <List
-        ref={listRef}
         height={height}
         itemCount={turns.length}
         itemSize={ESTIMATED_ROW_HEIGHT}
         width="100%"
         className={styles.virtualList}
-      >
-        {({ index, style }) => (
+        // @ts-ignore idk why this type is fcked up
+        listRef={listRef}
+        rowComponent={({ index, style }) => (
           <div style={style}>
             <TurnRow
               turn={turns[index]}
@@ -154,7 +157,7 @@ export const VirtualizedMessageList = ({
             />
           </div>
         )}
-      </List>
+      />
       {isThinking && <ThinkingIndicator />}
     </div>
   );

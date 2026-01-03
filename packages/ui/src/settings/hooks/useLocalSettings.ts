@@ -51,6 +51,7 @@ export const useDownloadLocalConfig = () => {
     mutationFn: async (runtime: RuntimePreference): Promise<void> => {
       const response = await apiFetch<Response>({
         path: `/wordforge/v1/opencode/local-config?runtime=${runtime}`,
+        // @ts-ignore wordpress api fetch enforce parse, we need it to false for file fetching
         parse: false,
       });
 
