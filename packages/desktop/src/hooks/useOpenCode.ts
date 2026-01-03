@@ -172,7 +172,10 @@ export function useOpenCode(): UseOpenCodeReturn {
       await openViewMutation.mutateAsync();
     },
     refresh: () => {
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: openCodeKeys.all,
+        exact: false,
+      });
     },
   };
 }

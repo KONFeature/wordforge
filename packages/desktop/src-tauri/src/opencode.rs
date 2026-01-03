@@ -66,10 +66,11 @@ pub struct OpenCodeManager {
 
 impl OpenCodeManager {
     pub fn new(app: AppHandle) -> Self {
-        let install_dir = dirs::data_local_dir()
+        let base_dir = dirs::data_local_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("wordforge")
-            .join("opencode");
+            .join("wordforge");
+        
+        let install_dir = base_dir.join("opencode");
 
         Self {
             app,
@@ -78,6 +79,12 @@ impl OpenCodeManager {
             port: None,
             install_dir,
         }
+    }
+    
+    fn isolated_state_dir(&self) -> PathBuf {
+        self.install_dir.parent()
+            .unwrap_or(&self.install_dir)
+            .join("opencode-state")
     }
 
     pub async fn get_status(&self) -> Status {
@@ -174,6 +181,13 @@ impl OpenCodeManager {
         cmd.env("OPENCODE_AUTO_SHARE", "false");
         cmd.env("OPENCODE_DISABLE_AUTOUPDATE", "true");
         cmd.env("OPENCODE_DISABLE_LSP_DOWNLOAD", "true");
+        cmd.env("OPENCODE_FAKE_VCS", "git");
+        
+        let state_dir = self.isolated_state_dir();
+        cmd.env("XDG_DATA_HOME", state_dir.join("data").to_string_lossy().to_string());
+        cmd.env("XDG_CONFIG_HOME", state_dir.join("config").to_string_lossy().to_string());
+        cmd.env("XDG_STATE_HOME", state_dir.join("state").to_string_lossy().to_string());
+        cmd.env("XDG_CACHE_HOME", state_dir.join("cache").to_string_lossy().to_string());
         
         if let Some(ref dir) = project_dir {
             cmd.current_dir(dir);

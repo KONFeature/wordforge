@@ -363,13 +363,14 @@ body {
 
 .site-dashboard {
   flex: 1;
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
+  overflow-y: auto;
 }
 
 .site-info-card {

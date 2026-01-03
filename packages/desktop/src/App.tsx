@@ -76,11 +76,16 @@ function App() {
   };
 
   const renderContent = () => {
-    if (viewMode === 'opencode' && opencode.status === 'running') {
+    if (
+      viewMode === 'opencode' &&
+      opencode.status === 'running' &&
+      activeSite
+    ) {
       return (
         <OpenCodeView
           opencode={opencode}
-          siteName={activeSite?.name || 'Unknown Site'}
+          siteName={activeSite.name}
+          projectDir={activeSite.project_dir}
           onBack={() => setViewMode('dashboard')}
         />
       );

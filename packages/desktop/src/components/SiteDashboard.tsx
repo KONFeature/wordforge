@@ -7,7 +7,9 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import { useSiteStats } from '../hooks/useSiteStats';
 import type { WordPressSite } from '../types';
+import { SiteStats } from './SiteStats';
 
 interface SiteDashboardProps {
   site: WordPressSite;
@@ -22,6 +24,8 @@ export function SiteDashboard({
   onRemove,
   onOpenFolder,
 }: SiteDashboardProps) {
+  const { data: stats, isLoading: isStatsLoading } = useSiteStats(site);
+
   const isInstalled = opencode.status !== 'not_installed';
   const isRunning = opencode.status === 'running';
   const isStarting = opencode.status === 'starting';
@@ -139,23 +143,7 @@ export function SiteDashboard({
         )}
       </div>
 
-      <div className="features-grid">
-        <div className="feature-card">
-          <div className="feature-icon">📝</div>
-          <h3>Content</h3>
-          <p>Create and edit posts with AI assistance</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">🎨</div>
-          <h3>Design</h3>
-          <p>Update theme styles and templates</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">🛒</div>
-          <h3>Commerce</h3>
-          <p>Manage products and orders</p>
-        </div>
-      </div>
+      <SiteStats stats={stats} isLoading={isStatsLoading} />
     </div>
   );
 }
