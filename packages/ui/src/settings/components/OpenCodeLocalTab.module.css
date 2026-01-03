@@ -6,35 +6,11 @@
   margin: 0 auto;
 }
 
-/* Hero / Intro */
-.introCard {
-  background: linear-gradient(135deg, var(--wf-color-primary) 0%, #135e96 100%);
-  color: white;
-  border: none;
-  overflow: hidden;
-  position: relative;
-}
-
-.introContent {
-  padding: var(--wf-spacing-xl);
-  position: relative;
-  z-index: 1;
-}
-
-.introTitle {
-  color: white;
-  font-size: 24px;
-  margin: 0 0 var(--wf-spacing-md) 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
+/* Intro */
 .introText {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
+  color: var(--wf-color-text-muted);
+  font-size: 14px;
   line-height: 1.6;
-  max-width: 600px;
   margin: 0;
 }
 
@@ -169,6 +145,29 @@
   line-height: 1.6;
 }
 
+.terminalInstructions {
+  margin-bottom: 8px;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 3px 6px;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--wf-color-text);
+  background: var(--wf-color-bg-alt);
+  border: 1px solid var(--wf-color-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--wf-color-border);
+}
+
+.enterHint {
+  margin: 12px 0 0 0;
+  font-size: 13px;
+  color: var(--wf-color-text-muted);
+}
+
 /* Actions Area */
 .stepActions {
   display: flex;
@@ -250,23 +249,38 @@
   opacity: 0.8;
 }
 
-/* Runtime Toggle */
+.advancedSection {
+  margin-top: 20px;
+}
+
 .advancedToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   color: var(--wf-color-text-muted);
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
   padding: 0;
-  text-decoration: underline;
-  margin-bottom: 12px;
 }
 
-.runtimeConfig {
+.advancedToggle:hover {
+  color: var(--wf-color-primary);
+}
+
+.advancedOptions {
   background: var(--wf-color-bg-alt);
   padding: 16px;
   border-radius: 6px;
-  margin-bottom: 16px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.advancedOptions .components-base-control {
+  margin: 0;
 }
 
 /* Troubleshooting */
