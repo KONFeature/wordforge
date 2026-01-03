@@ -93,6 +93,7 @@ function init(): void {
 	new Admin\MenuManager();
 	new Admin\SettingsPage();
 	new Admin\OpenCodeController();
+	new Admin\DesktopConnectionController();
 	new Admin\WidgetManager();
 	new Admin\EditorSidebarManager();
 

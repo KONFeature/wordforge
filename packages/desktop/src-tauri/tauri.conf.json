@@ -22,5 +22,11 @@
   "bundle": {
     "active": true
   },
-  "plugins": {}
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["wordforge"]
+      }
+    }
+  }
 }

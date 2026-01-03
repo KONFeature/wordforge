@@ -146,7 +146,11 @@ impl OpenCodeManager {
         Ok(())
     }
 
-    pub async fn start(&mut self) -> Result<u16, Error> {
+    pub async fn start(
+        &mut self, 
+        cors_origin: Option<String>,
+        project_dir: Option<std::path::PathBuf>,
+    ) -> Result<u16, Error> {
         if self.process.is_some() {
             return Err(Error::AlreadyRunning);
         }
@@ -159,13 +163,24 @@ impl OpenCodeManager {
         info!("Starting OpenCode on port {}", port);
 
         let binary = self.binary_path();
-        let mut child = Command::new(&binary)
-            .args(["serve", "--port", &port.to_string()])
-            .env("OPENCODE_CLIENT", "wordforge-desktop")
-            .stdout(Stdio::piped())
+        let mut cmd = Command::new(&binary);
+        cmd.args(["serve", "--port", &port.to_string()]);
+        
+        if let Some(cors) = cors_origin {
+            cmd.args(["--cors", &cors]);
+        }
+        
+        cmd.env("OPENCODE_CLIENT", "wordforge-desktop");
+        
+        if let Some(dir) = project_dir {
+            cmd.current_dir(&dir);
+        }
+        
+        cmd.stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .kill_on_drop(true)
-            .spawn()?;
+            .kill_on_drop(true);
+
+        let mut child = cmd.spawn()?;
 
         self.spawn_log_handler(&mut child);
         self.process = Some(child);

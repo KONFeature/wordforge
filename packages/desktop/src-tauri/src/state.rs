@@ -1,4 +1,5 @@
 use crate::opencode::{OpenCodeManager, Status};
+use std::path::PathBuf;
 use tauri::AppHandle;
 
 pub struct AppState {
@@ -28,8 +29,12 @@ impl AppState {
         self.opencode.download(app).await
     }
 
-    pub async fn start_opencode(&mut self) -> Result<u16, crate::opencode::Error> {
-        self.opencode.start().await
+    pub async fn start_opencode_with_config(
+        &mut self, 
+        cors_origin: Option<String>,
+        project_dir: Option<PathBuf>,
+    ) -> Result<u16, crate::opencode::Error> {
+        self.opencode.start(cors_origin, project_dir).await
     }
 
     pub async fn stop_opencode(&mut self) -> Result<(), crate::opencode::Error> {

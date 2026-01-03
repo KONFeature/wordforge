@@ -1,8 +1,9 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-type Status =
+export type OpenCodeStatus =
   | 'not_installed'
   | 'stopped'
   | 'starting'
@@ -14,8 +15,42 @@ interface DownloadProgress {
   percent: number;
 }
 
+interface OpenCodeState {
+  status: OpenCodeStatus;
+  installedVersion: string | null;
+  latestVersion: string | null;
+  port: number | null;
+  updateAvailable: boolean;
+}
+
+const openCodeKeys = {
+  all: ['opencode'] as const,
+  status: () => [...openCodeKeys.all, 'status'] as const,
+};
+
+async function fetchOpenCodeState(): Promise<OpenCodeState> {
+  const [status, installedVersion, latestVersion, port, updateAvailable] =
+    await Promise.all([
+      invoke<OpenCodeStatus>('get_status').catch(
+        () => 'stopped' as OpenCodeStatus,
+      ),
+      invoke<string | null>('get_installed_version').catch(() => null),
+      invoke<string>('get_latest_version').catch(() => null),
+      invoke<number | null>('get_opencode_port').catch(() => null),
+      invoke<boolean>('check_update_available').catch(() => false),
+    ]);
+
+  return {
+    status,
+    installedVersion,
+    latestVersion,
+    port,
+    updateAvailable,
+  };
+}
+
 export interface UseOpenCodeReturn {
-  status: Status;
+  status: OpenCodeStatus;
   installedVersion: string | null;
   latestVersion: string | null;
   updateAvailable: boolean;
@@ -27,135 +62,117 @@ export interface UseOpenCodeReturn {
   start: () => Promise<void>;
   stop: () => Promise<void>;
   openView: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: () => void;
 }
 
 export function useOpenCode(): UseOpenCodeReturn {
-  const [status, setStatus] = useState<Status>('not_installed');
-  const [installedVersion, setInstalledVersion] = useState<string | null>(null);
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [port, setPort] = useState<number | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const queryClient = useQueryClient();
   const [downloadProgress, setDownloadProgress] =
     useState<DownloadProgress | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      const [currentStatus, installed, latest, currentPort, hasUpdate] =
-        await Promise.all([
-          invoke<Status>('get_status'),
-          invoke<string | null>('get_installed_version'),
-          invoke<string>('get_latest_version').catch(() => null),
-          invoke<number | null>('get_opencode_port'),
-          invoke<boolean>('check_update_available').catch(() => false),
-        ]);
+  const stateQuery = useQuery({
+    queryKey: openCodeKeys.status(),
+    queryFn: fetchOpenCodeState,
+    refetchInterval: 5000,
+  });
 
-      setStatus(currentStatus);
-      setInstalledVersion(installed);
-      setLatestVersion(latest);
-      setPort(currentPort);
-      setUpdateAvailable(hasUpdate);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, []);
+  const downloadMutation = useMutation({
+    mutationFn: async () => {
+      setDownloadProgress({ message: 'Starting download...', percent: 0 });
+      setMutationError(null);
+      await invoke('download_opencode');
+    },
+    onSuccess: () => {
+      setDownloadProgress(null);
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+    onError: (error) => {
+      setDownloadProgress(null);
+      setMutationError(error instanceof Error ? error.message : String(error));
+    },
+  });
+
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      setMutationError(null);
+      const port = await invoke<number>('start_opencode');
+      return port;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+    onError: (error) => {
+      setMutationError(error instanceof Error ? error.message : String(error));
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+  });
+
+  const stopMutation = useMutation({
+    mutationFn: async () => {
+      setMutationError(null);
+      await invoke('stop_opencode');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+    onError: (error) => {
+      setMutationError(error instanceof Error ? error.message : String(error));
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+  });
+
+  const openViewMutation = useMutation({
+    mutationFn: async () => {
+      await invoke('open_opencode_view');
+    },
+    onError: (error) => {
+      setMutationError(error instanceof Error ? error.message : String(error));
+    },
+  });
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    const unlistenProgress = listen<DownloadProgress>(
+    const unlistenPromise = listen<DownloadProgress>(
       'opencode:download-progress',
       (event) => {
         setDownloadProgress(event.payload);
       },
     );
 
-    const unlistenLog = listen<string>('opencode:log', (event) => {
-      console.log('[OpenCode]', event.payload);
-    });
-
-    const unlistenError = listen<string>('opencode:error', (event) => {
-      console.error('[OpenCode]', event.payload);
-    });
-
     return () => {
-      unlistenProgress.then((fn) => fn());
-      unlistenLog.then((fn) => fn());
-      unlistenError.then((fn) => fn());
+      unlistenPromise.then((fn) => fn());
     };
   }, []);
 
-  const download = useCallback(async () => {
-    setIsDownloading(true);
-    setDownloadProgress({ message: 'Starting download...', percent: 0 });
-    setError(null);
-
-    try {
-      await invoke('download_opencode');
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsDownloading(false);
-      setDownloadProgress(null);
-    }
-  }, [refresh]);
-
-  const start = useCallback(async () => {
-    setError(null);
-    setStatus('starting');
-
-    try {
-      const newPort = await invoke<number>('start_opencode');
-      setPort(newPort);
-      setStatus('running');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await refresh();
-    }
-  }, [refresh]);
-
-  const stop = useCallback(async () => {
-    setError(null);
-
-    try {
-      await invoke('stop_opencode');
-      setPort(null);
-      setStatus('stopped');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await refresh();
-    }
-  }, [refresh]);
-
-  const openView = useCallback(async () => {
-    setError(null);
-
-    try {
-      await invoke('open_opencode_view');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, []);
+  const state = stateQuery.data;
+  const isStarting = startMutation.isPending;
+  const computedStatus: OpenCodeStatus = isStarting
+    ? 'starting'
+    : (state?.status ?? 'not_installed');
 
   return {
-    status,
-    installedVersion,
-    latestVersion,
-    updateAvailable,
-    port,
-    isDownloading,
+    status: computedStatus,
+    installedVersion: state?.installedVersion ?? null,
+    latestVersion: state?.latestVersion ?? null,
+    updateAvailable: state?.updateAvailable ?? false,
+    port: state?.port ?? null,
+    isDownloading: downloadMutation.isPending,
     downloadProgress,
-    error,
-    download,
-    start,
-    stop,
-    openView,
-    refresh,
+    error: mutationError,
+    download: async () => {
+      await downloadMutation.mutateAsync();
+    },
+    start: async () => {
+      await startMutation.mutateAsync();
+    },
+    stop: async () => {
+      await stopMutation.mutateAsync();
+    },
+    openView: async () => {
+      await openViewMutation.mutateAsync();
+    },
+    refresh: () => {
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
   };
 }
