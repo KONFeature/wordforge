@@ -1,9 +1,11 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use thiserror::Error;
 use uuid::Uuid;
+use zip::ZipArchive;
 
 #[derive(Debug, Error)]
 pub enum SiteError {
@@ -13,12 +15,18 @@ pub enum SiteError {
     Json(#[from] serde_json::Error),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("ZIP error: {0}")]
+    Zip(#[from] zip::result::ZipError),
     #[error("Token exchange failed: {0}")]
     TokenExchange(String),
+    #[error("Config download failed: {0}")]
+    ConfigDownload(String),
     #[error("Site not found: {0}")]
     NotFound(String),
     #[error("Invalid URL: {0}")]
     InvalidUrl(String),
+    #[error("API error: {0}")]
+    ApiError(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,19 +45,11 @@ pub struct WordPressSite {
     pub last_used_at: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SiteConfig {
-    pub opencode: serde_json::Value,
-    pub agent_files: HashMap<String, String>,
-    pub context: serde_json::Value,
-}
-
 #[derive(Debug, Deserialize)]
 struct ExchangeResponse {
     success: bool,
     credentials: Credentials,
     site: SiteInfo,
-    config: SiteConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +76,7 @@ struct SiteInfo {
 pub struct SitesStore {
     pub sites: HashMap<String, WordPressSite>,
     pub active_site_id: Option<String>,
+    pub device_id: Option<String>,
 }
 
 pub struct SiteManager {
@@ -89,7 +90,7 @@ impl SiteManager {
         let store_path = dirs::data_local_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("wordforge")
-            .join("sites.json");
+            .join(".sites.json");
 
         let store = Self::load_store(&store_path).unwrap_or_default();
 
@@ -115,21 +116,29 @@ impl SiteManager {
     }
 
     pub async fn exchange_token(&mut self, site_url: &str, token: &str) -> Result<WordPressSite, SiteError> {
-        let exchange_url = format!("{}/wp-json/wordforge/v1/desktop/exchange", site_url.trim_end_matches('/'));
+        let base_url = site_url.trim_end_matches('/');
+        let exchange_url = format!("{}/wp-json/wordforge/v1/desktop/exchange", base_url);
+        
+        tracing::info!("Exchanging token with: {}", exchange_url);
         
         let response = self.client
             .post(&exchange_url)
+            .header("Content-Type", "application/json")
             .json(&serde_json::json!({ "token": token }))
             .send()
             .await?;
 
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response.text().await.unwrap_or_default();
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        
+        tracing::info!("Exchange response status: {}", status);
+
+        if !status.is_success() {
             return Err(SiteError::TokenExchange(format!("HTTP {}: {}", status, body)));
         }
 
-        let exchange_response: ExchangeResponse = response.json().await?;
+        let exchange_response: ExchangeResponse = serde_json::from_str(&body)
+            .map_err(|e| SiteError::TokenExchange(format!("Failed to parse response: {}. Body: {}", e, &body[..body.len().min(200)])))?;
 
         if !exchange_response.success {
             return Err(SiteError::TokenExchange("Exchange failed".into()));
@@ -142,7 +151,12 @@ impl SiteManager {
             .as_secs();
 
         let project_dir = self.create_project_dir(&exchange_response.site.name)?;
-        self.write_config_files(&project_dir, &exchange_response.config)?;
+        
+        self.download_and_extract_config(
+            base_url,
+            &exchange_response.credentials.auth,
+            &project_dir,
+        ).await?;
 
         let site = WordPressSite {
             id: site_id.clone(),
@@ -166,49 +180,123 @@ impl SiteManager {
         Ok(site)
     }
 
-    fn create_project_dir(&self, site_name: &str) -> Result<PathBuf, SiteError> {
-        let sanitized = site_name
-            .chars()
-            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
-            .collect::<String>()
-            .to_lowercase();
+    pub async fn sync_port_to_wordpress(&self, site: &WordPressSite, port: u16, device_id: &str) -> Result<(), SiteError> {
+        let settings_url = format!("{}/wp-json/wordforge/v1/opencode/local-settings", site.url.trim_end_matches('/'));
+        
+        tracing::info!("Syncing port {} (device: {}) to WordPress", port, device_id);
 
-        let base_dir = dirs::document_dir()
-            .unwrap_or_else(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")))
-            .join("WordForge")
+        let response = self.client
+            .post(&settings_url)
+            .header("Authorization", format!("Basic {}", site.auth))
+            .header("Content-Type", "application/json")
+            .json(&serde_json::json!({
+                "port": port,
+                "device_id": device_id,
+                "enabled": true
+            }))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(SiteError::ApiError(format!("Failed to sync port: {}", body)));
+        }
+
+        tracing::info!("Port synced successfully");
+        Ok(())
+    }
+
+    async fn download_and_extract_config(
+        &self,
+        base_url: &str,
+        auth: &str,
+        project_dir: &PathBuf,
+    ) -> Result<(), SiteError> {
+        let config_url = format!("{}/wp-json/wordforge/v1/opencode/local-config?runtime=none", base_url);
+        
+        tracing::info!("Downloading config from: {}", config_url);
+
+        let response = self.client
+            .get(&config_url)
+            .header("Authorization", format!("Basic {}", auth))
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(SiteError::ConfigDownload(format!("HTTP {}: {}", status, body)));
+        }
+
+        let bytes = response.bytes().await?;
+        tracing::info!("Downloaded {} bytes", bytes.len());
+
+        let cursor = std::io::Cursor::new(bytes.as_ref());
+        let mut archive = ZipArchive::new(cursor)?;
+
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i)?;
+            let outpath = project_dir.join(file.name());
+
+            if file.name().ends_with('/') {
+                std::fs::create_dir_all(&outpath)?;
+            } else {
+                if let Some(parent) = outpath.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                let mut outfile = std::fs::File::create(&outpath)?;
+                let mut contents = Vec::new();
+                file.read_to_end(&mut contents)?;
+                outfile.write_all(&contents)?;
+            }
+
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if let Some(mode) = file.unix_mode() {
+                    std::fs::set_permissions(&outpath, std::fs::Permissions::from_mode(mode))?;
+                }
+            }
+        }
+
+        tracing::info!("Extracted config to: {:?}", project_dir);
+        Ok(())
+    }
+
+    fn create_project_dir(&self, site_name: &str) -> Result<PathBuf, SiteError> {
+        let sanitized = Self::sanitize_site_name(site_name);
+
+        let base_dir = dirs::data_local_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("wordforge")
+            .join("sites")
             .join(&sanitized);
 
         std::fs::create_dir_all(&base_dir)?;
         Ok(base_dir)
     }
 
-    fn write_config_files(&self, project_dir: &PathBuf, config: &SiteConfig) -> Result<(), SiteError> {
-        let opencode_dir = project_dir.join(".opencode");
-        let agent_dir = opencode_dir.join("agent");
-        let context_dir = opencode_dir.join("context");
+    fn sanitize_site_name(site_name: &str) -> String {
+        site_name
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
+            .collect::<String>()
+            .to_lowercase()
+    }
 
-        std::fs::create_dir_all(&agent_dir)?;
-        std::fs::create_dir_all(&context_dir)?;
+    pub fn get_site_folder(&self, id: &str) -> Option<PathBuf> {
+        self.store.sites.get(id).map(|site| site.project_dir.clone())
+    }
 
-        let opencode_json = serde_json::to_string_pretty(&config.opencode)?;
-        std::fs::write(project_dir.join("opencode.json"), opencode_json)?;
-
-        for (filename, content) in &config.agent_files {
-            let file_path = if filename.starts_with("context/") {
-                opencode_dir.join(filename)
-            } else if filename.starts_with("agent/") {
-                opencode_dir.join(filename)
-            } else {
-                project_dir.join(filename)
-            };
-
-            if let Some(parent) = file_path.parent() {
-                std::fs::create_dir_all(parent)?;
-            }
-            std::fs::write(file_path, content)?;
+    pub fn get_device_id(&mut self) -> String {
+        if let Some(id) = &self.store.device_id {
+            return id.clone();
         }
-
-        Ok(())
+        
+        let device_id = Uuid::new_v4().to_string();
+        self.store.device_id = Some(device_id.clone());
+        self.save_store().ok();
+        device_id
     }
 
     pub fn list_sites(&self) -> Vec<&WordPressSite> {

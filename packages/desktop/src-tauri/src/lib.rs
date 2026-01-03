@@ -4,6 +4,7 @@ mod state;
 
 use sites::{SiteManager, WordPressSite};
 use state::AppState;
+use std::collections::HashSet;
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tauri_plugin_deep_link::DeepLinkExt;
@@ -18,7 +19,21 @@ struct DeepLinkPayload {
     name: String,
 }
 
+struct ProcessedTokens {
+    tokens: HashSet<String>,
+}
 
+impl ProcessedTokens {
+    fn new() -> Self {
+        Self {
+            tokens: HashSet::new(),
+        }
+    }
+
+    fn is_new(&mut self, token: &str) -> bool {
+        self.tokens.insert(token.to_string())
+    }
+}
 
 #[tauri::command]
 async fn get_status(state: tauri::State<'_, Arc<Mutex<AppState>>>) -> Result<opencode::Status, String> {
@@ -57,17 +72,23 @@ async fn start_opencode(
     site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
 ) -> Result<u16, String> {
     let mut state = state.lock().await;
-    let site_manager = site_manager.lock().await;
+    let mut site_manager = site_manager.lock().await;
     
-    let cors_origin = site_manager
-        .get_active_site()
-        .map(|s| s.url.clone());
+    let device_id = site_manager.get_device_id();
+    let active_site = site_manager.get_active_site().cloned();
     
-    let project_dir = site_manager
-        .get_active_site()
-        .map(|s| s.project_dir.clone());
+    let cors_origin = active_site.as_ref().map(|s| s.url.clone());
+    let project_dir = active_site.as_ref().map(|s| s.project_dir.clone());
     
-    state.start_opencode_with_config(cors_origin, project_dir).await.map_err(|e| e.to_string())
+    let port = state.start_opencode_with_config(cors_origin, project_dir).await.map_err(|e| e.to_string())?;
+    
+    if let Some(site) = active_site {
+        if let Err(e) = site_manager.sync_port_to_wordpress(&site, port, &device_id).await {
+            tracing::warn!("Failed to sync port to WordPress: {}", e);
+        }
+    }
+    
+    Ok(port)
 }
 
 #[tauri::command]
@@ -154,6 +175,18 @@ async fn remove_site(
 }
 
 #[tauri::command]
+async fn open_site_folder(
+    site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
+    id: String,
+) -> Result<(), String> {
+    let manager = site_manager.lock().await;
+    let folder = manager.get_site_folder(&id)
+        .ok_or_else(|| "Site not found".to_string())?;
+    
+    open::that(&folder).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn connect_site(
     site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
     site_url: String,
@@ -163,13 +196,21 @@ async fn connect_site(
     manager.exchange_token(&site_url, &token).await.map_err(|e| e.to_string())
 }
 
-fn handle_deep_link(app: &tauri::AppHandle, urls: Vec<url::Url>) {
+fn handle_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<ProcessedTokens>>, urls: Vec<url::Url>) {
     for url in urls {
         let url_str = url.to_string();
         info!("Received deep link: {}", url_str);
 
         match SiteManager::parse_connect_url(&url_str) {
             Ok((site_url, token, name)) => {
+                let mut processed = processed.lock().unwrap();
+                if !processed.is_new(&token) {
+                    info!("Token already processed, skipping: {}", &token[..8.min(token.len())]);
+                    continue;
+                }
+                drop(processed);
+
+                info!("Processing new token for site: {}", site_url);
                 app.emit("deep-link:connect", DeepLinkPayload {
                     url: url_str,
                     site_url,
@@ -188,11 +229,11 @@ fn handle_deep_link(app: &tauri::AppHandle, urls: Vec<url::Url>) {
     }
 }
 
-fn handle_cli_deep_link(app: &tauri::AppHandle, args: &[String]) {
+fn handle_cli_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<ProcessedTokens>>, args: &[String]) {
     for arg in args {
         if arg.starts_with("wordforge://") {
             if let Ok(url) = url::Url::parse(arg) {
-                handle_deep_link(app, vec![url]);
+                handle_deep_link(app, processed, vec![url]);
             }
         }
     }
@@ -200,21 +241,26 @@ fn handle_cli_deep_link(app: &tauri::AppHandle, args: &[String]) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let processed_tokens = Arc::new(std::sync::Mutex::new(ProcessedTokens::new()));
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            info!("Single instance callback: {:?}", argv);
-            handle_cli_deep_link(app, &argv);
-            
-            if let Some(window) = app.get_webview_window("main") {
-                window.set_focus().ok();
-                window.unminimize().ok();
-            }
-        }))
-        .setup(|app| {
+        .plugin({
+            let processed = processed_tokens.clone();
+            tauri_plugin_single_instance::init(move |app, argv, _cwd| {
+                info!("Single instance callback: {:?}", argv);
+                handle_cli_deep_link(app, &processed, &argv);
+                
+                if let Some(window) = app.get_webview_window("main") {
+                    window.set_focus().ok();
+                    window.unminimize().ok();
+                }
+            })
+        })
+        .setup(move |app| {
             let app_state = Arc::new(Mutex::new(AppState::new(app.handle().clone())));
             app.manage(app_state);
             
@@ -230,14 +276,15 @@ pub fn run() {
 
             if let Ok(Some(urls)) = app.deep_link().get_current() {
                 info!("App started via deep link: {:?}", urls);
-                handle_deep_link(app.handle(), urls);
+                handle_deep_link(app.handle(), &processed_tokens, urls);
             }
 
             let app_handle = app.handle().clone();
+            let processed = processed_tokens.clone();
             app.deep_link().on_open_url(move |event| {
                 let urls = event.urls();
                 info!("Deep link event: {:?}", urls);
-                handle_deep_link(&app_handle, urls);
+                handle_deep_link(&app_handle, &processed, urls);
             });
 
             Ok(())
@@ -257,6 +304,7 @@ pub fn run() {
             set_active_site,
             remove_site,
             connect_site,
+            open_site_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -930,17 +930,17 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'port'    => $settings['port'],
-				'enabled' => $settings['enabled'],
-				'runtime' => $settings['runtime'],
+				'port'      => $settings['port'],
+				'enabled'   => $settings['enabled'],
+				'device_id' => $settings['device_id'],
 			)
 		);
 	}
 
 	public function save_local_settings( WP_REST_Request $request ): WP_REST_Response {
-		$port    = $request->get_param( 'port' );
-		$enabled = $request->get_param( 'enabled' );
-		$runtime = $request->get_param( 'runtime' );
+		$port      = $request->get_param( 'port' );
+		$enabled   = $request->get_param( 'enabled' );
+		$device_id = $request->get_param( 'device_id' );
 
 		$settings = array();
 
@@ -952,16 +952,16 @@ class OpenCodeController {
 			$settings['enabled'] = (bool) $enabled;
 		}
 
-		if ( null !== $runtime ) {
-			$settings['runtime'] = sanitize_text_field( $runtime );
+		if ( null !== $device_id ) {
+			$settings['device_id'] = sanitize_text_field( $device_id );
 		}
 
 		$result = LocalServerConfig::save_settings( $settings );
 
 		if ( ! $result ) {
 			return new WP_REST_Response(
-				array( 'error' => 'Failed to save settings' ),
-				500
+				array( 'error' => 'Failed to save settings. device_id is required.' ),
+				400
 			);
 		}
 
@@ -969,10 +969,10 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success' => true,
-				'port'    => $updated['port'],
-				'enabled' => $updated['enabled'],
-				'runtime' => $updated['runtime'],
+				'success'   => true,
+				'port'      => $updated['port'],
+				'enabled'   => $updated['enabled'],
+				'device_id' => $updated['device_id'],
 			)
 		);
 	}

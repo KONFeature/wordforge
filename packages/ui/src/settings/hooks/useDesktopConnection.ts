@@ -7,24 +7,20 @@ interface ConnectUrlResponse {
   expiresIn: number;
 }
 
-export const useDesktopConnectUrl = () => {
-  return useMutation({
-    mutationFn: async (): Promise<ConnectUrlResponse> => {
-      return apiFetch<ConnectUrlResponse>({
+export const useDesktopConnectUrl = () =>
+  useMutation({
+    mutationFn: async (): Promise<ConnectUrlResponse> =>
+      apiFetch<ConnectUrlResponse>({
         path: '/wordforge/v1/desktop/connect-url',
         method: 'GET',
-      });
-    },
+      }),
   });
-};
 
-export const useGenerateConnectToken = () => {
-  return useMutation({
-    mutationFn: async (): Promise<ConnectUrlResponse> => {
-      return apiFetch<ConnectUrlResponse>({
+export const useGenerateConnectToken = () =>
+  useMutation({
+    mutationFn: async (): Promise<ConnectUrlResponse> =>
+      apiFetch<ConnectUrlResponse>({
         path: '/wordforge/v1/desktop/connect-token',
         method: 'POST',
-      });
-    },
+      }),
   });
-};

@@ -15,13 +15,13 @@ import {
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { checkLocalServerHealth } from '../../lib/openCodeClient';
+import { useGenerateConnectToken } from '../hooks/useDesktopConnection';
 import {
   type RuntimePreference,
   useDownloadLocalConfig,
   useLocalSettings,
   useSaveLocalSettings,
 } from '../hooks/useLocalSettings';
-import { useGenerateConnectToken } from '../hooks/useDesktopConnection';
 import styles from './OpenCodeLocalTab.module.css';
 
 // SVG Icons

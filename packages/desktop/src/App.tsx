@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useSites } from './hooks/useSites';
-import { useOpenCode } from './hooks/useOpenCode';
-import { useDeepLink } from './hooks/useDeepLink';
+import { useEffect, useState } from 'react';
 import { Header } from './components/Header';
-import { StatusBar } from './components/StatusBar';
 import { Onboarding } from './components/Onboarding';
-import { SiteDashboard } from './components/SiteDashboard';
 import { OpenCodeView } from './components/OpenCodeView';
+import { SiteDashboard } from './components/SiteDashboard';
+import { StatusBar } from './components/StatusBar';
+import { useDeepLink } from './hooks/useDeepLink';
+import { useOpenCode } from './hooks/useOpenCode';
+import { useSites } from './hooks/useSites';
 
 type ViewMode = 'dashboard' | 'opencode';
 
@@ -19,6 +19,7 @@ function App() {
     connectSite,
     setActive,
     removeSite,
+    openSiteFolder,
   } = useSites();
 
   const opencode = useOpenCode();
@@ -27,7 +28,10 @@ function App() {
 
   useDeepLink(async (payload) => {
     try {
-      await connectSite(payload.site_url, payload.token);
+      await connectSite({
+        siteUrl: payload.site,
+        token: payload.token,
+      });
     } catch (e) {
       console.error('Deep link connection failed', e);
     }
@@ -51,7 +55,10 @@ function App() {
     }
 
     if (siteUrl && token) {
-      await connectSite(siteUrl, token);
+      await connectSite({
+        siteUrl,
+        token,
+      });
     } else {
       throw new Error('Invalid connection URL');
     }
@@ -85,6 +92,7 @@ function App() {
           site={activeSite}
           opencode={dashboardOpencode}
           onRemove={() => removeSite(activeSite.id)}
+          onOpenFolder={() => openSiteFolder(activeSite.id)}
         />
       );
     }

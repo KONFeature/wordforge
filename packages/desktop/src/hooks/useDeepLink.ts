@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useEffect } from 'react';
 import type { DeepLinkPayload } from '../types';
 
 export function useDeepLink(onConnect: (payload: DeepLinkPayload) => void) {

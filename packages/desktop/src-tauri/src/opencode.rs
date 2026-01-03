@@ -159,7 +159,7 @@ impl OpenCodeManager {
             return Err(Error::NotInstalled);
         }
 
-        let port = portpicker::pick_unused_port().ok_or(Error::NoAvailablePort)?;
+        let port = self.get_or_assign_port().await?;
         info!("Starting OpenCode on port {}", port);
 
         let binary = self.binary_path();
@@ -202,6 +202,26 @@ impl OpenCodeManager {
 
     pub fn get_port(&self) -> Option<u16> {
         self.port
+    }
+
+    async fn get_or_assign_port(&self) -> Result<u16, Error> {
+        let port_file = self.install_dir.join(".port");
+        
+        if let Ok(content) = tokio::fs::read_to_string(&port_file).await {
+            if let Ok(saved_port) = content.trim().parse::<u16>() {
+                if portpicker::is_free(saved_port) {
+                    info!("Reusing saved port {}", saved_port);
+                    return Ok(saved_port);
+                }
+                info!("Saved port {} is in use, picking new one", saved_port);
+            }
+        }
+        
+        let new_port = portpicker::pick_unused_port().ok_or(Error::NoAvailablePort)?;
+        tokio::fs::write(&port_file, new_port.to_string()).await.ok();
+        info!("Assigned new port {}", new_port);
+        
+        Ok(new_port)
     }
 
     fn binary_path(&self) -> PathBuf {

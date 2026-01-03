@@ -1,18 +1,11 @@
 <?php
-/**
- * Desktop Connection Controller.
- *
- * @package WordForge
- */
-
 declare(strict_types=1);
 
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\AgentConfig;
-use WordForge\OpenCode\ProviderConfig;
 use WordForge\OpenCode\ContextProvider;
-use WordForge\OpenCode\LocalServerConfig;
+use WordForge\OpenCode\ProviderConfig;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -151,8 +144,6 @@ class DesktopConnectionController {
 			);
 		}
 
-		$config = $this->build_desktop_config( $user, $app_password );
-
 		return new WP_REST_Response(
 			array(
 				'success'     => true,
@@ -168,7 +159,6 @@ class DesktopConnectionController {
 					'mcpEndpoint'  => \WordForge\get_endpoint_url(),
 					'abilitiesUrl' => rest_url( 'wp-abilities/v1' ),
 				),
-				'config'      => $config,
 			)
 		);
 	}
@@ -245,48 +235,4 @@ class DesktopConnectionController {
 		);
 	}
 
-	private function build_desktop_config( \WP_User $user, array $app_password ): array {
-		$mcp_url = \WordForge\get_endpoint_url();
-
-		$opencode_config = array(
-			'$schema'       => 'https://opencode.ai/config.json',
-			'default_agent' => 'wordpress-manager',
-			'instructions'  => array( '.opencode/context/site.md' ),
-			'permission'    => array(
-				'edit'               => 'ask',
-				'external_directory' => 'deny',
-				'bash'               => array( '*' => 'ask' ),
-			),
-			'mcp'           => array(
-				'wordforge' => array(
-					'type'    => 'remote',
-					'url'     => $mcp_url,
-					'headers' => array(
-						'Authorization' => 'Basic ' . $app_password['auth'],
-					),
-				),
-			),
-		);
-
-		$provider_config = ProviderConfig::get_opencode_provider_config();
-		if ( ! empty( $provider_config ) ) {
-			$opencode_config['provider'] = $provider_config;
-		}
-
-		$context     = ContextProvider::get_global_context();
-		$agent_files = $this->generate_agent_files( $context );
-
-		return array(
-			'opencode'   => $opencode_config,
-			'agentFiles' => $agent_files,
-			'context'    => $context,
-		);
-	}
-
-	private function generate_agent_files( array $context ): array {
-		return array(
-			'context/site.md' => LocalServerConfig::generate_site_context(),
-			'AGENTS.md'       => LocalServerConfig::generate_agents_md(),
-		);
-	}
 }

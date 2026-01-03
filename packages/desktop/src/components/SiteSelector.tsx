@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Plus } from 'lucide-react';
+import { Check, ChevronDown, Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import type { WordPressSite } from '../types';
 
 interface SiteSelectorProps {

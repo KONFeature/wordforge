@@ -1,28 +1,52 @@
-import { ExternalLink, Trash2, AlertCircle, ArrowRight } from 'lucide-react';
-import type { WordPressSite } from '../types';
+import {
+  AlertCircle,
+  ArrowRight,
+  ExternalLink,
+  FolderOpen,
+  Play,
+  Trash2,
+} from 'lucide-react';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import type { WordPressSite } from '../types';
 
 interface SiteDashboardProps {
   site: WordPressSite;
   opencode: UseOpenCodeReturn;
   onRemove: () => void;
+  onOpenFolder: () => void;
 }
 
 export function SiteDashboard({
   site,
   opencode,
   onRemove,
+  onOpenFolder,
 }: SiteDashboardProps) {
   const isInstalled = opencode.status !== 'not_installed';
+  const isRunning = opencode.status === 'running';
   const isStarting = opencode.status === 'starting';
   const isDownloading = opencode.isDownloading;
 
-  const handleStart = () => {
-    if (!isInstalled) {
+  const handleAction = () => {
+    if (isRunning) {
+      opencode.openView();
+    } else if (!isInstalled) {
       opencode.download();
     } else {
       opencode.start();
     }
+  };
+
+  const getButtonText = () => {
+    if (isStarting) return 'Starting Server...';
+    if (isRunning) return 'Open OpenCode';
+    if (!isInstalled) return 'Download & Start OpenCode';
+    return 'Start OpenCode';
+  };
+
+  const getButtonSubtext = () => {
+    if (isRunning) return `Running on port ${opencode.port}`;
+    return 'Launch the AI assistant for your site';
   };
 
   return (
@@ -49,6 +73,14 @@ export function SiteDashboard({
             Connected as <strong>{site.username}</strong>
           </div>
         </div>
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={onOpenFolder}
+          title="Open Site Folder"
+        >
+          <FolderOpen size={16} />
+        </button>
         <button
           type="button"
           className="btn-icon danger"
@@ -86,27 +118,21 @@ export function SiteDashboard({
         ) : (
           <button
             type="button"
-            className="btn-start-server"
-            onClick={handleStart}
+            className={`btn-start-server ${isRunning ? 'running' : ''}`}
+            onClick={handleAction}
             disabled={isStarting}
           >
             <div className="btn-content">
               {isStarting ? (
                 <div className="spinner" />
+              ) : isRunning ? (
+                <Play size={32} />
               ) : (
                 <ArrowRight size={32} />
               )}
               <div className="text-group">
-                <span className="primary-text">
-                  {isStarting
-                    ? 'Starting Server...'
-                    : !isInstalled
-                      ? 'Download & Start OpenCode'
-                      : 'Start OpenCode'}
-                </span>
-                <span className="secondary-text">
-                  Launch the AI assistant for your site
-                </span>
+                <span className="primary-text">{getButtonText()}</span>
+                <span className="secondary-text">{getButtonSubtext()}</span>
               </div>
             </div>
           </button>

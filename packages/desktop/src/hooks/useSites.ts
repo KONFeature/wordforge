@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import type { WordPressSite } from '../types';
 
@@ -59,16 +59,8 @@ export function useSites() {
     },
   });
 
-  const connectSite = async (siteUrl: string, token: string) => {
-    return connectMutation.mutateAsync({ siteUrl, token });
-  };
-
-  const setActive = async (id: string) => {
-    return setActiveMutation.mutateAsync(id);
-  };
-
-  const removeSite = async (id: string) => {
-    return removeMutation.mutateAsync(id);
+  const openSiteFolder = async (id: string) => {
+    await invoke('open_site_folder', { id });
   };
 
   return {
@@ -77,12 +69,13 @@ export function useSites() {
     isLoading: sitesQuery.isLoading || activeSiteQuery.isLoading,
     error: sitesQuery.error?.message || activeSiteQuery.error?.message || null,
 
-    connectSite,
+    connectSite: connectMutation.mutateAsync,
     isConnecting: connectMutation.isPending,
     connectError: connectMutation.error?.message || null,
 
-    setActive,
-    removeSite,
+    setActive: setActiveMutation.mutateAsync,
+    removeSite: removeMutation.mutateAsync,
+    openSiteFolder,
 
     refreshSites: () => {
       queryClient.invalidateQueries({ queryKey: siteKeys.all });

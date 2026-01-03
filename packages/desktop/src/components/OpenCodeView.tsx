@@ -1,5 +1,5 @@
+import { ChevronLeft, ExternalLink, Square } from 'lucide-react';
 import { useState } from 'react';
-import { ChevronLeft, Square, ExternalLink } from 'lucide-react';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
 
 interface OpenCodeViewProps {

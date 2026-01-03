@@ -169,32 +169,93 @@ class LocalServerConfig {
 		);
 	}
 
-	public static function get_settings(): array {
-		$settings = \get_option( 'wordforge_local_server', array() );
+	private const USER_META_KEY = 'wordforge_local_devices';
+	private const DEVICE_TTL    = 86400 * 7;
+
+	public static function get_settings( ?int $user_id = null ): array {
+		$user_id = $user_id ?? \get_current_user_id();
+		$devices = self::get_user_devices( $user_id );
+		$latest  = self::get_latest_device( $devices );
 
 		return array(
-			'port'    => $settings['port'] ?? 4096,
-			'enabled' => $settings['enabled'] ?? true,
-			'runtime' => $settings['runtime'] ?? self::RUNTIME_NODE,
+			'port'      => $latest['port'] ?? 4096,
+			'enabled'   => ! empty( $latest ),
+			'runtime'   => self::RUNTIME_NONE,
+			'device_id' => $latest['device_id'] ?? null,
+			'devices'   => $devices,
 		);
 	}
 
-	public static function save_settings( array $settings ): bool {
-		$existing  = self::get_settings();
-		$sanitized = array(
-			'port'    => isset( $settings['port'] ) ? \absint( $settings['port'] ) : $existing['port'],
-			'enabled' => isset( $settings['enabled'] ) ? (bool) $settings['enabled'] : $existing['enabled'],
-			'runtime' => isset( $settings['runtime'] ) ? \sanitize_text_field( $settings['runtime'] ) : $existing['runtime'],
-		);
+	public static function save_settings( array $settings, ?int $user_id = null ): bool {
+		$user_id   = $user_id ?? \get_current_user_id();
+		$device_id = isset( $settings['device_id'] ) ? \sanitize_text_field( $settings['device_id'] ) : null;
 
-		$sanitized['port'] = max( 1024, min( 65535, $sanitized['port'] ) );
-
-		$valid_runtimes = array( self::RUNTIME_NODE, self::RUNTIME_BUN, self::RUNTIME_NONE );
-		if ( ! in_array( $sanitized['runtime'], $valid_runtimes, true ) ) {
-			$sanitized['runtime'] = self::RUNTIME_NODE;
+		if ( empty( $device_id ) ) {
+			return false;
 		}
 
-		return \update_option( 'wordforge_local_server', $sanitized, false );
+		$port = isset( $settings['port'] ) ? \absint( $settings['port'] ) : 4096;
+		$port = max( 1024, min( 65535, $port ) );
+
+		$devices              = self::get_user_devices( $user_id );
+		$devices[ $device_id ] = array(
+			'port'      => $port,
+			'enabled'   => isset( $settings['enabled'] ) ? (bool) $settings['enabled'] : true,
+			'last_seen' => time(),
+		);
+
+		$devices = self::cleanup_stale_devices( $devices );
+
+		return (bool) \update_user_meta( $user_id, self::USER_META_KEY, $devices );
+	}
+
+	public static function get_port_for_device( string $device_id, ?int $user_id = null ): ?int {
+		$user_id = $user_id ?? \get_current_user_id();
+		$devices = self::get_user_devices( $user_id );
+
+		if ( isset( $devices[ $device_id ] ) ) {
+			return $devices[ $device_id ]['port'];
+		}
+
+		return null;
+	}
+
+	private static function get_user_devices( int $user_id ): array {
+		$devices = \get_user_meta( $user_id, self::USER_META_KEY, true );
+		return is_array( $devices ) ? $devices : array();
+	}
+
+	private static function get_latest_device( array $devices ): array {
+		if ( empty( $devices ) ) {
+			return array();
+		}
+
+		$latest    = null;
+		$latest_id = null;
+
+		foreach ( $devices as $device_id => $device ) {
+			if ( null === $latest || ( $device['last_seen'] ?? 0 ) > ( $latest['last_seen'] ?? 0 ) ) {
+				$latest    = $device;
+				$latest_id = $device_id;
+			}
+		}
+
+		if ( $latest ) {
+			$latest['device_id'] = $latest_id;
+		}
+
+		return $latest ?? array();
+	}
+
+	private static function cleanup_stale_devices( array $devices ): array {
+		$cutoff = time() - self::DEVICE_TTL;
+
+		return array_filter(
+			$devices,
+			function ( $device ) use ( $cutoff ) {
+				return ( $device['last_seen'] ?? 0 ) > $cutoff;
+			}
+		);
 	}
 
 	public static function get_mcp_server_binary_path(): ?string {

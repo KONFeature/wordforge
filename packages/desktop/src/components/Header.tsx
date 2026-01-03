@@ -1,6 +1,6 @@
-import { Sparkles, Settings } from 'lucide-react';
-import { SiteSelector } from './SiteSelector';
+import { Settings, Sparkles } from 'lucide-react';
 import type { WordPressSite } from '../types';
+import { SiteSelector } from './SiteSelector';
 
 interface HeaderProps {
   sites: WordPressSite[];

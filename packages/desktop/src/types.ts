@@ -15,7 +15,7 @@ export interface WordPressSite {
 
 export interface DeepLinkPayload {
   url: string;
-  site_url: string;
+  site: string;
   token: string;
   name: string;
 }
