@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig([
   {
-    entry: { 'wordforge-mcp': './src/index.ts' },
+    entry: './src/index.ts',
     format: ['cjs'],
     outDir: 'dist',
     platform: 'node',
