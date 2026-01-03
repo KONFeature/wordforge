@@ -1,0 +1,113 @@
+.contextSection {
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+}
+
+.contextRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--wf-spacing-lg);
+  padding: var(--wf-spacing-xs) 0;
+}
+
+.contextRow:first-child {
+  padding-top: 0;
+}
+
+.contextRow:last-child {
+  padding-bottom: 0;
+}
+
+.contextLabel {
+  color: var(--wf-color-text-muted);
+  font-size: var(--wf-font-size-sm);
+}
+
+.contextValue {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text);
+}
+
+.contextValue.medium {
+  color: var(--wf-color-warning-text);
+}
+
+.contextValue.high {
+  color: var(--wf-color-error-text);
+}
+
+.connectionSection {
+  padding: var(--wf-spacing-sm) var(--wf-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wf-spacing-sm);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-sm);
+}
+
+.connectionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotLocal {
+  background: var(--wf-color-info, #0073aa);
+}
+
+.dotRemote {
+  background: var(--wf-color-success, #46b450);
+}
+
+.dotDisconnected {
+  background: var(--wf-color-error, #dc3232);
+}
+
+.connectionLabel {
+  font-weight: 500;
+  font-size: var(--wf-font-size-sm);
+  color: var(--wf-color-text);
+}
+
+.availabilityInfo {
+  font-size: var(--wf-font-size-xs);
+  padding-left: calc(8px + var(--wf-spacing-sm));
+}
+
+.available {
+  color: var(--wf-color-success-text, #2e7d32);
+}
+
+.unavailable {
+  color: var(--wf-color-text-muted);
+}
+
+.switchButton {
+  margin-top: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  background: var(--wf-color-primary, #0073aa);
+  color: var(--wf-color-white, #fff);
+  border: none;
+  border-radius: var(--wf-radius-sm);
+  font-size: var(--wf-font-size-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  text-align: center;
+}
+
+.switchButton:hover {
+  background: var(--wf-color-primary-dark, #005a87);
+}
+
+.switchButton:focus {
+  outline: 2px solid var(--wf-color-primary, #0073aa);
+  outline-offset: 2px;
+}

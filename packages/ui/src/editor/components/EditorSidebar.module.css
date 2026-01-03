@@ -5,6 +5,14 @@
   background: var(--wf-color-white);
 }
 
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  border-bottom: 1px solid var(--wf-color-border-light);
+}
+
 .chatContainer {
   flex: 1;
   display: flex;

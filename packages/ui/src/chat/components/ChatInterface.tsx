@@ -109,8 +109,6 @@ interface ChatInterfaceProps {
   filteredMessages?: ChatMessage[];
 }
 
-import { ContextInfo } from './ContextInfo';
-
 export const ChatInterface = ({
   chat,
   context = null,
@@ -122,8 +120,7 @@ export const ChatInterface = ({
   searchMatchCount = 0,
   isSearching = false,
   filteredMessages,
-  showContextInfo = true,
-}: ChatInterfaceProps & { showContextInfo?: boolean }) => {
+}: ChatInterfaceProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
   const clientContext = useClient();
@@ -181,14 +178,6 @@ export const ChatInterface = ({
           onClear={onClearSearch}
           matchCount={searchMatchCount}
           isSearching={isSearching}
-        />
-      )}
-
-      {showContextInfo && !showSearch && chat.messages.length > 0 && (
-        <ContextInfo
-          messages={chat.messages}
-          providers={chat.providers}
-          compact={compact}
         />
       )}
 

@@ -1,10 +1,11 @@
-import { Button, Tooltip } from '@wordpress/components';
+import type { Provider } from '@opencode-ai/sdk/client';
+import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useClient } from '../../lib/ClientProvider';
-import type { ConnectionMode } from '../../lib/openCodeClient';
 import type { ExportFormat } from '../hooks/useExport';
 import styles from './ChatHeader.module.css';
-import { ExportMenu } from './ExportMenu';
+import { HeaderMenu } from './HeaderMenu';
+import type { ChatMessage } from './MessageList';
+import { StatusIndicator } from './StatusIndicator';
 
 interface ParentSessionInfo {
   id: string;
@@ -16,6 +17,8 @@ interface ChatHeaderProps {
   isBusy: boolean;
   hasSession: boolean;
   hasMessages: boolean;
+  messages: ChatMessage[];
+  providers: Provider[];
   compact?: boolean;
   parentSession?: ParentSessionInfo | null;
   onRefresh: () => void;
@@ -28,96 +31,13 @@ interface ChatHeaderProps {
   showSearch?: boolean;
 }
 
-const getConnectionLabel = (mode: ConnectionMode): string => {
-  switch (mode) {
-    case 'local':
-      return __('Local', 'wordforge');
-    case 'remote':
-      return __('Server', 'wordforge');
-    default:
-      return __('Disconnected', 'wordforge');
-  }
-};
-
-const getConnectionTooltip = (
-  mode: ConnectionMode,
-  localAvailable: boolean,
-  remoteAvailable: boolean,
-): string => {
-  if (mode === 'local') {
-    return remoteAvailable
-      ? __(
-          'Connected to local OpenCode. Click to switch to server.',
-          'wordforge',
-        )
-      : __('Connected to local OpenCode.', 'wordforge');
-  }
-  if (mode === 'remote') {
-    return localAvailable
-      ? __(
-          'Connected to WordPress server. Click to switch to local.',
-          'wordforge',
-        )
-      : __('Connected to WordPress server.', 'wordforge');
-  }
-  return __(
-    'No OpenCode server available. Start the server or run OpenCode locally.',
-    'wordforge',
-  );
-};
-
-const getConnectionStyle = (mode: ConnectionMode): string => {
-  switch (mode) {
-    case 'local':
-      return styles.connectionLocal;
-    case 'remote':
-      return styles.connectionRemote;
-    default:
-      return styles.connectionDisconnected;
-  }
-};
-
-const ConnectionBadge = () => {
-  const { connectionStatus, setPreference } = useClient();
-  const { mode, localAvailable, remoteAvailable } = connectionStatus;
-
-  const canSwitch =
-    (mode === 'local' && remoteAvailable) ||
-    (mode === 'remote' && localAvailable);
-
-  const handleClick = () => {
-    if (mode === 'local' && remoteAvailable) {
-      setPreference('remote');
-    } else if (mode === 'remote' && localAvailable) {
-      setPreference('local');
-    }
-  };
-
-  const badge = (
-    <button
-      type="button"
-      className={`${styles.connectionBadge} ${getConnectionStyle(mode)}`}
-      onClick={canSwitch ? handleClick : undefined}
-      disabled={!canSwitch}
-      style={!canSwitch ? { cursor: 'default' } : undefined}
-    >
-      <span className={styles.connectionDot} />
-      {getConnectionLabel(mode)}
-    </button>
-  );
-
-  return (
-    <Tooltip text={getConnectionTooltip(mode, localAvailable, remoteAvailable)}>
-      {badge}
-    </Tooltip>
-  );
-};
-
 export const ChatHeader = ({
   title,
   isBusy,
   hasSession,
   hasMessages,
+  messages,
+  providers,
   compact = false,
   parentSession,
   onRefresh,
@@ -171,38 +91,21 @@ export const ChatHeader = ({
               {isBusy ? __('Busy', 'wordforge') : __('Ready', 'wordforge')}
             </span>
           )}
-          <ConnectionBadge />
+          <StatusIndicator />
         </div>
         <div className={styles.right}>
-          {hasSession && (
-            <>
-              {onToggleSearch && hasMessages && (
-                <Button
-                  icon="search"
-                  label={__('Search messages', 'wordforge')}
-                  onClick={onToggleSearch}
-                  size="small"
-                  isPressed={showSearch}
-                />
-              )}
-              {onExport && hasMessages && (
-                <ExportMenu onExport={onExport} disabled={isBusy} />
-              )}
-              <Button
-                icon="update"
-                label={__('Refresh', 'wordforge')}
-                onClick={onRefresh}
-                size="small"
-              />
-              <Button
-                icon="trash"
-                label={__('Delete Session', 'wordforge')}
-                onClick={onDelete}
-                size="small"
-                isDestructive
-              />
-            </>
-          )}
+          <HeaderMenu
+            hasSession={hasSession}
+            hasMessages={hasMessages}
+            isBusy={isBusy}
+            messages={messages}
+            providers={providers}
+            showSearch={showSearch}
+            onToggleSearch={onToggleSearch}
+            onExport={onExport}
+            onRefresh={onRefresh}
+            onDelete={onDelete}
+          />
         </div>
       </div>
     </div>

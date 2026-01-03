@@ -131,6 +131,8 @@ export const ChatApp = () => {
             isBusy={chat.isBusy}
             hasSession={!!chat.sessionId}
             hasMessages={chat.messages.length > 0}
+            messages={chat.messages}
+            providers={chat.providers}
             parentSession={
               chat.parentSession
                 ? { id: chat.parentSession.id, title: chat.parentSession.title }

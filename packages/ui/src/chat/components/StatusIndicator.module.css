@@ -1,0 +1,35 @@
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--wf-font-size-xs);
+  padding: 2px var(--wf-spacing-sm);
+  border-radius: var(--wf-radius-pill);
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.label {
+  font-weight: 500;
+}
+
+.local {
+  background: var(--wf-color-info-bg, #e8f4fc);
+  color: var(--wf-color-info-text, #0073aa);
+}
+
+.remote {
+  background: var(--wf-color-success-bg);
+  color: var(--wf-color-success-text);
+}
+
+.disconnected {
+  background: var(--wf-color-error-bg);
+  color: var(--wf-color-error-text);
+}

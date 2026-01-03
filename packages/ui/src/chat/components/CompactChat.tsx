@@ -2,6 +2,8 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useChat } from '../hooks/useChat';
 import type { ScopedContext } from '../hooks/useContextInjection';
+import { useExport } from '../hooks/useExport';
+import { useMessageSearch } from '../hooks/useMessageSearch';
 import { ChatHeader } from './ChatHeader';
 import { ChatInterface } from './ChatInterface';
 import styles from './CompactChat.module.css';
@@ -22,8 +24,11 @@ export const CompactChat = ({
     defaultSessionsCollapsed,
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const chat = useChat({ context });
+  const search = useMessageSearch(chat.messages);
+  const { exportConversation } = useExport(chat.session, chat.messages);
 
   const handleDeleteSession = async () => {
     await chat.deleteSession();
@@ -36,6 +41,9 @@ export const CompactChat = ({
         title={chat.session?.title || __('New Chat', 'wordforge')}
         isBusy={chat.isBusy}
         hasSession={!!chat.sessionId}
+        hasMessages={chat.messages.length > 0}
+        messages={chat.messages}
+        providers={chat.providers}
         compact
         parentSession={
           chat.parentSession
@@ -51,6 +59,9 @@ export const CompactChat = ({
         }
         onToggleSessions={() => setSessionsCollapsed(!sessionsCollapsed)}
         sessionsCollapsed={sessionsCollapsed}
+        onToggleSearch={() => setShowSearch(!showSearch)}
+        onExport={exportConversation}
+        showSearch={showSearch}
       />
 
       {context && <ContextBadge context={context} />}
@@ -71,7 +82,18 @@ export const CompactChat = ({
         )}
 
         <div className={styles.chatArea}>
-          <ChatInterface chat={chat} context={context} />
+          <ChatInterface
+            chat={chat}
+            context={context}
+            compact
+            showSearch={showSearch}
+            searchQuery={search.searchQuery}
+            onSearchChange={search.setSearchQuery}
+            onClearSearch={search.clearSearch}
+            searchMatchCount={search.matchCount}
+            isSearching={search.isSearching}
+            filteredMessages={search.filteredMessages}
+          />
         </div>
       </div>
 
