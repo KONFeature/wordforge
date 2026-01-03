@@ -171,9 +171,13 @@ impl OpenCodeManager {
         }
         
         cmd.env("OPENCODE_CLIENT", "wordforge-desktop");
+        cmd.env("OPENCODE_AUTO_SHARE", "false");
+        cmd.env("OPENCODE_DISABLE_AUTOUPDATE", "true");
+        cmd.env("OPENCODE_DISABLE_LSP_DOWNLOAD", "true");
         
-        if let Some(dir) = project_dir {
-            cmd.current_dir(&dir);
+        if let Some(ref dir) = project_dir {
+            cmd.current_dir(dir);
+            cmd.env("OPENCODE_CONFIG_DIR", dir.to_string_lossy().to_string());
         }
         
         cmd.stdout(Stdio::piped())

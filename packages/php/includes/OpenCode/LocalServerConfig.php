@@ -17,6 +17,7 @@ class LocalServerConfig {
 			'$schema'       => 'https://opencode.ai/config.json',
 			'default_agent' => 'wordpress-manager',
 			'instructions'  => array( '.opencode/context/site.md' ),
+			'share'         => 'disabled',
 			'permission'    => array(
 				'edit'               => 'ask',
 				'external_directory' => 'deny',
