@@ -864,14 +864,14 @@ class OpenCodeController {
 
 		$files_to_add = array(
 			'AGENTS.md',
-			'context/site.md',
-			'agent/wordpress-manager.md',
-			'agent/wordpress-content-creator.md',
-			'agent/wordpress-auditor.md',
+			'.opencode/context/site.md',
+			'.opencode/agent/wordpress-manager.md',
+			'.opencode/agent/wordpress-content-creator.md',
+			'.opencode/agent/wordpress-auditor.md',
 		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$files_to_add[] = 'agent/wordpress-commerce-manager.md';
+			$files_to_add[] = '.opencode/agent/wordpress-commerce-manager.md';
 		}
 
 		foreach ( $files_to_add as $file ) {
@@ -884,7 +884,7 @@ class OpenCodeController {
 		if ( LocalServerConfig::RUNTIME_NONE !== $runtime ) {
 			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
 			if ( $mcp_binary_path ) {
-				$zip->addFile( $mcp_binary_path, 'wordforge-mcp.cjs' );
+				$zip->addFile( $mcp_binary_path, '.opencode/wordforge-mcp.cjs' );
 			}
 		}
 

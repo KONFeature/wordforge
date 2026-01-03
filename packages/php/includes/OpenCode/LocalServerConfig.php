@@ -16,7 +16,7 @@ class LocalServerConfig {
 		$config = array(
 			'$schema'       => 'https://opencode.ai/config.json',
 			'default_agent' => 'wordpress-manager',
-			'instructions'  => array( 'context/site.md' ),
+			'instructions'  => array( '.opencode/context/site.md' ),
 			'permission'    => array(
 				'edit'               => 'ask',
 				'external_directory' => 'deny',
@@ -42,10 +42,12 @@ class LocalServerConfig {
 	}
 
 	public static function write_config_files( string $base_dir, string $runtime = self::RUNTIME_NODE ): bool {
-		$dirs = array(
+		$opencode_dir = $base_dir . '/.opencode';
+		$dirs         = array(
 			$base_dir,
-			$base_dir . '/agent',
-			$base_dir . '/context',
+			$opencode_dir,
+			$opencode_dir . '/agent',
+			$opencode_dir . '/context',
 		);
 
 		foreach ( $dirs as $dir ) {
@@ -59,15 +61,15 @@ class LocalServerConfig {
 		$context       = ContextProvider::get_global_context();
 
 		$files = array(
-			'AGENTS.md'                            => self::render_agents_md( $is_local, $is_remote_mcp ),
-			'context/site.md'                      => self::render_site_context( $context, $is_local ),
-			'agent/wordpress-manager.md'           => self::render_agent_template( 'wordpress-manager', $context, $is_local, $is_remote_mcp ),
-			'agent/wordpress-content-creator.md'   => self::render_agent_template( 'wordpress-content-creator', $context, $is_local, $is_remote_mcp ),
-			'agent/wordpress-auditor.md'           => self::render_agent_template( 'wordpress-auditor', $context, $is_local, $is_remote_mcp ),
+			'AGENTS.md'                                     => self::render_agents_md( $is_local, $is_remote_mcp ),
+			'.opencode/context/site.md'                     => self::render_site_context( $context, $is_local ),
+			'.opencode/agent/wordpress-manager.md'          => self::render_agent_template( 'wordpress-manager', $context, $is_local, $is_remote_mcp ),
+			'.opencode/agent/wordpress-content-creator.md'  => self::render_agent_template( 'wordpress-content-creator', $context, $is_local, $is_remote_mcp ),
+			'.opencode/agent/wordpress-auditor.md'          => self::render_agent_template( 'wordpress-auditor', $context, $is_local, $is_remote_mcp ),
 		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$files['agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, $is_local, $is_remote_mcp );
+			$files['.opencode/agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, $is_local, $is_remote_mcp );
 		}
 
 		foreach ( $files as $filename => $content ) {
@@ -158,7 +160,7 @@ class LocalServerConfig {
 		$abilities_url = \rest_url( 'wp-abilities/v1' );
 		return array(
 			'type'        => 'local',
-			'command'     => array( $runtime, './wordforge-mcp.cjs' ),
+			'command'     => array( $runtime, './.opencode/wordforge-mcp.cjs' ),
 			'environment' => array(
 				'WORDPRESS_URL'          => $abilities_url,
 				'WORDPRESS_USERNAME'     => $app_password_data['username'],

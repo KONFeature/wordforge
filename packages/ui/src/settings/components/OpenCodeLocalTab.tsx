@@ -264,7 +264,8 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
                       )}
                     </p>
                     <code className={styles.command}>
-                      opencode serve --port {port}
+                      opencode serve --port {port} --cors{' '}
+                      {window.location.origin}
                     </code>
                   </>
                 )}
