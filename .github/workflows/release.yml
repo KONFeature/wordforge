@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  prepare-artifacts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,23 +54,18 @@ jobs:
         run: |
           cp packages/mcp/dist/index.cjs wordforge-server.js
 
-      - name: Create Release
-        id: create-release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: WordForge ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
-          files: |
+          name: release-artifacts
+          path: |
             packages/php/dist/wordforge.zip
             packages/mcp/wordforge.mcpb
             wordforge-server.js
-
-      - name: Output release info
-        run: |
-          echo "release_id=${{ steps.create-release.outputs.id }}" >> $GITHUB_OUTPUT
+          retention-days: 1
 
   publish-tauri:
-    needs: release
+    needs: prepare-artifacts
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -84,8 +79,6 @@ jobs:
             target: x86_64-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - host: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v4
@@ -123,14 +116,32 @@ jobs:
         working-directory: packages/desktop
         run: bun run build:mcp-sidecar
 
-      - name: Build and upload artifacts
-        uses: tauri-apps/tauri-action@390cbe447412ced1303d35abe75287949e43437a
+      - name: Build Tauri app and create release
+        uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: packages/desktop
-          uploadWorkflowArtifacts: true
+          tagName: ${{ github.ref_name }}
+          releaseName: WordForge ${{ steps.version.outputs.VERSION }}
+          generateReleaseNotes: true
           args: --target ${{ matrix.settings.target }} --verbose
-          releaseId: ${{ needs.release.outputs.release_id }}
           releaseAssetNamePattern: wordforge-desktop-[platform]-[arch][ext]
-          releaseDraft: true
+
+  upload-artifacts:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download prepared artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: artifacts
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" artifacts/** --clobber
