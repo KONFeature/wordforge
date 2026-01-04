@@ -1,14 +1,10 @@
-import {
-  AlertCircle,
-  ExternalLink,
-  FolderOpen,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { ExternalLink, FolderOpen, RefreshCw, Trash2 } from 'lucide-react';
 import { useConfigSync } from '../hooks/useConfigSync';
-import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import { useOpenCodeStatus } from '../hooks/useOpenCode';
 import { useSessions } from '../hooks/useSessions';
 import { useSiteStats } from '../hooks/useSiteStats';
+import { useSiteMutations } from '../hooks/useSites';
 import type { WordPressSite } from '../types';
 import { ServerControls } from './ServerControls';
 import { SessionList } from './SessionList';
@@ -16,29 +12,29 @@ import { SiteStats } from './SiteStats';
 
 interface SiteDashboardProps {
   site: WordPressSite;
-  opencode: UseOpenCodeReturn;
-  onRemove: () => void;
-  onOpenFolder: () => void;
 }
 
-export function SiteDashboard({
-  site,
-  opencode,
-  onRemove,
-  onOpenFolder,
-}: SiteDashboardProps) {
+export function SiteDashboard({ site }: SiteDashboardProps) {
+  const navigate = useNavigate();
   const { data: stats, isLoading: isStatsLoading } = useSiteStats(site);
   const configSync = useConfigSync({ siteId: site.id });
+  const { status, port } = useOpenCodeStatus();
+  const { removeSite, openSiteFolder } = useSiteMutations();
+  const sessions = useSessions();
 
-  const isRunning = opencode.status === 'running' && opencode.port !== null;
-
-  const sessions = useSessions({
-    port: isRunning ? opencode.port : null,
-    projectDir: isRunning ? site.project_dir : null,
-  });
+  const isRunning = status === 'running' && port !== null;
 
   const handleConfigUpdate = async () => {
     await configSync.applyUpdate(isRunning);
+  };
+
+  const handleRemove = async () => {
+    await removeSite(site.id);
+    navigate({ to: '/onboarding' });
+  };
+
+  const handleOpenFolder = () => {
+    openSiteFolder(site.id);
   };
 
   return (
@@ -68,7 +64,7 @@ export function SiteDashboard({
         <button
           type="button"
           className="btn-icon"
-          onClick={onOpenFolder}
+          onClick={handleOpenFolder}
           title="Open Site Folder"
         >
           <FolderOpen size={16} />
@@ -76,7 +72,7 @@ export function SiteDashboard({
         <button
           type="button"
           className="btn-icon danger"
-          onClick={onRemove}
+          onClick={handleRemove}
           title="Remove Site"
         >
           <Trash2 size={16} />
@@ -100,19 +96,12 @@ export function SiteDashboard({
         </div>
       )}
 
-      {opencode.error && (
-        <div className="error-banner">
-          <AlertCircle size={20} />
-          <span>{opencode.error}</span>
-        </div>
-      )}
-
-      <ServerControls opencode={opencode} />
+      <ServerControls />
 
       <SessionList
         sessions={sessions.hierarchicalSessions}
         isLoading={sessions.isLoading}
-        isServerRunning={isRunning}
+        isServerRunning={sessions.isServerRunning}
         onOpenSession={sessions.openSession}
         onCreateSession={sessions.createAndOpenSession}
         onDeleteSession={sessions.deleteSession}

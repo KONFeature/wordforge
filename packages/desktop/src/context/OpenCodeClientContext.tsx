@@ -1,12 +1,20 @@
 import {
-  createOpencodeClient,
   type OpencodeClient,
+  createOpencodeClient,
 } from '@opencode-ai/sdk/v2/client';
 import { invoke } from '@tauri-apps/api/core';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { type ReactNode, createContext, useContext, useMemo } from 'react';
+import { useOpenCodeStatus } from '../hooks/useOpenCode';
+import type { WordPressSite } from '../types';
 
 function encodeProjectPath(path: string): string {
   return btoa(path).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+interface OpenCodeConnection {
+  port: number;
+  projectDir: string;
+  isReady: true;
 }
 
 interface OpenCodeClientContextValue {
@@ -22,17 +30,35 @@ const OpenCodeClientContext = createContext<OpenCodeClientContextValue | null>(
 );
 
 interface OpenCodeClientProviderProps {
-  port: number;
-  projectDir: string;
+  site: WordPressSite;
   children: ReactNode;
 }
 
+function useOpenCodeConnection(site: WordPressSite): OpenCodeConnection | null {
+  const { port, status } = useOpenCodeStatus();
+
+  if (status !== 'running' || port === null) {
+    return null;
+  }
+
+  return {
+    port,
+    projectDir: site.project_dir,
+    isReady: true,
+  };
+}
+
 export function OpenCodeClientProvider({
-  port,
-  projectDir,
+  site,
   children,
 }: OpenCodeClientProviderProps) {
-  const value = useMemo<OpenCodeClientContextValue>(() => {
+  const connection = useOpenCodeConnection(site);
+
+  const value = useMemo<OpenCodeClientContextValue | null>(() => {
+    if (!connection) return null;
+
+    const { port, projectDir } = connection;
+
     const client = createOpencodeClient({
       baseUrl: `http://localhost:${port}`,
       directory: projectDir,
@@ -50,7 +76,7 @@ export function OpenCodeClientProvider({
     };
 
     return { client, port, projectDir, buildUrl, openInWebview };
-  }, [port, projectDir]);
+  }, [connection]);
 
   return (
     <OpenCodeClientContext.Provider value={value}>
@@ -63,8 +89,12 @@ export function useOpenCodeClient(): OpenCodeClientContextValue {
   const context = useContext(OpenCodeClientContext);
   if (!context) {
     throw new Error(
-      'useOpenCodeClient must be used within OpenCodeClientProvider',
+      'useOpenCodeClient must be used within OpenCodeClientProvider with a running server',
     );
   }
   return context;
+}
+
+export function useOpenCodeClientSafe(): OpenCodeClientContextValue | null {
+  return useContext(OpenCodeClientContext);
 }

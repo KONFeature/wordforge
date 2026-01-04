@@ -33,7 +33,8 @@
       "packages/php/assets/js/*.js",
       "packages/php/assets/js/*.css",
       "packages/php/assets/bin/*.cjs",
-      "packages/desktop/src-tauri/target"
+      "packages/desktop/src-tauri/target",
+      "**/routeTree.gen.ts"
     ]
   }
 }

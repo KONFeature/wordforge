@@ -1,11 +1,26 @@
-import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import type { OpenCodeStatus } from '../hooks/useOpenCode';
 
 interface StatusBarProps {
-  opencode: UseOpenCodeReturn;
+  status: OpenCodeStatus;
+  port: number | null;
+  installedVersion?: string | null;
   siteConnected: boolean;
 }
 
-export function StatusBar({ opencode, siteConnected }: StatusBarProps) {
+export function StatusBar({
+  status,
+  port,
+  installedVersion,
+  siteConnected,
+}: StatusBarProps) {
+  const statusClass = typeof status === 'object' ? 'error' : status;
+  const statusText =
+    status === 'running'
+      ? `Running (Port ${port})`
+      : typeof status === 'string'
+        ? status
+        : 'Error';
+
   return (
     <footer className="status-bar">
       <div className="status-item">
@@ -20,25 +35,14 @@ export function StatusBar({ opencode, siteConnected }: StatusBarProps) {
       <div className="status-divider" />
 
       <div className="status-item">
-        <span
-          className={`status-indicator opencode-${typeof opencode.status === 'object' ? 'error' : opencode.status}`}
-        />
-        <span className="status-text">
-          OpenCode:{' '}
-          {opencode.status === 'running'
-            ? `Running (Port ${opencode.port})`
-            : typeof opencode.status === 'string'
-              ? opencode.status
-              : 'Error'}
-        </span>
+        <span className={`status-indicator opencode-${statusClass}`} />
+        <span className="status-text">OpenCode: {statusText}</span>
       </div>
 
       <div className="status-spacer" />
 
       <div className="status-item">
-        <span className="status-version">
-          v{opencode.installedVersion || '---'}
-        </span>
+        <span className="status-version">v{installedVersion || '---'}</span>
       </div>
     </footer>
   );

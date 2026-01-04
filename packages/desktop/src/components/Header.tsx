@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Settings, Sparkles } from 'lucide-react';
 import type { WordPressSite } from '../types';
 import { SiteSelector } from './SiteSelector';
@@ -6,7 +7,6 @@ interface HeaderProps {
   sites: WordPressSite[];
   activeSite: WordPressSite | null;
   onSelectSite: (id: string) => void;
-  onAddSite: () => void;
   onOpenSettings: () => void;
 }
 
@@ -14,9 +14,19 @@ export function Header({
   sites,
   activeSite,
   onSelectSite,
-  onAddSite,
   onOpenSettings,
 }: HeaderProps) {
+  const navigate = useNavigate();
+
+  const handleSelectSite = (id: string) => {
+    onSelectSite(id);
+    navigate({ to: '/site/$siteId', params: { siteId: id } });
+  };
+
+  const handleAddSite = () => {
+    navigate({ to: '/onboarding' });
+  };
+
   return (
     <header className="app-header">
       <div className="header-left">
@@ -27,8 +37,8 @@ export function Header({
         <SiteSelector
           sites={sites}
           activeSite={activeSite}
-          onSelect={onSelectSite}
-          onAdd={onAddSite}
+          onSelect={handleSelectSite}
+          onAdd={handleAddSite}
         />
       </div>
       <div className="header-right">

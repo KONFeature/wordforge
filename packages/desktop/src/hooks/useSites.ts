@@ -8,26 +8,34 @@ const siteKeys = {
   active: () => [...siteKeys.all, 'active'] as const,
 };
 
-async function fetchSites(): Promise<WordPressSite[]> {
-  return invoke<WordPressSite[]>('list_sites');
-}
-
-async function fetchActiveSite(): Promise<WordPressSite | null> {
-  return invoke<WordPressSite | null>('get_active_site');
-}
-
-export function useSites() {
-  const queryClient = useQueryClient();
-
+export function useSitesList() {
   const sitesQuery = useQuery({
     queryKey: siteKeys.list(),
-    queryFn: fetchSites,
+    queryFn: () => invoke<WordPressSite[]>('list_sites'),
   });
 
+  return {
+    sites: sitesQuery.data ?? [],
+    isLoading: sitesQuery.isLoading,
+    error: sitesQuery.error?.message ?? null,
+  };
+}
+
+export function useActiveSite() {
   const activeSiteQuery = useQuery({
     queryKey: siteKeys.active(),
-    queryFn: fetchActiveSite,
+    queryFn: () => invoke<WordPressSite | null>('get_active_site'),
   });
+
+  return {
+    activeSite: activeSiteQuery.data ?? null,
+    isLoading: activeSiteQuery.isLoading,
+    error: activeSiteQuery.error?.message ?? null,
+  };
+}
+
+export function useSiteMutations() {
+  const queryClient = useQueryClient();
 
   const connectMutation = useMutation({
     mutationFn: async ({
@@ -64,21 +72,46 @@ export function useSites() {
   };
 
   return {
-    sites: sitesQuery.data ?? [],
-    activeSite: activeSiteQuery.data ?? null,
-    isLoading: sitesQuery.isLoading || activeSiteQuery.isLoading,
-    error: sitesQuery.error?.message || activeSiteQuery.error?.message || null,
-
     connectSite: connectMutation.mutateAsync,
     isConnecting: connectMutation.isPending,
-    connectError: connectMutation.error?.message || null,
+    connectError: connectMutation.error?.message ?? null,
 
     setActive: setActiveMutation.mutateAsync,
-    removeSite: removeMutation.mutateAsync,
-    openSiteFolder,
+    isSettingActive: setActiveMutation.isPending,
 
-    refreshSites: () => {
-      queryClient.invalidateQueries({ queryKey: siteKeys.all });
-    },
+    removeSite: removeMutation.mutateAsync,
+    isRemoving: removeMutation.isPending,
+
+    openSiteFolder,
+  };
+}
+
+export function useSiteInvalidation() {
+  const queryClient = useQueryClient();
+
+  return {
+    invalidateAll: () =>
+      queryClient.invalidateQueries({ queryKey: siteKeys.all }),
+    invalidateActive: () =>
+      queryClient.invalidateQueries({ queryKey: siteKeys.active() }),
+  };
+}
+
+export function useSites() {
+  const { sites, isLoading: isListLoading, error: listError } = useSitesList();
+  const {
+    activeSite,
+    isLoading: isActiveLoading,
+    error: activeError,
+  } = useActiveSite();
+  const mutations = useSiteMutations();
+
+  return {
+    sites,
+    activeSite,
+    isLoading: isListLoading || isActiveLoading,
+    error: listError || activeError,
+    ...mutations,
+    refreshSites: useSiteInvalidation().invalidateAll,
   };
 }

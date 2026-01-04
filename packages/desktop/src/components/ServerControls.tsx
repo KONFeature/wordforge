@@ -1,15 +1,29 @@
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { Download, ExternalLink, Play, Square } from 'lucide-react';
-import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import {
+  useOpenCodeActions,
+  useOpenCodeDownload,
+  useOpenCodeStatus,
+} from '../hooks/useOpenCode';
 
-interface ServerControlsProps {
-  opencode: UseOpenCodeReturn;
-}
+export function ServerControls() {
+  const navigate = useNavigate();
+  const params = useParams({ strict: false });
+  const siteId = params.siteId as string | undefined;
 
-export function ServerControls({ opencode }: ServerControlsProps) {
-  const isInstalled = opencode.status !== 'not_installed';
-  const isRunning = opencode.status === 'running';
-  const isStarting = opencode.status === 'starting';
-  const isDownloading = opencode.isDownloading;
+  const { status, port } = useOpenCodeStatus();
+  const { start, stop, isStarting } = useOpenCodeActions();
+  const { download, isDownloading, downloadProgress } = useOpenCodeDownload();
+
+  const isInstalled = status !== 'not_installed';
+  const isRunning = status === 'running';
+  const isStartingStatus = status === 'starting' || isStarting;
+
+  const handleOpenCode = () => {
+    if (siteId) {
+      navigate({ to: '/site/$siteId/code', params: { siteId } });
+    }
+  };
 
   if (isDownloading) {
     return (
@@ -17,14 +31,14 @@ export function ServerControls({ opencode }: ServerControlsProps) {
         <div className="progress-card">
           <div className="progress-info">
             <span>
-              {opencode.downloadProgress?.message || 'Downloading OpenCode...'}
+              {downloadProgress?.message || 'Downloading OpenCode...'}
             </span>
-            <span>{opencode.downloadProgress?.percent || 0}%</span>
+            <span>{downloadProgress?.percent || 0}%</span>
           </div>
           <div className="progress-bar">
             <div
               className="progress-fill"
-              style={{ width: `${opencode.downloadProgress?.percent || 0}%` }}
+              style={{ width: `${downloadProgress?.percent || 0}%` }}
             />
           </div>
         </div>
@@ -38,7 +52,7 @@ export function ServerControls({ opencode }: ServerControlsProps) {
         <button
           type="button"
           className="btn-server btn-download"
-          onClick={() => opencode.download()}
+          onClick={() => download()}
         >
           <Download size={18} />
           <span>Download OpenCode</span>
@@ -53,26 +67,30 @@ export function ServerControls({ opencode }: ServerControlsProps) {
         <button
           type="button"
           className="btn-server btn-start"
-          onClick={() => opencode.start()}
-          disabled={isRunning || isStarting}
+          onClick={() => start()}
+          disabled={isRunning || isStartingStatus}
         >
-          {isStarting ? <div className="spinner-small" /> : <Play size={18} />}
-          <span>{isStarting ? 'Starting...' : 'Start'}</span>
+          {isStartingStatus ? (
+            <div className="spinner-small" />
+          ) : (
+            <Play size={18} />
+          )}
+          <span>{isStartingStatus ? 'Starting...' : 'Start'}</span>
         </button>
         <button
           type="button"
           className="btn-server btn-stop"
-          onClick={() => opencode.stop()}
+          onClick={() => stop()}
           disabled={!isRunning}
         >
           <Square size={16} />
           <span>Stop</span>
         </button>
-        {isRunning && (
+        {isRunning && siteId && (
           <button
             type="button"
             className="btn-server btn-open"
-            onClick={() => opencode.openView()}
+            onClick={handleOpenCode}
           >
             <ExternalLink size={16} />
             <span>Open</span>
@@ -81,12 +99,12 @@ export function ServerControls({ opencode }: ServerControlsProps) {
       </div>
       <div className="server-status">
         <span
-          className={`status-dot ${isRunning ? 'running' : isStarting ? 'starting' : 'stopped'}`}
+          className={`status-dot ${isRunning ? 'running' : isStartingStatus ? 'starting' : 'stopped'}`}
         />
         <span className="status-text">
           {isRunning
-            ? `Running on port ${opencode.port}`
-            : isStarting
+            ? `Running on port ${port}`
+            : isStartingStatus
               ? 'Starting...'
               : 'Stopped'}
         </span>

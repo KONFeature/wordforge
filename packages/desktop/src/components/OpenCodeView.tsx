@@ -1,26 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ExternalLink, Square } from 'lucide-react';
 import { useState } from 'react';
-import { useOpenCodeClient } from '../context/OpenCodeClientContext';
-import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import { useOpenCodeClientSafe } from '../context/OpenCodeClientContext';
+import { useOpenCodeActions } from '../hooks/useOpenCode';
 
 interface OpenCodeViewProps {
-  opencode: UseOpenCodeReturn;
   siteName: string;
   onBack: () => void;
 }
 
-export function OpenCodeView({
-  opencode,
-  siteName,
-  onBack,
-}: OpenCodeViewProps) {
+export function OpenCodeView({ siteName, onBack }: OpenCodeViewProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { client, projectDir, buildUrl, openInWebview } = useOpenCodeClient();
+  const clientContext = useOpenCodeClientSafe();
+  const { stop } = useOpenCodeActions();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['opencode-init', projectDir],
+    queryKey: ['opencode-init', clientContext?.projectDir],
     queryFn: async () => {
+      if (!clientContext) throw new Error('Server not running');
+
+      const { client } = clientContext;
       const projectResult = await client.project.current();
       const project = projectResult.data!;
 
@@ -46,11 +45,34 @@ export function OpenCodeView({
 
       return { projectId: project.id, sessionId };
     },
+    enabled: !!clientContext,
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
 
-  const iframeUrl = data ? buildUrl(data.sessionId) : null;
+  const iframeUrl =
+    data && clientContext ? clientContext.buildUrl(data.sessionId) : null;
+
+  if (!clientContext) {
+    return (
+      <div className="opencode-view">
+        <div className="opencode-toolbar">
+          <div className="toolbar-left">
+            <button type="button" className="btn-back" onClick={onBack}>
+              <ChevronLeft size={16} />
+              Back
+            </button>
+            <span className="toolbar-title">{siteName}</span>
+          </div>
+        </div>
+        <div className="webview-container">
+          <div className="webview-loading">
+            <span>OpenCode server is not running. Please start it first.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="opencode-view">
@@ -66,7 +88,7 @@ export function OpenCodeView({
           <button
             type="button"
             className="btn-icon"
-            onClick={() => opencode.stop()}
+            onClick={() => stop()}
             title="Stop Server"
           >
             <Square size={16} />
@@ -74,7 +96,7 @@ export function OpenCodeView({
           <button
             type="button"
             className="btn-icon"
-            onClick={() => data && openInWebview(data.sessionId)}
+            onClick={() => data && clientContext.openInWebview(data.sessionId)}
             title="Open in Browser"
             disabled={!data}
           >

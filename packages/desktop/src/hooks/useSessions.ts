@@ -1,52 +1,34 @@
-import { createOpencodeClient, type Session } from '@opencode-ai/sdk/v2/client';
+import type { Session } from '@opencode-ai/sdk/v2/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/core';
 import { useMemo } from 'react';
+import { useOpenCodeClientSafe } from '../context/OpenCodeClientContext';
 
 export interface SessionWithChildren extends Session {
   children: Session[];
 }
 
-interface UseSessionsParams {
-  port: number | null;
-  projectDir: string | null;
-}
-
 const SESSION_POLL_INTERVAL = 10000;
 
-function encodeProjectPath(path: string): string {
-  return btoa(path).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
+const sessionKeys = {
+  all: ['sessions'] as const,
+  list: (projectDir: string) =>
+    [...sessionKeys.all, 'list', projectDir] as const,
+};
 
-function buildUrl(
-  port: number,
-  projectDir: string,
-  sessionId?: string,
-): string {
-  const encodedPath = encodeProjectPath(projectDir);
-  const base = `http://localhost:${port}/${encodedPath}`;
-  return sessionId ? `${base}/session/${sessionId}` : base;
-}
-
-export function useSessions({ port, projectDir }: UseSessionsParams) {
+export function useSessions() {
+  const clientContext = useOpenCodeClientSafe();
   const queryClient = useQueryClient();
-  const isEnabled = port !== null && projectDir !== null;
 
-  const client = useMemo(() => {
-    if (!port || !projectDir) return null;
-    return createOpencodeClient({
-      baseUrl: `http://localhost:${port}`,
-      directory: projectDir,
-    });
-  }, [port, projectDir]);
+  const isEnabled = clientContext !== null;
+  const projectDir = clientContext?.projectDir ?? '';
 
-  const queryKey = ['sessions', projectDir] as const;
+  const queryKey = sessionKeys.list(projectDir);
 
   const sessionsQuery = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!client) return [];
-      const result = await client.session.list();
+      if (!clientContext) return [];
+      const result = await clientContext.client.session.list();
       return result.data ?? [];
     },
     enabled: isEnabled,
@@ -56,8 +38,8 @@ export function useSessions({ port, projectDir }: UseSessionsParams) {
 
   const createMutation = useMutation({
     mutationFn: async (title?: string) => {
-      if (!client) throw new Error('Server not running');
-      const result = await client.session.create({ title });
+      if (!clientContext) throw new Error('Server not running');
+      const result = await clientContext.client.session.create({ title });
       return result.data!;
     },
     onSuccess: (newSession) => {
@@ -69,8 +51,8 @@ export function useSessions({ port, projectDir }: UseSessionsParams) {
 
   const deleteMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      if (!client) throw new Error('Server not running');
-      await client.session.delete({ sessionID: sessionId });
+      if (!clientContext) throw new Error('Server not running');
+      await clientContext.client.session.delete({ sessionID: sessionId });
       return sessionId;
     },
     onSuccess: (deletedId) => {
@@ -108,9 +90,8 @@ export function useSessions({ port, projectDir }: UseSessionsParams) {
   }, [sessionsQuery.data]);
 
   const openSession = async (sessionId?: string) => {
-    if (!port || !projectDir) return;
-    const url = buildUrl(port, projectDir, sessionId);
-    await invoke('open_opencode_view', { url });
+    if (!clientContext) return;
+    await clientContext.openInWebview(sessionId);
   };
 
   const createAndOpenSession = async (title?: string) => {
@@ -132,5 +113,6 @@ export function useSessions({ port, projectDir }: UseSessionsParams) {
     openSession,
     createAndOpenSession,
     refetch: sessionsQuery.refetch,
+    isServerRunning: isEnabled,
   };
 }

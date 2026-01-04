@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type OpenCodeStatus =
   | 'not_installed'
@@ -40,71 +40,43 @@ async function fetchOpenCodeState(): Promise<OpenCodeState> {
       invoke<boolean>('check_update_available').catch(() => false),
     ]);
 
-  return {
-    status,
-    installedVersion,
-    latestVersion,
-    port,
-    updateAvailable,
-  };
+  return { status, installedVersion, latestVersion, port, updateAvailable };
 }
 
-export interface UseOpenCodeReturn {
-  status: OpenCodeStatus;
-  installedVersion: string | null;
-  latestVersion: string | null;
-  updateAvailable: boolean;
-  port: number | null;
-  isDownloading: boolean;
-  downloadProgress: DownloadProgress | null;
-  error: string | null;
-  download: () => Promise<void>;
-  start: () => Promise<void>;
-  stop: () => Promise<void>;
-  openView: () => Promise<void>;
-  refresh: () => void;
-}
-
-export function useOpenCode(): UseOpenCodeReturn {
-  const queryClient = useQueryClient();
-  const [downloadProgress, setDownloadProgress] =
-    useState<DownloadProgress | null>(null);
-  const [mutationError, setMutationError] = useState<string | null>(null);
-
+export function useOpenCodeStatus() {
   const stateQuery = useQuery({
     queryKey: openCodeKeys.status(),
     queryFn: fetchOpenCodeState,
     refetchInterval: 5000,
   });
 
-  const downloadMutation = useMutation({
-    mutationFn: async () => {
-      setDownloadProgress({ message: 'Starting download...', percent: 0 });
-      setMutationError(null);
-      await invoke('download_opencode');
-    },
-    onSuccess: () => {
-      setDownloadProgress(null);
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
-    },
-    onError: (error) => {
-      setDownloadProgress(null);
-      setMutationError(error instanceof Error ? error.message : String(error));
-    },
-  });
+  return {
+    status: stateQuery.data?.status ?? 'not_installed',
+    installedVersion: stateQuery.data?.installedVersion ?? null,
+    latestVersion: stateQuery.data?.latestVersion ?? null,
+    updateAvailable: stateQuery.data?.updateAvailable ?? false,
+    port: stateQuery.data?.port ?? null,
+    isLoading: stateQuery.isLoading,
+  };
+}
+
+export function useOpenCodeActions() {
+  const queryClient = useQueryClient();
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+  }, [queryClient]);
 
   const startMutation = useMutation({
     mutationFn: async () => {
       setMutationError(null);
-      const port = await invoke<number>('start_opencode');
-      return port;
+      return invoke<number>('start_opencode');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
-    },
+    onSuccess: invalidate,
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+      invalidate();
     },
   });
 
@@ -113,12 +85,10 @@ export function useOpenCode(): UseOpenCodeReturn {
       setMutationError(null);
       await invoke('stop_opencode');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
-    },
+    onSuccess: invalidate,
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
-      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+      invalidate();
     },
   });
 
@@ -128,6 +98,44 @@ export function useOpenCode(): UseOpenCodeReturn {
     },
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
+    },
+  });
+
+  return {
+    start: startMutation.mutateAsync,
+    isStarting: startMutation.isPending,
+
+    stop: stopMutation.mutateAsync,
+    isStopping: stopMutation.isPending,
+
+    openView: openViewMutation.mutateAsync,
+
+    error: mutationError,
+    clearError: () => setMutationError(null),
+
+    refresh: invalidate,
+  };
+}
+
+export function useOpenCodeDownload() {
+  const queryClient = useQueryClient();
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgress | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const downloadMutation = useMutation({
+    mutationFn: async () => {
+      setDownloadProgress({ message: 'Starting download...', percent: 0 });
+      setError(null);
+      await invoke('download_opencode');
+    },
+    onSuccess: () => {
+      setDownloadProgress(null);
+      queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+    },
+    onError: (err) => {
+      setDownloadProgress(null);
+      setError(err instanceof Error ? err.message : String(err));
     },
   });
 
@@ -144,38 +152,52 @@ export function useOpenCode(): UseOpenCodeReturn {
     };
   }, []);
 
-  const state = stateQuery.data;
-  const isStarting = startMutation.isPending;
-  const computedStatus: OpenCodeStatus = isStarting
+  return {
+    download: downloadMutation.mutateAsync,
+    isDownloading: downloadMutation.isPending,
+    downloadProgress,
+    error,
+  };
+}
+
+export interface UseOpenCodeReturn {
+  status: OpenCodeStatus;
+  installedVersion: string | null;
+  latestVersion: string | null;
+  updateAvailable: boolean;
+  port: number | null;
+  isDownloading: boolean;
+  downloadProgress: DownloadProgress | null;
+  error: string | null;
+  download: () => Promise<void>;
+  start: () => Promise<number>;
+  stop: () => Promise<void>;
+  openView: () => Promise<void>;
+  refresh: () => void;
+}
+
+export function useOpenCode(): UseOpenCodeReturn {
+  const statusHook = useOpenCodeStatus();
+  const actionsHook = useOpenCodeActions();
+  const downloadHook = useOpenCodeDownload();
+
+  const computedStatus: OpenCodeStatus = actionsHook.isStarting
     ? 'starting'
-    : (state?.status ?? 'not_installed');
+    : statusHook.status;
 
   return {
     status: computedStatus,
-    installedVersion: state?.installedVersion ?? null,
-    latestVersion: state?.latestVersion ?? null,
-    updateAvailable: state?.updateAvailable ?? false,
-    port: state?.port ?? null,
-    isDownloading: downloadMutation.isPending,
-    downloadProgress,
-    error: mutationError,
-    download: async () => {
-      await downloadMutation.mutateAsync();
-    },
-    start: async () => {
-      await startMutation.mutateAsync();
-    },
-    stop: async () => {
-      await stopMutation.mutateAsync();
-    },
-    openView: async () => {
-      await openViewMutation.mutateAsync();
-    },
-    refresh: () => {
-      queryClient.invalidateQueries({
-        queryKey: openCodeKeys.all,
-        exact: false,
-      });
-    },
+    installedVersion: statusHook.installedVersion,
+    latestVersion: statusHook.latestVersion,
+    updateAvailable: statusHook.updateAvailable,
+    port: statusHook.port,
+    isDownloading: downloadHook.isDownloading,
+    downloadProgress: downloadHook.downloadProgress,
+    error: actionsHook.error ?? downloadHook.error,
+    download: downloadHook.download,
+    start: actionsHook.start,
+    stop: actionsHook.stop,
+    openView: actionsHook.openView,
+    refresh: actionsHook.refresh,
   };
 }
