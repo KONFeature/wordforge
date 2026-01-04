@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "wordforge",
   "display_name": "WordForge - WordPress MCP",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Connect Claude to your WordPress site for content management, styling, and commerce",
   "long_description": "WordForge enables Claude to interact with your WordPress site through the Model Context Protocol. Manage posts, pages, media, WooCommerce products, Gutenberg blocks, and theme styles - all through natural conversation.\n\n**Features:**\n- Content CRUD (posts, pages, custom post types)\n- Media library management\n- Taxonomy management (categories, tags)\n- Gutenberg block editing\n- Full Site Editing templates\n- Global styles (theme.json)\n- WooCommerce product management\n- AI-powered content prompts",
   "author": {

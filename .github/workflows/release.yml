@@ -19,34 +19,8 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
-      - name: Update version in PHP
-        run: |
-          sed -i "s/Version: .*/Version: ${{ steps.version.outputs.VERSION }}/" packages/php/wordforge.php
-          sed -i "s/define( 'WORDFORGE_VERSION', '.*' );/define( 'WORDFORGE_VERSION', '${{ steps.version.outputs.VERSION }}' );/" packages/php/wordforge.php
-
-      - name: Update version in MCP manifest
-        run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/mcp/manifest.json
-
-      - name: Update version in MCP package.json
-        run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/mcp/package.json
-
-      - name: Update version in MCP source
-        run: |
-          sed -i "s/version: '.*',/version: '${{ steps.version.outputs.VERSION }}',/" packages/mcp/src/index.ts
-
-      - name: Update version in Desktop package.json
-        run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/desktop/package.json
-
-      - name: Update version in Desktop Tauri config
-        run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/desktop/src-tauri/tauri.conf.json
-
-      - name: Update version in Desktop Cargo.toml
-        run: |
-          sed -i 's/^version = ".*"/version = "'"${{ steps.version.outputs.VERSION }}'"/' packages/desktop/src-tauri/Cargo.toml
+      - name: Update all versions
+        run: chmod +x ./update-version.sh && ./update-version.sh ${{ steps.version.outputs.VERSION }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -136,6 +110,9 @@ jobs:
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update versions
+        run: chmod +x ./update-version.sh && ./update-version.sh ${{ steps.version.outputs.VERSION }}
 
       - name: Build MCP sidecar
         env:
