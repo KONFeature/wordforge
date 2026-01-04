@@ -1,4 +1,11 @@
+const path = require('node:path');
 const defaultConfig = require('@wordpress/scripts/config/webpack.config');
+const wpScriptsPath = require.resolve(
+  '@wordpress/scripts/config/webpack.config',
+);
+const webpack = require(
+  require.resolve('webpack', { paths: [path.dirname(wpScriptsPath)] }),
+);
 
 module.exports = {
   ...defaultConfig,
@@ -13,11 +20,17 @@ module.exports = {
     ...defaultConfig.resolve,
     alias: {
       ...(defaultConfig.resolve?.alias || {}),
-      // Map 'react' imports to @wordpress/element for TanStack Query compatibility
       react: require.resolve('@wordpress/element'),
       'react-dom': require.resolve('@wordpress/element'),
     },
   },
+  plugins: [
+    ...(defaultConfig.plugins || []),
+    new webpack.NormalModuleReplacementPlugin(
+      /^node:child_process$/,
+      path.resolve(__dirname, 'src/shims/node-child-process.js'),
+    ),
+  ],
   optimization: {
     ...defaultConfig.optimization,
     splitChunks: {

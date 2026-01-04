@@ -1,4 +1,4 @@
-import type { Message, Part } from '@opencode-ai/sdk';
+import type { Message, Part } from '@opencode-ai/sdk/v2';
 import type { ScopedContext } from './chat/hooks/useContextInjection';
 
 export type {
@@ -10,7 +10,7 @@ export type {
   ToolState,
   SessionStatus,
   Event,
-} from '@opencode-ai/sdk/client';
+} from '@opencode-ai/sdk/v2';
 
 export interface WordForgeChatConfig {
   proxyUrl: string;

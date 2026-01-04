@@ -1,4 +1,4 @@
-import type { OpencodeClient } from '@opencode-ai/sdk';
+import type { OpencodeClient } from '@opencode-ai/sdk/v2';
 import { useQuery } from '@tanstack/react-query';
 import {
   createContext,

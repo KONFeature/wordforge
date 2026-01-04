@@ -1,4 +1,4 @@
-import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
+import type { Session, SessionStatus } from '@opencode-ai/sdk/v2';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   useConnectionStatus,
@@ -51,7 +51,7 @@ export const useCreateSession = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const result = await client!.session.create({ body: {} });
+      const result = await client!.session.create();
       return result.data!;
     },
     onSuccess: (newSession, _var, _result, { client: queryClient }) => {
@@ -68,7 +68,7 @@ export const useDeleteSession = () => {
 
   return useMutation({
     mutationFn: async (sessionId: string) => {
-      await client!.session.delete({ path: { id: sessionId } });
+      await client!.session.delete({ sessionID: sessionId });
       return sessionId;
     },
     onSuccess: (deletedId, _var, _result, { client: queryClient }) => {
@@ -93,8 +93,9 @@ export const useRevertSession = () => {
   return useMutation({
     mutationFn: async ({ sessionId, messageID, partID }: RevertParams) => {
       const result = await client!.session.revert({
-        path: { id: sessionId },
-        body: { messageID, partID },
+        sessionID: sessionId,
+        messageID,
+        partID,
       });
       return result.data!;
     },
@@ -143,7 +144,7 @@ export const useUnrevertSession = () => {
   return useMutation({
     mutationFn: async (sessionId: string) => {
       const result = await client!.session.unrevert({
-        path: { id: sessionId },
+        sessionID: sessionId,
       });
       return result.data!;
     },

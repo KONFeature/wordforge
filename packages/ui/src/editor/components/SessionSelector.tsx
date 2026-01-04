@@ -1,4 +1,4 @@
-import type { Session, SessionStatus } from '@opencode-ai/sdk/client';
+import type { Session, SessionStatus } from '@opencode-ai/sdk/v2';
 import { Button, Spinner } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

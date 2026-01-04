@@ -1,7 +1,8 @@
-import { memo } from '@wordpress/element';
+import { memo, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import styles from '../MessageList.module.css';
 import { AgentBadge } from './AgentBadge';
+import { CollapsibleSteps } from './CollapsibleSteps';
 import { CompactionNotice } from './CompactionNotice';
 import { FileAttachment } from './FileAttachment';
 import { Markdown } from './Markdown';
@@ -41,17 +42,36 @@ import {
 
 interface AssistantMessageProps {
   messages: ChatMessage[];
+  isComplete: boolean;
   onOpenSession?: (sessionId: string) => void;
 }
 
 type StepPart = ToolPart | ReasoningPart | PatchPart | RetryPart | SubtaskPart;
 
 export const AssistantMessage = memo(
-  ({ messages, onOpenSession }: AssistantMessageProps) => {
+  ({ messages, isComplete, onOpenSession }: AssistantMessageProps) => {
     if (!messages || messages.length === 0) return null;
 
     const allParts: Part[] = messages.flatMap((m) => m.parts || []);
     const validParts = allParts.filter((p): p is Part => p != null);
+
+    const durationSeconds = useMemo(() => {
+      if (!isComplete || messages.length === 0) return undefined;
+      const firstMsg = messages[0];
+      const lastMsg = messages[messages.length - 1];
+      const startTime =
+        isAssistantMessage(firstMsg.info) && firstMsg.info.time?.created
+          ? firstMsg.info.time.created
+          : undefined;
+      const endTime =
+        isAssistantMessage(lastMsg.info) && lastMsg.info.time?.completed
+          ? lastMsg.info.time.completed
+          : undefined;
+      if (startTime && endTime) {
+        return endTime - startTime;
+      }
+      return undefined;
+    }, [messages, isComplete]);
 
     const allSteps = validParts.filter(
       (p): p is StepPart =>
@@ -64,9 +84,6 @@ export const AssistantMessage = memo(
     const allTextParts = validParts.filter(isTextPart);
     const fileParts = validParts.filter(isFilePart) as FilePart[];
     const agentParts = validParts.filter(isAgentPart) as AgentPart[];
-    const stepFinishParts = validParts.filter(
-      isStepFinishPart,
-    ) as StepFinishPart[];
     const compactionParts = validParts.filter(
       isCompactionPart,
     ) as CompactionPart[];
@@ -121,7 +138,11 @@ export const AssistantMessage = memo(
           ))}
 
         {allSteps.length > 0 && (
-          <div className={styles.stepsContainer}>
+          <CollapsibleSteps
+            isComplete={isComplete}
+            durationSeconds={durationSeconds}
+            stepCount={allSteps.length}
+          >
             {allSteps.map((step) => {
               if (isToolPart(step)) {
                 if (isTaskTool(step)) {
@@ -146,7 +167,7 @@ export const AssistantMessage = memo(
               }
               return <ReasoningStep key={step.id} part={step} />;
             })}
-          </div>
+          </CollapsibleSteps>
         )}
 
         {allTextParts.map((part, i) => (

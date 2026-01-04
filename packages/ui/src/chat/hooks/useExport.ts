@@ -1,4 +1,4 @@
-import type { Session } from '@opencode-ai/sdk/client';
+import type { Session } from '@opencode-ai/sdk/v2';
 import { useCallback } from '@wordpress/element';
 import type { ChatMessage } from '../components/MessageList';
 

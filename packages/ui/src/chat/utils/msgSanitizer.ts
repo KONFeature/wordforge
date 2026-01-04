@@ -5,7 +5,7 @@ import type {
   ToolState,
   ToolStateCompleted,
   ToolStateError,
-} from '@opencode-ai/sdk';
+} from '@opencode-ai/sdk/v2';
 
 const MAX_TOOL_INPUT_SIZE = 5 * 1024;
 const MAX_TOOL_OUTPUT_SIZE = 5 * 1024;

@@ -1,4 +1,4 @@
-import type { Part } from '@opencode-ai/sdk/client';
+import type { Part } from '@opencode-ai/sdk/v2';
 
 const CONTEXT_TAG_OPEN = '<user_context>';
 const CONTEXT_TAG_CLOSE = '</user_context>';

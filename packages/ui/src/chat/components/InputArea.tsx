@@ -1,4 +1,4 @@
-import type { Agent, Provider } from '@opencode-ai/sdk/client';
+import type { Agent, Provider } from '@opencode-ai/sdk/v2';
 import { Button } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

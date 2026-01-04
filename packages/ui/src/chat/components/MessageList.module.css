@@ -315,6 +315,56 @@
   margin-bottom: var(--wf-spacing-md);
 }
 
+.collapsibleStepsWrapper {
+  margin-bottom: var(--wf-spacing-sm);
+}
+
+.collapsibleStepsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs) 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: var(--wf-font-size-sm);
+  font-family: inherit;
+  color: var(--wf-color-text-muted);
+  transition: color 0.15s ease;
+}
+
+.collapsibleStepsToggle:hover {
+  color: var(--wf-color-text);
+}
+
+.collapsibleStepsToggle:focus-visible {
+  outline: 2px solid var(--wf-color-primary, #0073aa);
+  outline-offset: 2px;
+  border-radius: var(--wf-radius-sm);
+}
+
+.collapsibleStepsLabel {
+  font-weight: 400;
+}
+
+.collapsibleStepsDuration {
+  color: var(--wf-color-text-muted);
+}
+
+.collapsibleStepsChevron {
+  font-size: var(--wf-font-size-xs);
+  transition: transform 0.2s ease;
+}
+
+.collapsibleStepsChevron.expanded {
+  transform: rotate(180deg);
+}
+
+.collapsibleStepsWrapper .stepsContainer {
+  margin-top: var(--wf-spacing-sm);
+  margin-bottom: 0;
+}
+
 .simpleStep {
   display: flex;
   align-items: center;

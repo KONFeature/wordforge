@@ -1,4 +1,4 @@
-import type { Agent } from '@opencode-ai/sdk/client';
+import type { Agent } from '@opencode-ai/sdk/v2';
 import { Button, Popover } from '@wordpress/components';
 import { memo, useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

@@ -2,7 +2,7 @@ import type {
   Session,
   SessionPromptData,
   SessionStatus,
-} from '@opencode-ai/sdk/client';
+} from '@opencode-ai/sdk/v2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SelectedModel } from '../../components/ModelSelector';
 import {
@@ -27,10 +27,8 @@ export const useMessages = (sessionId: string | null) => {
     queryKey: queryKeys.messages(mode, sessionId!),
     queryFn: async () => {
       const result = await client!.session.messages({
-        path: { id: sessionId! },
-        query: {
-          limit: 100,
-        },
+        sessionID: sessionId!,
+        limit: 100,
       });
 
       const rawMessages = result.data || [];
@@ -112,7 +110,7 @@ export const useSendMessage = () => {
       };
 
       if (!sessionId) {
-        const createResult = await client.session.create({ body: {} });
+        const createResult = await client.session.create();
         const newSession = createResult.data!;
         sessionId = newSession.id;
         isNewSession = true;
@@ -147,8 +145,8 @@ export const useSendMessage = () => {
       );
 
       await client.session.promptAsync({
-        path: { id: sessionId },
-        body,
+        sessionID: sessionId,
+        ...body,
       });
 
       return {
@@ -186,7 +184,7 @@ export const useAbortSession = () => {
       if (!client) {
         throw new Error('OpenCode client not available');
       }
-      await client.session.abort({ path: { id: sessionId } });
+      await client.session.abort({ sessionID: sessionId });
     },
   });
 };

@@ -1,5 +1,5 @@
 import type { SelectedModel } from '@/components/ModelSelector';
-import type { Agent, McpStatus, Provider } from '@opencode-ai/sdk/client';
+import type { Agent, McpStatus, Provider } from '@opencode-ai/sdk/v2';
 import { useQuery } from '@tanstack/react-query';
 import {
   useConnectionStatus,

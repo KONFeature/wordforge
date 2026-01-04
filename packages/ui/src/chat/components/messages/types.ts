@@ -13,7 +13,7 @@ import type {
   TextPart,
   ToolPart,
   UserMessage,
-} from '@opencode-ai/sdk/client';
+} from '@opencode-ai/sdk/v2';
 
 export type {
   AgentPart,

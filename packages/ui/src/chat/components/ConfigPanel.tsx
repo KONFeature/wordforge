@@ -1,4 +1,4 @@
-import type { McpStatus, Provider } from '@opencode-ai/sdk/client';
+import type { McpStatus, Provider } from '@opencode-ai/sdk/v2';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import styles from './ConfigPanel.module.css';
