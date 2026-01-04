@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Package, ShoppingCart } from 'lucide-react';
+import { ExternalLink, Package, ShoppingCart } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/site/$siteId/woocommerce')({
 
 function WooCommercePage() {
   const { site } = Route.useRouteContext();
-  const { products, orders, isLoading } = useWooCommerce(site);
+  const { products, orders, isLoading, isAvailable } = useWooCommerce(site);
 
   if (isLoading) {
     return (
@@ -34,6 +34,36 @@ function WooCommercePage() {
         </div>
         <Skeleton height={300} />
         <Skeleton height={300} />
+      </div>
+    );
+  }
+
+  if (isAvailable === false) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Commerce</h1>
+          <p className={styles.subtitle}>
+            Manage your store orders and products
+          </p>
+        </div>
+        <div className={styles.emptyState}>
+          <ShoppingCart size={48} strokeWidth={1.5} />
+          <h3>WooCommerce Not Installed</h3>
+          <p>
+            Install and activate WooCommerce on your WordPress site to manage
+            products, orders, and customers from this dashboard.
+          </p>
+          <Button
+            variant="primary"
+            onClick={() =>
+              window.open('https://woocommerce.com/start/', '_blank')
+            }
+          >
+            Learn about WooCommerce
+            <ExternalLink size={14} />
+          </Button>
+        </div>
       </div>
     );
   }

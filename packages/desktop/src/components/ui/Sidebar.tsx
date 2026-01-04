@@ -158,43 +158,31 @@ export function Sidebar({
   );
 }
 
-export function createSiteNavItems(
-  siteId: string,
-  options?: { hasWooCommerce?: boolean; hasAnalytics?: boolean },
-): NavItem[] {
-  const items: NavItem[] = [
+export function createSiteNavItems(siteId: string): NavItem[] {
+  return [
     {
       to: '/site/$siteId',
       label: 'Home',
       icon: <Home size={18} />,
       params: { siteId },
     },
-  ];
-
-  if (options?.hasWooCommerce) {
-    items.push({
+    {
       to: '/site/$siteId/woocommerce',
       label: 'Commerce',
       icon: <ShoppingCart size={18} />,
       params: { siteId },
-    });
-  }
-
-  if (options?.hasAnalytics) {
-    items.push({
+    },
+    {
       to: '/site/$siteId/analytics',
       label: 'Analytics',
       icon: <BarChart2 size={18} />,
       params: { siteId },
-    });
-  }
-
-  items.push({
-    to: '/site/$siteId/system',
-    label: 'System',
-    icon: <Settings size={18} />,
-    params: { siteId },
-  });
-
-  return items;
+    },
+    {
+      to: '/site/$siteId/system',
+      label: 'System',
+      icon: <Settings size={18} />,
+      params: { siteId },
+    },
+  ];
 }

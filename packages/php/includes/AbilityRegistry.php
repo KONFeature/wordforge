@@ -38,6 +38,7 @@ use WordForge\Abilities\Comments\ModerateComment;
 use WordForge\Abilities\Settings\GetSettings;
 use WordForge\Abilities\Settings\UpdateSettings;
 use WordForge\Abilities\Analytics\GetSiteStats;
+use WordForge\Abilities\Analytics\GetJetpackStats;
 use WordForge\Abilities\Orders\ListOrders;
 use WordForge\Abilities\Orders\GetOrder;
 use WordForge\Abilities\Orders\UpdateOrderStatus;
@@ -105,7 +106,8 @@ class AbilityRegistry {
 	);
 
 	private const ANALYTICS_ABILITIES = array(
-		'wordforge/get-site-stats' => GetSiteStats::class,
+		'wordforge/get-site-stats'    => GetSiteStats::class,
+		'wordforge/get-jetpack-stats' => GetJetpackStats::class,
 	);
 
 	private const ORDER_ABILITIES = array(

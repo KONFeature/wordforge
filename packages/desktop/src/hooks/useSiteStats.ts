@@ -15,18 +15,16 @@ import type {
   WPUser,
   WordPressSite,
 } from '../types';
+import { useJetpackStats } from './useJetpackStats';
 
 const statsKeys = {
   all: ['site-stats'] as const,
   site: (siteId: string) => [...statsKeys.all, siteId] as const,
 };
 
-interface JetpackStats {
-  visits?: { data?: Array<[string, number]> };
-  visitors?: { data?: Array<[string, number]> };
-}
-
-async function fetchSiteStats(site: WordPressSite): Promise<SiteStats> {
+async function fetchSiteStats(
+  site: WordPressSite,
+): Promise<Omit<SiteStats, 'analytics'>> {
   const { rest_url, auth } = site;
 
   const [
@@ -45,7 +43,6 @@ async function fetchSiteStats(site: WordPressSite): Promise<SiteStats> {
     wcProductsRes,
     wcOrdersRes,
     wcRecentOrdersRes,
-    jetpackStatsRes,
   ] = await Promise.all([
     wpFetch<WPSiteInfo>(rest_url, '/wp-json', auth),
     wpFetch<WPTheme[]>(rest_url, '/wp-json/wp/v2/themes', auth),
@@ -89,14 +86,6 @@ async function fetchSiteStats(site: WordPressSite): Promise<SiteStats> {
       per_page: '100',
       after: getMonthAgoDate(),
     }),
-    wpFetch<JetpackStats>(
-      rest_url,
-      '/wp-json/jetpack/v4/module/stats/data',
-      auth,
-      {
-        range: 'week',
-      },
-    ),
   ]);
 
   const activeTheme = themeRes.data?.find((t) => t.stylesheet);
@@ -205,34 +194,6 @@ async function fetchSiteStats(site: WordPressSite): Promise<SiteStats> {
           },
         }
       : null,
-
-    analytics: parseJetpackStats(jetpackStatsRes.data),
-  };
-}
-
-function parseJetpackStats(data: JetpackStats | null): SiteStats['analytics'] {
-  if (!data?.visits?.data && !data?.visitors?.data) return null;
-
-  const visits = data.visits?.data || [];
-  const visitors = data.visitors?.data || [];
-
-  const sumLast = (arr: Array<[string, number]>, days: number) =>
-    arr.slice(-days).reduce((sum, [, val]) => sum + (val || 0), 0);
-
-  const getLast = (arr: Array<[string, number]>, index: number) =>
-    arr[arr.length - 1 - index]?.[1] || 0;
-
-  return {
-    visitors: {
-      today: getLast(visitors, 0),
-      yesterday: getLast(visitors, 1),
-      week: sumLast(visitors, 7),
-    },
-    views: {
-      today: getLast(visits, 0),
-      yesterday: getLast(visits, 1),
-      week: sumLast(visits, 7),
-    },
   };
 }
 
@@ -261,11 +222,44 @@ function getString(value: unknown): string {
 }
 
 export function useSiteStats(site: WordPressSite | null) {
-  return useQuery({
+  const wpStatsQuery = useQuery({
     queryKey: statsKeys.site(site?.id ?? 'none'),
     queryFn: () => (site ? fetchSiteStats(site) : Promise.resolve(null)),
     enabled: !!site,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const jetpackStats = useJetpackStats(site, {
+    include: { stats: true, highlights: true },
+  });
+
+  const analytics: SiteStats['analytics'] = jetpackStats.data.stats
+    ? {
+        visitors: {
+          today: jetpackStats.data.stats.stats.visitors_today,
+          yesterday: jetpackStats.data.stats.stats.visitors_yesterday,
+          week: jetpackStats.data.stats.visits.data
+            .slice(-7)
+            .reduce((sum, [, , visitors]) => sum + (visitors || 0), 0),
+        },
+        views: {
+          today: jetpackStats.data.stats.stats.views_today,
+          yesterday: jetpackStats.data.stats.stats.views_yesterday,
+          week: jetpackStats.data.stats.visits.data
+            .slice(-7)
+            .reduce((sum, [, views]) => sum + (views || 0), 0),
+        },
+      }
+    : null;
+
+  const data: SiteStats | null = wpStatsQuery.data
+    ? { ...wpStatsQuery.data, analytics }
+    : null;
+
+  return {
+    ...wpStatsQuery,
+    data,
+    jetpackStats,
+  };
 }
