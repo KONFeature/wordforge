@@ -11,6 +11,7 @@ export type ScopedContext =
   | ProductListContext
   | MediaListContext
   | TemplateEditorContext
+  | CommentListContext
   | CustomContext;
 
 interface PageEditorContext {
@@ -69,6 +70,14 @@ interface TemplateEditorContext {
   templateId: string;
   templateName: string;
   templateType?: 'template' | 'template-part';
+}
+
+interface CommentListContext {
+  type: 'comment-list';
+  totalComments: number;
+  pendingComments?: number;
+  approvedComments?: number;
+  spamComments?: number;
 }
 
 interface CustomContext {
@@ -134,6 +143,13 @@ function buildContextMessage(context: ScopedContext): string {
 
     case 'template-editor':
       return `You are now helping the user edit ${context.templateType || 'template'} "${context.templateName}" (${context.templateId}). Use the wordforge/get-template and wordforge/update-template tools to work with this template.`;
+
+    case 'comment-list':
+      return `The user is viewing the Comments list. There are ${context.totalComments} total comments${
+        context.pendingComments ? ` (${context.pendingComments} pending` : ''
+      }${context.approvedComments ? `, ${context.approvedComments} approved` : ''}${
+        context.spamComments ? `, ${context.spamComments} spam` : ''
+      }${context.pendingComments || context.approvedComments || context.spamComments ? ')' : ''}. The user may want to moderate comments, reply to comments, or manage spam. Use wordforge/list-comments and wordforge/moderate-comment tools.`;
 
     case 'custom':
       return context.message;
