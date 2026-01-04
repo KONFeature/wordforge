@@ -4,8 +4,10 @@ import {
   ExternalLink,
   FolderOpen,
   Play,
+  RefreshCw,
   Trash2,
 } from 'lucide-react';
+import { useConfigSync } from '../hooks/useConfigSync';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
 import { useSiteStats } from '../hooks/useSiteStats';
 import type { WordPressSite } from '../types';
@@ -25,11 +27,16 @@ export function SiteDashboard({
   onOpenFolder,
 }: SiteDashboardProps) {
   const { data: stats, isLoading: isStatsLoading } = useSiteStats(site);
+  const configSync = useConfigSync({ siteId: site.id });
 
   const isInstalled = opencode.status !== 'not_installed';
   const isRunning = opencode.status === 'running';
   const isStarting = opencode.status === 'starting';
   const isDownloading = opencode.isDownloading;
+
+  const handleConfigUpdate = async () => {
+    await configSync.applyUpdate(isRunning);
+  };
 
   const handleAction = () => {
     if (isRunning) {
@@ -96,6 +103,23 @@ export function SiteDashboard({
       </div>
 
       <div className="action-area">
+        {configSync.updateAvailable && (
+          <div className="update-banner">
+            <div className="update-info">
+              <RefreshCw size={16} />
+              <span>Configuration update available</span>
+            </div>
+            <button
+              type="button"
+              className="btn-update"
+              onClick={handleConfigUpdate}
+              disabled={configSync.isUpdating}
+            >
+              {configSync.isUpdating ? 'Updating...' : 'Update Now'}
+            </button>
+          </div>
+        )}
+
         {opencode.error && (
           <div className="error-banner">
             <AlertCircle size={20} />

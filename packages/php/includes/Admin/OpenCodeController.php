@@ -631,7 +631,7 @@ class OpenCodeController {
 			);
 		}
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -653,7 +653,7 @@ class OpenCodeController {
 
 		ProviderConfig::remove_provider_key( $provider_id );
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -690,7 +690,7 @@ class OpenCodeController {
 			);
 		}
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -703,7 +703,7 @@ class OpenCodeController {
 	public function reset_agents(): WP_REST_Response {
 		AgentConfig::reset_to_recommended();
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -799,22 +799,6 @@ class OpenCodeController {
 				'enabled'   => $settings['auto_shutdown_enabled'],
 				'threshold' => $settings['auto_shutdown_threshold'],
 				'activity'  => ActivityMonitor::get_status(),
-			)
-		);
-	}
-
-	private function restart_server_if_running(): void {
-		if ( ! ServerProcess::is_running() ) {
-			return;
-		}
-
-		ServerProcess::stop();
-		usleep( 300000 );
-
-		$token = $this->generate_mcp_auth_token();
-		ServerProcess::start(
-			array(
-				'mcp_auth_token' => $token,
 			)
 		);
 	}

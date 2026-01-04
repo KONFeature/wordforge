@@ -43,6 +43,10 @@ pub struct WordPressSite {
     pub project_dir: PathBuf,
     pub created_at: u64,
     pub last_used_at: u64,
+    #[serde(default)]
+    pub config_hash: Option<String>,
+    #[serde(default)]
+    pub config_updated_at: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,6 +74,30 @@ struct SiteInfo {
     mcp_endpoint: String,
     #[serde(rename = "abilitiesUrl")]
     abilities_url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigHashResponse {
+    pub hash: String,
+    pub components: ConfigHashComponents,
+    pub generated: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigHashComponents {
+    pub plugins_hash: String,
+    pub theme_hash: String,
+    pub agents_hash: String,
+    pub providers_hash: String,
+    pub woo_active: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ConfigSyncStatus {
+    pub update_available: bool,
+    pub current_hash: Option<String>,
+    pub remote_hash: Option<String>,
+    pub last_checked: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -158,6 +186,25 @@ impl SiteManager {
             &project_dir,
         ).await?;
 
+        let temp_site = WordPressSite {
+            id: site_id.clone(),
+            name: exchange_response.site.name.clone(),
+            url: exchange_response.site.url.clone(),
+            rest_url: exchange_response.site.rest_url.clone(),
+            mcp_endpoint: exchange_response.site.mcp_endpoint.clone(),
+            abilities_url: exchange_response.site.abilities_url.clone(),
+            username: exchange_response.credentials.username.clone(),
+            app_password: exchange_response.credentials.app_password.clone(),
+            auth: exchange_response.credentials.auth.clone(),
+            project_dir: project_dir.clone(),
+            created_at: now,
+            last_used_at: now,
+            config_hash: None,
+            config_updated_at: None,
+        };
+
+        let config_hash = self.check_config_hash(&temp_site).await.ok().map(|r| r.hash);
+
         let site = WordPressSite {
             id: site_id.clone(),
             name: exchange_response.site.name,
@@ -171,6 +218,8 @@ impl SiteManager {
             project_dir,
             created_at: now,
             last_used_at: now,
+            config_hash,
+            config_updated_at: Some(now),
         };
 
         self.store.sites.insert(site_id.clone(), site.clone());
@@ -303,7 +352,6 @@ impl SiteManager {
         self.store.sites.values().collect()
     }
 
-    #[allow(dead_code)]
     pub fn get_site(&self, id: &str) -> Option<&WordPressSite> {
         self.store.sites.get(id)
     }
@@ -369,4 +417,76 @@ impl SiteManager {
 
         Ok((site, token, name))
     }
+
+    pub async fn check_config_hash(&self, site: &WordPressSite) -> Result<ConfigHashResponse, SiteError> {
+        let hash_url = format!("{}/wp-json/wordforge/v1/desktop/config-hash", site.url.trim_end_matches('/'));
+        
+        tracing::info!("Checking config hash from: {}", hash_url);
+
+        let response = self.client
+            .get(&hash_url)
+            .header("Authorization", format!("Basic {}", site.auth))
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(SiteError::ApiError(format!("HTTP {}: {}", status, body)));
+        }
+
+        let hash_response: ConfigHashResponse = response.json().await?;
+        tracing::info!("Remote config hash: {}", hash_response.hash);
+        
+        Ok(hash_response)
+    }
+
+    pub fn get_config_sync_status(&self, site: &WordPressSite, remote_hash: Option<&str>) -> ConfigSyncStatus {
+        let current_hash = site.config_hash.clone();
+        let update_available = match (&current_hash, remote_hash) {
+            (Some(current), Some(remote)) => current != remote,
+            (None, Some(_)) => true,
+            _ => false,
+        };
+
+        ConfigSyncStatus {
+            update_available,
+            current_hash,
+            remote_hash: remote_hash.map(String::from),
+            last_checked: Some(std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()),
+        }
+    }
+
+    pub async fn refresh_site_config(&mut self, site_id: &str) -> Result<String, SiteError> {
+        let site = self.store.sites.get(site_id)
+            .ok_or_else(|| SiteError::NotFound(site_id.to_string()))?
+            .clone();
+
+        let hash_response = self.check_config_hash(&site).await?;
+        
+        self.download_and_extract_config(
+            site.url.trim_end_matches('/'),
+            &site.auth,
+            &site.project_dir,
+        ).await?;
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        if let Some(stored_site) = self.store.sites.get_mut(site_id) {
+            stored_site.config_hash = Some(hash_response.hash.clone());
+            stored_site.config_updated_at = Some(now);
+        }
+        
+        self.save_store()?;
+        
+        tracing::info!("Refreshed config for site {}, new hash: {}", site_id, hash_response.hash);
+        Ok(hash_response.hash)
+    }
+
 }

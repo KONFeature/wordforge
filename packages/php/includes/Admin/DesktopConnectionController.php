@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WordForge\Admin;
 
 use WordForge\OpenCode\AgentConfig;
+use WordForge\OpenCode\ConfigChangeDetector;
 use WordForge\OpenCode\ContextProvider;
 use WordForge\OpenCode\ProviderConfig;
 use WP_REST_Request;
@@ -66,10 +67,24 @@ class DesktopConnectionController {
 				'permission_callback' => array( $this, 'check_admin_permission' ),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/desktop/config-hash',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_config_hash' ),
+				'permission_callback' => array( $this, 'check_app_password_permission' ),
+			)
+		);
 	}
 
 	public function check_admin_permission(): bool {
 		return current_user_can( 'manage_options' );
+	}
+
+	public function check_app_password_permission(): bool {
+		return is_user_logged_in() && current_user_can( 'manage_options' );
 	}
 
 	public function generate_connect_token(): WP_REST_Response {
@@ -233,6 +248,12 @@ class DesktopConnectionController {
 			'auth'     => $auth,
 			'uuid'     => $item['uuid'],
 		);
+	}
+
+	public function get_config_hash(): WP_REST_Response {
+		$hash_data = ConfigChangeDetector::get_config_hash();
+
+		return new WP_REST_Response( $hash_data );
 	}
 
 }

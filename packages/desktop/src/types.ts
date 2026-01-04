@@ -11,6 +11,15 @@ export interface WordPressSite {
   project_dir: string;
   created_at: number;
   last_used_at: number;
+  config_hash?: string;
+  config_updated_at?: number;
+}
+
+export interface ConfigSyncStatus {
+  update_available: boolean;
+  current_hash: string | null;
+  remote_hash: string | null;
+  last_checked: number | null;
 }
 
 export interface DeepLinkPayload {

@@ -98,6 +98,7 @@ function init(): void {
 	new Admin\EditorSidebarManager();
 
 	OpenCode\ActivityMonitor::schedule_cron();
+	OpenCode\ConfigChangeDetector::register_hooks();
 
 	if ( ! class_exists( 'WP\\MCP\\Core\\McpAdapter' ) ) {
 		add_action( 'admin_notices', __NAMESPACE__ . '\\missing_mcp_adapter_notice' );

@@ -1,5 +1,5 @@
-import { ChevronLeft, ExternalLink, Square } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ExternalLink, Square } from 'lucide-react';
 import { useState } from 'react';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
 import {

@@ -2,11 +2,11 @@ mod opencode;
 mod sites;
 mod state;
 
-use sites::{SiteManager, WordPressSite};
+use sites::{ConfigSyncStatus, SiteManager, WordPressSite};
 use state::AppState;
 use std::collections::HashSet;
 use std::sync::Arc;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Listener, Manager, RunEvent};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tokio::sync::Mutex;
 use tracing::info;
@@ -167,10 +167,21 @@ async fn set_active_site(
 
 #[tauri::command]
 async fn remove_site(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
     site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
     id: String,
 ) -> Result<(), String> {
     let mut manager = site_manager.lock().await;
+    
+    let is_active_site = manager.get_active_site().map(|s| s.id.as_str()) == Some(&id);
+    if is_active_site {
+        drop(manager);
+        let mut app_state = state.lock().await;
+        app_state.stop_opencode().await.ok();
+        drop(app_state);
+        manager = site_manager.lock().await;
+    }
+    
     manager.remove_site(&id).map_err(|e| e.to_string())
 }
 
@@ -194,6 +205,86 @@ async fn connect_site(
 ) -> Result<WordPressSite, String> {
     let mut manager = site_manager.lock().await;
     manager.exchange_token(&site_url, &token).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn check_config_update(
+    site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
+    site_id: Option<String>,
+) -> Result<ConfigSyncStatus, String> {
+    let manager = site_manager.lock().await;
+    
+    let site = match site_id {
+        Some(id) => manager.get_site(&id).cloned(),
+        None => manager.get_active_site().cloned(),
+    };
+    
+    let site = site.ok_or_else(|| "No site found".to_string())?;
+    
+    let remote_hash = manager.check_config_hash(&site)
+        .await
+        .map(|r| r.hash)
+        .ok();
+    
+    Ok(manager.get_config_sync_status(&site, remote_hash.as_deref()))
+}
+
+#[tauri::command]
+async fn refresh_site_config(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+    site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
+    site_id: Option<String>,
+    restart_opencode: bool,
+) -> Result<String, String> {
+    let mut manager = site_manager.lock().await;
+    
+    let id = match site_id {
+        Some(id) => id,
+        None => manager.get_active_site()
+            .map(|s| s.id.clone())
+            .ok_or_else(|| "No active site".to_string())?,
+    };
+    
+    if restart_opencode {
+        drop(manager);
+        let mut app_state = state.lock().await;
+        let was_running = app_state.get_port().is_some();
+        
+        if was_running {
+            app_state.stop_opencode().await.map_err(|e| e.to_string())?;
+        }
+        drop(app_state);
+        
+        manager = site_manager.lock().await;
+        let new_hash = manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?;
+        drop(manager);
+        
+        if was_running {
+            let mut app_state = state.lock().await;
+            let mut site_mgr = site_manager.lock().await;
+            
+            let device_id = site_mgr.get_device_id();
+            let active_site = site_mgr.get_active_site().cloned();
+            let cors_origin = active_site.as_ref().map(|s| s.url.clone());
+            let project_dir = active_site.as_ref().map(|s| s.project_dir.clone());
+            
+            let port = app_state.start_opencode_with_config(cors_origin, project_dir)
+                .await
+                .map_err(|e| e.to_string())?;
+            
+            if let Some(site) = active_site {
+                site_mgr.sync_port_to_wordpress(&site, port, &device_id).await.ok();
+            }
+        }
+        
+        app.emit("config:updated", &new_hash).ok();
+        Ok(new_hash)
+    } else {
+        let new_hash = manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?;
+        app.emit("config:updated", &new_hash).ok();
+        Ok(new_hash)
+    }
 }
 
 fn handle_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<ProcessedTokens>>, urls: Vec<url::Url>) {
@@ -287,6 +378,17 @@ pub fn run() {
                 handle_deep_link(&app_handle, &processed, urls);
             });
 
+            let app_handle = app.handle().clone();
+            app.listen("opencode:idle-shutdown", move |_| {
+                info!("Received idle-shutdown event, stopping OpenCode");
+                let app = app_handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    let state = app.state::<Arc<Mutex<AppState>>>();
+                    let mut state = state.lock().await;
+                    state.stop_opencode().await.ok();
+                });
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -305,7 +407,19 @@ pub fn run() {
             remove_site,
             connect_site,
             open_site_folder,
+            check_config_update,
+            refresh_site_config,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let RunEvent::Exit = event {
+                info!("App exiting, stopping OpenCode");
+                let state = app.state::<Arc<Mutex<AppState>>>();
+                tauri::async_runtime::block_on(async {
+                    let mut state = state.lock().await;
+                    state.stop_opencode().await.ok();
+                });
+            }
+        });
 }

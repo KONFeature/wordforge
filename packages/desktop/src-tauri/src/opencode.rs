@@ -7,10 +7,13 @@ use tauri::{AppHandle, Emitter};
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
+use tokio::sync::watch;
 use tracing::{error, info};
 
 const GITHUB_REPO: &str = "sst/opencode";
 const GITHUB_API_URL: &str = "https://api.github.com";
+const IDLE_TIMEOUT_SECS: u64 = 30 * 60; // 30 minutes
+const IDLE_CHECK_INTERVAL_SECS: u64 = 60; // Check every minute
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -56,12 +59,23 @@ struct GitHubAsset {
     browser_download_url: String,
 }
 
+#[derive(Deserialize)]
+struct SessionTime {
+    updated: Option<u64>,
+}
+
+#[derive(Deserialize)]
+struct SessionInfo {
+    time: SessionTime,
+}
+
 pub struct OpenCodeManager {
     app: AppHandle,
     client: Client,
     process: Option<Child>,
     port: Option<u16>,
     install_dir: PathBuf,
+    idle_monitor_stop: Option<watch::Sender<bool>>,
 }
 
 impl OpenCodeManager {
@@ -78,6 +92,7 @@ impl OpenCodeManager {
             process: None,
             port: None,
             install_dir,
+            idle_monitor_stop: None,
         }
     }
     
@@ -205,11 +220,16 @@ impl OpenCodeManager {
         self.port = Some(port);
 
         self.wait_for_ready(port).await?;
+        self.spawn_idle_monitor(port);
 
         Ok(port)
     }
 
     pub async fn stop(&mut self) -> Result<(), Error> {
+        if let Some(tx) = self.idle_monitor_stop.take() {
+            tx.send(true).ok();
+        }
+        
         if let Some(mut process) = self.process.take() {
             info!("Stopping OpenCode");
             process.kill().await.ok();
@@ -363,6 +383,44 @@ impl OpenCodeManager {
         }
     }
 
+    fn spawn_idle_monitor(&mut self, port: u16) {
+        let (stop_tx, mut stop_rx) = watch::channel(false);
+        self.idle_monitor_stop = Some(stop_tx);
+
+        let app = self.app.clone();
+        let client = self.client.clone();
+
+        tokio::spawn(async move {
+            info!("Idle monitor started for port {}", port);
+            
+            loop {
+                tokio::select! {
+                    _ = tokio::time::sleep(tokio::time::Duration::from_secs(IDLE_CHECK_INTERVAL_SECS)) => {
+                        if let Some(last_activity) = fetch_last_activity(&client, port).await {
+                            let now = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .map(|d| d.as_secs())
+                                .unwrap_or(0);
+                            
+                            let idle_secs = now.saturating_sub(last_activity);
+                            
+                            if idle_secs > IDLE_TIMEOUT_SECS {
+                                info!("OpenCode idle for {}s (threshold: {}s), requesting shutdown", 
+                                    idle_secs, IDLE_TIMEOUT_SECS);
+                                app.emit("opencode:idle-shutdown", ()).ok();
+                                break;
+                            }
+                        }
+                    }
+                    _ = stop_rx.changed() => {
+                        info!("Idle monitor stopped");
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     async fn wait_for_ready(&self, port: u16) -> Result<(), Error> {
         let url = format!("http://localhost:{}/", port);
         let max_attempts = 30;
@@ -404,6 +462,23 @@ fn get_platform_identifier() -> Result<(&'static str, &'static str), Error> {
     };
 
     Ok((os, arch))
+}
+
+async fn fetch_last_activity(client: &Client, port: u16) -> Option<u64> {
+    let url = format!("http://localhost:{}/session", port);
+    
+    let response = client
+        .get(&url)
+        .timeout(std::time::Duration::from_secs(5))
+        .send()
+        .await
+        .ok()?;
+    
+    let sessions: Vec<SessionInfo> = response.json().await.ok()?;
+    
+    sessions.iter()
+        .filter_map(|s| s.time.updated)
+        .max()
 }
 
 fn extract_tar_gz(archive: &PathBuf, dest: &PathBuf) -> Result<(), Error> {
