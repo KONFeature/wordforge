@@ -13,7 +13,9 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SiteSiteIdRouteImport } from './routes/site/$siteId'
 import { Route as SiteSiteIdIndexRouteImport } from './routes/site/$siteId/index'
-import { Route as SiteSiteIdCodeRouteImport } from './routes/site/$siteId/code'
+import { Route as SiteSiteIdWoocommerceRouteImport } from './routes/site/$siteId/woocommerce'
+import { Route as SiteSiteIdSystemRouteImport } from './routes/site/$siteId/system'
+import { Route as SiteSiteIdAnalyticsRouteImport } from './routes/site/$siteId/analytics'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -35,9 +37,19 @@ const SiteSiteIdIndexRoute = SiteSiteIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SiteSiteIdRoute,
 } as any)
-const SiteSiteIdCodeRoute = SiteSiteIdCodeRouteImport.update({
-  id: '/code',
-  path: '/code',
+const SiteSiteIdWoocommerceRoute = SiteSiteIdWoocommerceRouteImport.update({
+  id: '/woocommerce',
+  path: '/woocommerce',
+  getParentRoute: () => SiteSiteIdRoute,
+} as any)
+const SiteSiteIdSystemRoute = SiteSiteIdSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => SiteSiteIdRoute,
+} as any)
+const SiteSiteIdAnalyticsRoute = SiteSiteIdAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => SiteSiteIdRoute,
 } as any)
 
@@ -45,13 +57,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/site/$siteId': typeof SiteSiteIdRouteWithChildren
-  '/site/$siteId/code': typeof SiteSiteIdCodeRoute
+  '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
+  '/site/$siteId/system': typeof SiteSiteIdSystemRoute
+  '/site/$siteId/woocommerce': typeof SiteSiteIdWoocommerceRoute
   '/site/$siteId/': typeof SiteSiteIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
-  '/site/$siteId/code': typeof SiteSiteIdCodeRoute
+  '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
+  '/site/$siteId/system': typeof SiteSiteIdSystemRoute
+  '/site/$siteId/woocommerce': typeof SiteSiteIdWoocommerceRoute
   '/site/$siteId': typeof SiteSiteIdIndexRoute
 }
 export interface FileRoutesById {
@@ -59,7 +75,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/site/$siteId': typeof SiteSiteIdRouteWithChildren
-  '/site/$siteId/code': typeof SiteSiteIdCodeRoute
+  '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
+  '/site/$siteId/system': typeof SiteSiteIdSystemRoute
+  '/site/$siteId/woocommerce': typeof SiteSiteIdWoocommerceRoute
   '/site/$siteId/': typeof SiteSiteIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -68,16 +86,26 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/site/$siteId'
-    | '/site/$siteId/code'
+    | '/site/$siteId/analytics'
+    | '/site/$siteId/system'
+    | '/site/$siteId/woocommerce'
     | '/site/$siteId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/site/$siteId/code' | '/site/$siteId'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/site/$siteId/analytics'
+    | '/site/$siteId/system'
+    | '/site/$siteId/woocommerce'
+    | '/site/$siteId'
   id:
     | '__root__'
     | '/'
     | '/onboarding'
     | '/site/$siteId'
-    | '/site/$siteId/code'
+    | '/site/$siteId/analytics'
+    | '/site/$siteId/system'
+    | '/site/$siteId/woocommerce'
     | '/site/$siteId/'
   fileRoutesById: FileRoutesById
 }
@@ -117,23 +145,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteSiteIdIndexRouteImport
       parentRoute: typeof SiteSiteIdRoute
     }
-    '/site/$siteId/code': {
-      id: '/site/$siteId/code'
-      path: '/code'
-      fullPath: '/site/$siteId/code'
-      preLoaderRoute: typeof SiteSiteIdCodeRouteImport
+    '/site/$siteId/woocommerce': {
+      id: '/site/$siteId/woocommerce'
+      path: '/woocommerce'
+      fullPath: '/site/$siteId/woocommerce'
+      preLoaderRoute: typeof SiteSiteIdWoocommerceRouteImport
+      parentRoute: typeof SiteSiteIdRoute
+    }
+    '/site/$siteId/system': {
+      id: '/site/$siteId/system'
+      path: '/system'
+      fullPath: '/site/$siteId/system'
+      preLoaderRoute: typeof SiteSiteIdSystemRouteImport
+      parentRoute: typeof SiteSiteIdRoute
+    }
+    '/site/$siteId/analytics': {
+      id: '/site/$siteId/analytics'
+      path: '/analytics'
+      fullPath: '/site/$siteId/analytics'
+      preLoaderRoute: typeof SiteSiteIdAnalyticsRouteImport
       parentRoute: typeof SiteSiteIdRoute
     }
   }
 }
 
 interface SiteSiteIdRouteChildren {
-  SiteSiteIdCodeRoute: typeof SiteSiteIdCodeRoute
+  SiteSiteIdAnalyticsRoute: typeof SiteSiteIdAnalyticsRoute
+  SiteSiteIdSystemRoute: typeof SiteSiteIdSystemRoute
+  SiteSiteIdWoocommerceRoute: typeof SiteSiteIdWoocommerceRoute
   SiteSiteIdIndexRoute: typeof SiteSiteIdIndexRoute
 }
 
 const SiteSiteIdRouteChildren: SiteSiteIdRouteChildren = {
-  SiteSiteIdCodeRoute: SiteSiteIdCodeRoute,
+  SiteSiteIdAnalyticsRoute: SiteSiteIdAnalyticsRoute,
+  SiteSiteIdSystemRoute: SiteSiteIdSystemRoute,
+  SiteSiteIdWoocommerceRoute: SiteSiteIdWoocommerceRoute,
   SiteSiteIdIndexRoute: SiteSiteIdIndexRoute,
 }
 

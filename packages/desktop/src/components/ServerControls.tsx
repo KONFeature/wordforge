@@ -1,114 +1,102 @@
-import { useNavigate, useParams } from '@tanstack/react-router';
 import { Download, ExternalLink, Play, Square } from 'lucide-react';
+import { useOpenCodeClientSafe } from '../context/OpenCodeClientContext';
 import {
   useOpenCodeActions,
   useOpenCodeDownload,
   useOpenCodeStatus,
 } from '../hooks/useOpenCode';
+import styles from './ServerControls.module.css';
+import { Button, Progress, StatusIndicator } from './ui';
 
 export function ServerControls() {
-  const navigate = useNavigate();
-  const params = useParams({ strict: false });
-  const siteId = params.siteId as string | undefined;
-
   const { status, port } = useOpenCodeStatus();
   const { start, stop, isStarting } = useOpenCodeActions();
   const { download, isDownloading, downloadProgress } = useOpenCodeDownload();
+  const clientContext = useOpenCodeClientSafe();
 
   const isInstalled = status !== 'not_installed';
   const isRunning = status === 'running';
   const isStartingStatus = status === 'starting' || isStarting;
 
   const handleOpenCode = () => {
-    if (siteId) {
-      navigate({ to: '/site/$siteId/code', params: { siteId } });
-    }
+    clientContext?.openInWebview();
   };
 
   if (isDownloading) {
     return (
-      <div className="server-controls">
-        <div className="progress-card">
-          <div className="progress-info">
-            <span>
-              {downloadProgress?.message || 'Downloading OpenCode...'}
-            </span>
-            <span>{downloadProgress?.percent || 0}%</span>
-          </div>
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${downloadProgress?.percent || 0}%` }}
-            />
-          </div>
-        </div>
+      <div className={styles.container}>
+        <Progress
+          value={downloadProgress?.percent || 0}
+          label={downloadProgress?.message || 'Downloading OpenCode...'}
+          showValue
+        />
       </div>
     );
   }
 
   if (!isInstalled) {
     return (
-      <div className="server-controls">
-        <button
-          type="button"
-          className="btn-server btn-download"
+      <div className={styles.container}>
+        <Button
+          variant="primary"
+          size="lg"
           onClick={() => download()}
+          leftIcon={<Download size={18} />}
+          className={styles.fullWidth}
         >
-          <Download size={18} />
-          <span>Download OpenCode</span>
-        </button>
+          Download OpenCode
+        </Button>
       </div>
     );
   }
 
+  const getStatusIndicator = () => {
+    if (isRunning) return 'success';
+    if (isStartingStatus) return 'loading';
+    return 'idle';
+  };
+
+  const getStatusLabel = () => {
+    if (isRunning) return `Running on port ${port}`;
+    if (isStartingStatus) return 'Starting...';
+    return 'Stopped';
+  };
+
   return (
-    <div className="server-controls">
-      <div className="server-buttons">
-        <button
-          type="button"
-          className="btn-server btn-start"
+    <div className={styles.container}>
+      <div className={styles.buttons}>
+        <Button
+          variant="success"
           onClick={() => start()}
           disabled={isRunning || isStartingStatus}
+          isLoading={isStartingStatus}
+          leftIcon={!isStartingStatus ? <Play size={18} /> : undefined}
         >
-          {isStartingStatus ? (
-            <div className="spinner-small" />
-          ) : (
-            <Play size={18} />
-          )}
-          <span>{isStartingStatus ? 'Starting...' : 'Start'}</span>
-        </button>
-        <button
-          type="button"
-          className="btn-server btn-stop"
+          {isStartingStatus ? 'Starting...' : 'Start'}
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => stop()}
           disabled={!isRunning}
+          leftIcon={<Square size={16} />}
         >
-          <Square size={16} />
-          <span>Stop</span>
-        </button>
-        {isRunning && siteId && (
-          <button
-            type="button"
-            className="btn-server btn-open"
+          Stop
+        </Button>
+        {isRunning && clientContext && (
+          <Button
+            variant="primary"
             onClick={handleOpenCode}
+            leftIcon={<ExternalLink size={16} />}
           >
-            <ExternalLink size={16} />
-            <span>Open</span>
-          </button>
+            Open
+          </Button>
         )}
       </div>
-      <div className="server-status">
-        <span
-          className={`status-dot ${isRunning ? 'running' : isStartingStatus ? 'starting' : 'stopped'}`}
-        />
-        <span className="status-text">
-          {isRunning
-            ? `Running on port ${port}`
-            : isStartingStatus
-              ? 'Starting...'
-              : 'Stopped'}
-        </span>
-      </div>
+      <StatusIndicator
+        status={getStatusIndicator()}
+        label={getStatusLabel()}
+        showPulse={isStartingStatus}
+      />
     </div>
   );
 }

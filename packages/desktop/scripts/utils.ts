@@ -1,5 +1,5 @@
-import { $ } from 'bun';
 import path from 'node:path';
+import { $ } from 'bun';
 
 const DESKTOP_DIR = path.resolve(import.meta.dir, '..');
 const MCP_DIR = path.resolve(DESKTOP_DIR, '../mcp');

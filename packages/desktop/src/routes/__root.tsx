@@ -1,6 +1,6 @@
 import { Outlet, createRootRoute, useNavigate } from '@tanstack/react-router';
-import { Header } from '../components/Header';
-import { StatusBar } from '../components/StatusBar';
+import { AppStatusBar, Sidebar, SidebarLayout } from '../components/ui';
+import { SidebarProvider, useSidebarNavItems } from '../context/SidebarContext';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { useOpenCodeStatus } from '../hooks/useOpenCode';
 import {
@@ -8,17 +8,27 @@ import {
   useSiteMutations,
   useSitesList,
 } from '../hooks/useSites';
+import '../styles/variables.css';
 
 export const Route = createRootRoute({
   component: RootLayout,
 });
 
 function RootLayout() {
+  return (
+    <SidebarProvider>
+      <RootLayoutInner />
+    </SidebarProvider>
+  );
+}
+
+function RootLayoutInner() {
   const navigate = useNavigate();
   const { sites } = useSitesList();
   const { activeSite } = useActiveSite();
   const { setActive, connectSite } = useSiteMutations();
   const { status, port, installedVersion } = useOpenCodeStatus();
+  const { navItems } = useSidebarNavItems();
 
   useDeepLink(async (payload) => {
     try {
@@ -32,25 +42,37 @@ function RootLayout() {
     }
   });
 
+  const handleSelectSite = (id: string) => {
+    setActive(id);
+    navigate({ to: '/site/$siteId', params: { siteId: id } });
+  };
+
+  const handleAddSite = () => {
+    navigate({ to: '/onboarding' });
+  };
+
+  const sidebar = (
+    <Sidebar
+      sites={sites}
+      activeSite={activeSite}
+      onSelectSite={handleSelectSite}
+      onAddSite={handleAddSite}
+      navItems={navItems}
+    />
+  );
+
+  const statusBar = (
+    <AppStatusBar
+      openCodeStatus={status}
+      openCodePort={port}
+      openCodeVersion={installedVersion}
+      siteConnected={!!activeSite}
+    />
+  );
+
   return (
-    <div className="app">
-      <Header
-        sites={sites}
-        activeSite={activeSite}
-        onSelectSite={setActive}
-        onOpenSettings={() => {}}
-      />
-
-      <main className="app-main">
-        <Outlet />
-      </main>
-
-      <StatusBar
-        status={status}
-        port={port}
-        installedVersion={installedVersion}
-        siteConnected={!!activeSite}
-      />
-    </div>
+    <SidebarLayout sidebar={sidebar} statusBar={statusBar}>
+      <Outlet />
+    </SidebarLayout>
   );
 }

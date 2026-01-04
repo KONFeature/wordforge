@@ -2,6 +2,8 @@ import type { Session } from '@opencode-ai/sdk/v2/client';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { SessionWithChildren } from '../hooks/useSessions';
+import styles from './SessionList.module.css';
+import { Button, Card, IconButton } from './ui';
 
 interface SessionListProps {
   sessions: SessionWithChildren[];
@@ -56,25 +58,24 @@ function SessionItem({
   };
 
   return (
-    <div className={`session-item ${isChild ? 'session-item-child' : ''}`}>
-      {isChild && <span className="session-child-indicator">↳</span>}
-      <button type="button" className="session-content-btn" onClick={onOpen}>
-        <span className="session-title">
+    <div className={`${styles.item} ${isChild ? styles.itemChild : ''}`}>
+      {isChild && <span className={styles.childIndicator}>↳</span>}
+      <button type="button" className={styles.itemContent} onClick={onOpen}>
+        <span className={styles.itemTitle}>
           {session.title || 'Untitled Session'}
         </span>
-        <span className="session-time">
+        <span className={styles.itemTime}>
           {formatTimeAgo(session.time.updated)}
         </span>
       </button>
-      <button
-        type="button"
-        className={`btn-delete-session ${showConfirm ? 'confirm' : ''}`}
+      <IconButton
+        aria-label={showConfirm ? 'Click again to confirm' : 'Delete session'}
         onClick={handleDelete}
         disabled={isDeleting}
-        title={showConfirm ? 'Click again to confirm' : 'Delete session'}
+        className={`${styles.deleteBtn} ${showConfirm ? styles.deleteBtnConfirm : ''}`}
       >
-        {isDeleting ? <div className="spinner-tiny" /> : <Trash2 size={14} />}
-      </button>
+        {isDeleting ? <div className={styles.spinner} /> : <Trash2 size={14} />}
+      </IconButton>
     </div>
   );
 }
@@ -96,12 +97,12 @@ function SessionGroup({
   const hasChildren = session.children.length > 0;
 
   return (
-    <div className="session-group">
-      <div className="session-group-header">
+    <div className={styles.group}>
+      <div className={styles.groupHeader}>
         {hasChildren && (
           <button
             type="button"
-            className="btn-expand-session"
+            className={styles.expandBtn}
             onClick={() => setExpanded(!expanded)}
           >
             {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -115,7 +116,7 @@ function SessionGroup({
         />
       </div>
       {hasChildren && expanded && (
-        <div className="session-children">
+        <div className={styles.children}>
           {session.children.map((child) => (
             <SessionItem
               key={child.id}
@@ -150,42 +151,39 @@ export function SessionList({
   const hiddenCount = sessions.length - INITIAL_VISIBLE_COUNT;
 
   return (
-    <div className="sessions-section">
-      <div className="sessions-header">
-        <h3>Sessions</h3>
+    <Card className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Sessions</h3>
         {isServerRunning && (
-          <button
-            type="button"
-            className="btn-new-session"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={onCreateSession}
             disabled={isCreating}
+            isLoading={isCreating}
+            leftIcon={!isCreating ? <Plus size={16} /> : undefined}
           >
-            {isCreating ? (
-              <div className="spinner-small" />
-            ) : (
-              <Plus size={16} />
-            )}
-            <span>New Session</span>
-          </button>
+            New Session
+          </Button>
         )}
       </div>
 
-      <div className="sessions-list">
+      <div className={styles.list}>
         {!isServerRunning ? (
-          <div className="sessions-empty">
-            <span className="sessions-empty-text">
+          <div className={styles.empty}>
+            <span className={styles.emptyText}>
               Start the server to manage sessions
             </span>
           </div>
         ) : isLoading && sessions.length === 0 ? (
-          <div className="sessions-loading">
-            <div className="spinner-small" />
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
             <span>Loading sessions...</span>
           </div>
         ) : sessions.length === 0 ? (
-          <div className="sessions-empty">
-            <span className="sessions-empty-text">No sessions yet</span>
-            <span className="sessions-empty-hint">
+          <div className={styles.empty}>
+            <span className={styles.emptyText}>No sessions yet</span>
+            <span className={styles.emptyHint}>
               Create a new session to get started
             </span>
           </div>
@@ -203,7 +201,7 @@ export function SessionList({
             {!showAll && hiddenCount > 0 && (
               <button
                 type="button"
-                className="btn-show-more"
+                className={styles.showMore}
                 onClick={() => setShowAll(true)}
               >
                 Show {hiddenCount} more session{hiddenCount > 1 ? 's' : ''}
@@ -212,7 +210,7 @@ export function SessionList({
             {showAll && hiddenCount > 0 && (
               <button
                 type="button"
-                className="btn-show-more"
+                className={styles.showMore}
                 onClick={() => setShowAll(false)}
               >
                 Show less
@@ -221,6 +219,6 @@ export function SessionList({
           </>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
