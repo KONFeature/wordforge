@@ -4,23 +4,67 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      debug_mode:
+        description: 'Create draft release for debugging'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
-  prepare-artifacts:
+  # 1. Create release FIRST (single job, no race conditions)
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create.outputs.id }}
+      version: ${{ steps.version.outputs.VERSION }}
+      tag_name: ${{ steps.version.outputs.TAG_NAME }}
+      is_draft: ${{ steps.version.outputs.IS_DRAFT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version and release type
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SHORT_SHA="${GITHUB_SHA::7}"
+            echo "VERSION=0.0.0-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "TAG_NAME=debug-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "IS_DRAFT=true" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=Debug Build (${SHORT_SHA})" >> $GITHUB_OUTPUT
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            echo "TAG_NAME=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "IS_DRAFT=false" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=WordForge ${VERSION}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG_NAME }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.version.outputs.RELEASE_NAME }}
+          draft: ${{ steps.version.outputs.IS_DRAFT == 'true' }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          generate_release_notes: ${{ github.event_name != 'workflow_dispatch' }}
+          body: ${{ github.event_name == 'workflow_dispatch' && format('Debug build from commit `{0}`. Delete this draft release and its tag when done.', github.sha) || '' }}
+
+  # 2. Build & upload non-Tauri artifacts (PHP plugin, MCP server)
+  build-artifacts:
+    needs: create-release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
-      - name: Update all versions
-        run: chmod +x ./update-version.sh && ./update-version.sh ${{ steps.version.outputs.VERSION }}
+      - name: Update versions
+        run: chmod +x ./update-version.sh && ./update-version.sh ${{ needs.create-release.outputs.version }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -51,38 +95,38 @@ jobs:
           ./build.sh
 
       - name: Prepare standalone server
+        run: cp packages/mcp/dist/index.cjs wordforge-server.js
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp packages/mcp/dist/index.cjs wordforge-server.js
+          gh release upload "${{ needs.create-release.outputs.tag_name }}" \
+            packages/php/dist/wordforge.zip \
+            packages/mcp/wordforge.mcpb \
+            wordforge-server.js \
+            --clobber
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts
-          path: |
-            packages/php/dist/wordforge.zip
-            packages/mcp/wordforge.mcpb
-            wordforge-server.js
-          retention-days: 1
-
-  publish-tauri:
-    needs: prepare-artifacts
+  # 3. Build Tauri desktop apps (upload to EXISTING release)
+  build-tauri:
+    needs: create-release
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        settings:
-          - host: macos-latest
+        include:
+          # Use macos-13 (Intel runner) for x64 builds - native compilation
+          - host: macos-13
             target: x86_64-apple-darwin
+          # Use macos-latest (ARM runner) for ARM64 builds - native compilation
           - host: macos-latest
             target: aarch64-apple-darwin
+          # Windows
           - host: windows-latest
             target: x86_64-pc-windows-msvc
-    runs-on: ${{ matrix.settings.host }}
+    runs-on: ${{ matrix.host }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.ref_name }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -93,47 +137,24 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.settings.target }}
-
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          targets: ${{ matrix.target }}
 
       - name: Update versions
-        run: chmod +x ./update-version.sh && ./update-version.sh ${{ steps.version.outputs.VERSION }}
+        shell: bash
+        run: chmod +x ./update-version.sh && ./update-version.sh ${{ needs.create-release.outputs.version }}
 
       - name: Build MCP sidecar
         env:
-          RUST_TARGET: ${{ matrix.settings.target }}
+          RUST_TARGET: ${{ matrix.target }}
         working-directory: packages/desktop
         run: bun run build:mcp-sidecar
 
-      - name: Build Tauri app and create release
-        uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: packages/desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: WordForge ${{ steps.version.outputs.VERSION }}
-          generateReleaseNotes: true
-          args: --target ${{ matrix.settings.target }} --verbose
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --target ${{ matrix.target }} --verbose
           releaseAssetNamePattern: wordforge-desktop-[platform]-[arch][ext]
-
-  upload-artifacts:
-    needs: publish-tauri
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download prepared artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: release-artifacts
-          path: artifacts
-
-      - name: Upload to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.ref_name }}" artifacts/**/* --clobber

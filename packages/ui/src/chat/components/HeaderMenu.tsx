@@ -2,6 +2,7 @@ import type { AssistantMessage, Provider } from '@opencode-ai/sdk/v2';
 import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components';
 import { useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { search, file, code, backup, trash } from '@wordpress/icons';
 import { useClient } from '../../lib/ClientProvider';
 import type { ConnectionMode } from '../../lib/openCodeClient';
 import type { ExportFormat } from '../hooks/useExport';
@@ -137,20 +138,21 @@ export const HeaderMenu = ({
             <MenuGroup label={__('Actions', 'wordforge')}>
               {onToggleSearch && hasMessages && (
                 <MenuItem
-                  icon="search"
+                  icon={search}
                   onClick={() => {
                     onToggleSearch();
                     onClose();
                   }}
-                  isPressed={showSearch}
                 >
-                  {__('Search messages', 'wordforge')}
+                  {showSearch
+                    ? __('Hide search', 'wordforge')
+                    : __('Search messages', 'wordforge')}
                 </MenuItem>
               )}
               {onExport && hasMessages && (
                 <>
                   <MenuItem
-                    icon="media-text"
+                    icon={file}
                     onClick={() => {
                       onExport('markdown');
                       onClose();
@@ -160,7 +162,7 @@ export const HeaderMenu = ({
                     {__('Export as Markdown', 'wordforge')}
                   </MenuItem>
                   <MenuItem
-                    icon="editor-code"
+                    icon={code}
                     onClick={() => {
                       onExport('json');
                       onClose();
@@ -172,7 +174,7 @@ export const HeaderMenu = ({
                 </>
               )}
               <MenuItem
-                icon="update"
+                icon={backup}
                 onClick={() => {
                   onRefresh();
                   onClose();
@@ -181,7 +183,7 @@ export const HeaderMenu = ({
                 {__('Refresh', 'wordforge')}
               </MenuItem>
               <MenuItem
-                icon="trash"
+                icon={trash}
                 onClick={() => {
                   onDelete();
                   onClose();
