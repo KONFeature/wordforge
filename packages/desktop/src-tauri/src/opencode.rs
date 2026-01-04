@@ -256,7 +256,9 @@ impl OpenCodeManager {
         }
         
         let new_port = portpicker::pick_unused_port().ok_or(Error::NoAvailablePort)?;
-        tokio::fs::write(&port_file, new_port.to_string()).await.ok();
+        if let Err(e) = tokio::fs::write(&port_file, new_port.to_string()).await {
+            tracing::warn!("Failed to persist port to file: {}", e);
+        }
         info!("Assigned new port {}", new_port);
         
         Ok(new_port)

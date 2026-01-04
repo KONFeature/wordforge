@@ -4,6 +4,7 @@ import { Onboarding } from './components/Onboarding';
 import { OpenCodeView } from './components/OpenCodeView';
 import { SiteDashboard } from './components/SiteDashboard';
 import { StatusBar } from './components/StatusBar';
+import { OpenCodeClientProvider } from './context/OpenCodeClientContext';
 import { useDeepLink } from './hooks/useDeepLink';
 import { useOpenCode } from './hooks/useOpenCode';
 import { useSites } from './hooks/useSites';
@@ -64,30 +65,27 @@ function App() {
     }
   };
 
-  const handleStartAndOpen = async () => {
-    await opencode.start();
-    setViewMode('opencode');
-  };
-
   const dashboardOpencode = {
     ...opencode,
-    start: handleStartAndOpen,
     openView: async () => setViewMode('opencode'),
   };
 
+  const isServerRunning =
+    opencode.status === 'running' && opencode.port !== null;
+
   const renderContent = () => {
-    if (
-      viewMode === 'opencode' &&
-      opencode.status === 'running' &&
-      activeSite
-    ) {
+    if (viewMode === 'opencode' && isServerRunning && activeSite) {
       return (
-        <OpenCodeView
-          opencode={opencode}
-          siteName={activeSite.name}
+        <OpenCodeClientProvider
+          port={opencode.port!}
           projectDir={activeSite.project_dir}
-          onBack={() => setViewMode('dashboard')}
-        />
+        >
+          <OpenCodeView
+            opencode={opencode}
+            siteName={activeSite.name}
+            onBack={() => setViewMode('dashboard')}
+          />
+        </OpenCodeClientProvider>
       );
     }
 

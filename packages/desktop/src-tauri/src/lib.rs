@@ -74,7 +74,7 @@ async fn start_opencode(
     let mut state = state.lock().await;
     let mut site_manager = site_manager.lock().await;
     
-    let device_id = site_manager.get_device_id();
+    let device_id = site_manager.get_device_id().await;
     let active_site = site_manager.get_active_site().cloned();
     
     let cors_origin = active_site.as_ref().map(|s| s.url.clone());
@@ -111,17 +111,21 @@ async fn get_opencode_port(
 async fn open_opencode_view(
     app: tauri::AppHandle,
     state: tauri::State<'_, Arc<Mutex<AppState>>>,
+    url: Option<String>,
 ) -> Result<(), String> {
     let state = state.lock().await;
     let port = state.get_port().ok_or("OpenCode is not running")?;
 
+    let target_url = url.unwrap_or_else(|| format!("http://localhost:{}", port));
+    let parsed_url: url::Url = target_url.parse().map_err(|e| format!("Invalid URL: {e}"))?;
+
     if let Some(window) = app.get_webview_window("opencode") {
+        window.navigate(parsed_url).map_err(|e| e.to_string())?;
         window.set_focus().map_err(|e| e.to_string())?;
         return Ok(());
     }
 
-    let url = format!("http://localhost:{}", port);
-    tauri::WebviewWindowBuilder::new(&app, "opencode", tauri::WebviewUrl::External(url.parse().unwrap()))
+    tauri::WebviewWindowBuilder::new(&app, "opencode", tauri::WebviewUrl::External(parsed_url))
         .title("OpenCode - WordForge")
         .inner_size(1400.0, 900.0)
         .min_inner_size(1000.0, 700.0)
@@ -162,7 +166,7 @@ async fn set_active_site(
     id: String,
 ) -> Result<(), String> {
     let mut manager = site_manager.lock().await;
-    manager.set_active_site(&id).map_err(|e| e.to_string())
+    manager.set_active_site(&id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -171,18 +175,23 @@ async fn remove_site(
     site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
     id: String,
 ) -> Result<(), String> {
-    let mut manager = site_manager.lock().await;
+    // First, check if this is the active site (minimal lock time)
+    let is_active_site = {
+        let manager = site_manager.lock().await;
+        manager.get_active_site().map(|s| s.id.as_str()) == Some(id.as_str())
+    };
     
-    let is_active_site = manager.get_active_site().map(|s| s.id.as_str()) == Some(&id);
+    // Stop opencode if removing the active site (separate lock scope)
     if is_active_site {
-        drop(manager);
         let mut app_state = state.lock().await;
-        app_state.stop_opencode().await.ok();
-        drop(app_state);
-        manager = site_manager.lock().await;
+        if let Err(e) = app_state.stop_opencode().await {
+            tracing::warn!("Failed to stop OpenCode while removing active site: {}", e);
+        }
     }
     
-    manager.remove_site(&id).map_err(|e| e.to_string())
+    // Now remove the site (final lock scope)
+    let mut manager = site_manager.lock().await;
+    manager.remove_site(&id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -237,54 +246,72 @@ async fn refresh_site_config(
     site_id: Option<String>,
     restart_opencode: bool,
 ) -> Result<String, String> {
-    let mut manager = site_manager.lock().await;
-    
-    let id = match site_id {
-        Some(id) => id,
-        None => manager.get_active_site()
-            .map(|s| s.id.clone())
-            .ok_or_else(|| "No active site".to_string())?,
+    // Phase 1: Resolve site ID (minimal lock)
+    let id = {
+        let manager = site_manager.lock().await;
+        match site_id {
+            Some(id) => id,
+            None => manager.get_active_site()
+                .map(|s| s.id.clone())
+                .ok_or_else(|| "No active site".to_string())?,
+        }
     };
     
-    if restart_opencode {
-        drop(manager);
+    if !restart_opencode {
+        let mut manager = site_manager.lock().await;
+        let new_hash = manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?;
+        if let Err(e) = app.emit("config:updated", &new_hash) {
+            tracing::warn!("Failed to emit config:updated event: {}", e);
+        }
+        return Ok(new_hash);
+    }
+    
+    // Phase 2: Stop OpenCode if running
+    let was_running = {
         let mut app_state = state.lock().await;
-        let was_running = app_state.get_port().is_some();
-        
-        if was_running {
+        let running = app_state.get_port().is_some();
+        if running {
             app_state.stop_opencode().await.map_err(|e| e.to_string())?;
         }
-        drop(app_state);
-        
-        manager = site_manager.lock().await;
-        let new_hash = manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?;
-        drop(manager);
-        
-        if was_running {
-            let mut app_state = state.lock().await;
+        running
+    };
+    
+    // Phase 3: Refresh config
+    let new_hash = {
+        let mut manager = site_manager.lock().await;
+        manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?
+    };
+    
+    // Phase 4: Restart OpenCode if it was running
+    if was_running {
+        let (cors_origin, project_dir, device_id, active_site) = {
             let mut site_mgr = site_manager.lock().await;
-            
-            let device_id = site_mgr.get_device_id();
+            let device_id = site_mgr.get_device_id().await;
             let active_site = site_mgr.get_active_site().cloned();
             let cors_origin = active_site.as_ref().map(|s| s.url.clone());
             let project_dir = active_site.as_ref().map(|s| s.project_dir.clone());
-            
-            let port = app_state.start_opencode_with_config(cors_origin, project_dir)
+            (cors_origin, project_dir, device_id, active_site)
+        };
+        
+        let port = {
+            let mut app_state = state.lock().await;
+            app_state.start_opencode_with_config(cors_origin, project_dir)
                 .await
-                .map_err(|e| e.to_string())?;
-            
-            if let Some(site) = active_site {
-                site_mgr.sync_port_to_wordpress(&site, port, &device_id).await.ok();
+                .map_err(|e| e.to_string())?
+        };
+        
+        if let Some(site) = active_site {
+            let site_mgr = site_manager.lock().await;
+            if let Err(e) = site_mgr.sync_port_to_wordpress(&site, port, &device_id).await {
+                tracing::warn!("Failed to sync port to WordPress: {}", e);
             }
         }
-        
-        app.emit("config:updated", &new_hash).ok();
-        Ok(new_hash)
-    } else {
-        let new_hash = manager.refresh_site_config(&id).await.map_err(|e| e.to_string())?;
-        app.emit("config:updated", &new_hash).ok();
-        Ok(new_hash)
     }
+    
+    if let Err(e) = app.emit("config:updated", &new_hash) {
+        tracing::warn!("Failed to emit config:updated event: {}", e);
+    }
+    Ok(new_hash)
 }
 
 fn handle_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<ProcessedTokens>>, urls: Vec<url::Url>) {
@@ -302,12 +329,14 @@ fn handle_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<Pro
                 drop(processed);
 
                 info!("Processing new token for site: {}", site_url);
-                app.emit("deep-link:connect", DeepLinkPayload {
+                if let Err(e) = app.emit("deep-link:connect", DeepLinkPayload {
                     url: url_str,
                     site_url,
                     token,
                     name,
-                }).ok();
+                }) {
+                    tracing::warn!("Failed to emit deep-link:connect event: {}", e);
+                }
                 
                 if let Some(window) = app.get_webview_window("main") {
                     window.set_focus().ok();
@@ -385,7 +414,9 @@ pub fn run() {
                 tauri::async_runtime::spawn(async move {
                     let state = app.state::<Arc<Mutex<AppState>>>();
                     let mut state = state.lock().await;
-                    state.stop_opencode().await.ok();
+                    if let Err(e) = state.stop_opencode().await {
+                        tracing::warn!("Failed to stop OpenCode on idle shutdown: {}", e);
+                    }
                 });
             });
 
@@ -418,7 +449,9 @@ pub fn run() {
                 let state = app.state::<Arc<Mutex<AppState>>>();
                 tauri::async_runtime::block_on(async {
                     let mut state = state.lock().await;
-                    state.stop_opencode().await.ok();
+                    if let Err(e) = state.stop_opencode().await {
+                        tracing::warn!("Failed to stop OpenCode on app exit: {}", e);
+                    }
                 });
             }
         });

@@ -1,16 +1,17 @@
 import {
   AlertCircle,
-  ArrowRight,
   ExternalLink,
   FolderOpen,
-  Play,
   RefreshCw,
   Trash2,
 } from 'lucide-react';
 import { useConfigSync } from '../hooks/useConfigSync';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
+import { useSessions } from '../hooks/useSessions';
 import { useSiteStats } from '../hooks/useSiteStats';
 import type { WordPressSite } from '../types';
+import { ServerControls } from './ServerControls';
+import { SessionList } from './SessionList';
 import { SiteStats } from './SiteStats';
 
 interface SiteDashboardProps {
@@ -29,35 +30,15 @@ export function SiteDashboard({
   const { data: stats, isLoading: isStatsLoading } = useSiteStats(site);
   const configSync = useConfigSync({ siteId: site.id });
 
-  const isInstalled = opencode.status !== 'not_installed';
-  const isRunning = opencode.status === 'running';
-  const isStarting = opencode.status === 'starting';
-  const isDownloading = opencode.isDownloading;
+  const isRunning = opencode.status === 'running' && opencode.port !== null;
+
+  const sessions = useSessions({
+    port: isRunning ? opencode.port : null,
+    projectDir: isRunning ? site.project_dir : null,
+  });
 
   const handleConfigUpdate = async () => {
     await configSync.applyUpdate(isRunning);
-  };
-
-  const handleAction = () => {
-    if (isRunning) {
-      opencode.openView();
-    } else if (!isInstalled) {
-      opencode.download();
-    } else {
-      opencode.start();
-    }
-  };
-
-  const getButtonText = () => {
-    if (isStarting) return 'Starting Server...';
-    if (isRunning) return 'Open OpenCode';
-    if (!isInstalled) return 'Download & Start OpenCode';
-    return 'Start OpenCode';
-  };
-
-  const getButtonSubtext = () => {
-    if (isRunning) return `Running on port ${opencode.port}`;
-    return 'Launch the AI assistant for your site';
   };
 
   return (
@@ -102,70 +83,42 @@ export function SiteDashboard({
         </button>
       </div>
 
-      <div className="action-area">
-        {configSync.updateAvailable && (
-          <div className="update-banner">
-            <div className="update-info">
-              <RefreshCw size={16} />
-              <span>Configuration update available</span>
-            </div>
-            <button
-              type="button"
-              className="btn-update"
-              onClick={handleConfigUpdate}
-              disabled={configSync.isUpdating}
-            >
-              {configSync.isUpdating ? 'Updating...' : 'Update Now'}
-            </button>
+      {configSync.updateAvailable && (
+        <div className="update-banner">
+          <div className="update-info">
+            <RefreshCw size={16} />
+            <span>Configuration update available</span>
           </div>
-        )}
-
-        {opencode.error && (
-          <div className="error-banner">
-            <AlertCircle size={20} />
-            <span>{opencode.error}</span>
-          </div>
-        )}
-
-        {isDownloading ? (
-          <div className="progress-card">
-            <div className="progress-info">
-              <span>
-                {opencode.downloadProgress?.message ||
-                  'Downloading OpenCode...'}
-              </span>
-              <span>{opencode.downloadProgress?.percent || 0}%</span>
-            </div>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${opencode.downloadProgress?.percent || 0}%` }}
-              />
-            </div>
-          </div>
-        ) : (
           <button
             type="button"
-            className={`btn-start-server ${isRunning ? 'running' : ''}`}
-            onClick={handleAction}
-            disabled={isStarting}
+            className="btn-update"
+            onClick={handleConfigUpdate}
+            disabled={configSync.isUpdating}
           >
-            <div className="btn-content">
-              {isStarting ? (
-                <div className="spinner" />
-              ) : isRunning ? (
-                <Play size={32} />
-              ) : (
-                <ArrowRight size={32} />
-              )}
-              <div className="text-group">
-                <span className="primary-text">{getButtonText()}</span>
-                <span className="secondary-text">{getButtonSubtext()}</span>
-              </div>
-            </div>
+            {configSync.isUpdating ? 'Updating...' : 'Update Now'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {opencode.error && (
+        <div className="error-banner">
+          <AlertCircle size={20} />
+          <span>{opencode.error}</span>
+        </div>
+      )}
+
+      <ServerControls opencode={opencode} />
+
+      <SessionList
+        sessions={sessions.hierarchicalSessions}
+        isLoading={sessions.isLoading}
+        isServerRunning={isRunning}
+        onOpenSession={sessions.openSession}
+        onCreateSession={sessions.createAndOpenSession}
+        onDeleteSession={sessions.deleteSession}
+        isCreating={sessions.isCreating}
+        isDeleting={sessions.isDeleting}
+      />
 
       <SiteStats stats={stats} isLoading={isStatsLoading} />
     </div>

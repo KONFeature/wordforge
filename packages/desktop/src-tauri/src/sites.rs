@@ -134,13 +134,19 @@ impl SiteManager {
         serde_json::from_str(&content).ok()
     }
 
-    fn save_store(&self) -> Result<(), SiteError> {
-        if let Some(parent) = self.store_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+    async fn save_store(&self) -> Result<(), SiteError> {
+        let path = self.store_path.clone();
         let content = serde_json::to_string_pretty(&self.store)?;
-        std::fs::write(&self.store_path, content)?;
-        Ok(())
+        
+        tokio::task::spawn_blocking(move || {
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&path, content)?;
+            Ok::<(), SiteError>(())
+        })
+        .await
+        .map_err(|e| SiteError::Io(std::io::Error::other(format!("Task join error: {e}"))))?
     }
 
     pub async fn exchange_token(&mut self, site_url: &str, token: &str) -> Result<WordPressSite, SiteError> {
@@ -224,7 +230,7 @@ impl SiteManager {
 
         self.store.sites.insert(site_id.clone(), site.clone());
         self.store.active_site_id = Some(site_id);
-        self.save_store()?;
+        self.save_store().await?;
 
         Ok(site)
     }
@@ -326,25 +332,56 @@ impl SiteManager {
     }
 
     fn sanitize_site_name(site_name: &str) -> String {
-        site_name
+        let sanitized: String = site_name
             .chars()
-            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
-            .collect::<String>()
-            .to_lowercase()
+            .map(|c| {
+                if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                    c.to_ascii_lowercase()
+                } else {
+                    '-'
+                }
+            })
+            .collect();
+
+        let mut result = String::new();
+        let mut last_was_hyphen = true;
+        for c in sanitized.chars() {
+            if c == '-' {
+                if !last_was_hyphen {
+                    result.push(c);
+                    last_was_hyphen = true;
+                }
+            } else {
+                result.push(c);
+                last_was_hyphen = false;
+            }
+        }
+
+        if result.ends_with('-') {
+            result.pop();
+        }
+
+        if result.is_empty() {
+            return "wordpress-site".to_string();
+        }
+
+        result
     }
 
     pub fn get_site_folder(&self, id: &str) -> Option<PathBuf> {
         self.store.sites.get(id).map(|site| site.project_dir.clone())
     }
 
-    pub fn get_device_id(&mut self) -> String {
+    pub async fn get_device_id(&mut self) -> String {
         if let Some(id) = &self.store.device_id {
             return id.clone();
         }
         
         let device_id = Uuid::new_v4().to_string();
         self.store.device_id = Some(device_id.clone());
-        self.save_store().ok();
+        if let Err(e) = self.save_store().await {
+            tracing::warn!("Failed to persist device ID: {}", e);
+        }
         device_id
     }
 
@@ -362,7 +399,7 @@ impl SiteManager {
             .and_then(|id| self.store.sites.get(id))
     }
 
-    pub fn set_active_site(&mut self, id: &str) -> Result<(), SiteError> {
+    pub async fn set_active_site(&mut self, id: &str) -> Result<(), SiteError> {
         if !self.store.sites.contains_key(id) {
             return Err(SiteError::NotFound(id.to_string()));
         }
@@ -375,18 +412,18 @@ impl SiteManager {
                 .as_secs();
         }
         
-        self.save_store()?;
+        self.save_store().await?;
         Ok(())
     }
 
-    pub fn remove_site(&mut self, id: &str) -> Result<(), SiteError> {
+    pub async fn remove_site(&mut self, id: &str) -> Result<(), SiteError> {
         self.store.sites.remove(id);
         
         if self.store.active_site_id.as_deref() == Some(id) {
             self.store.active_site_id = self.store.sites.keys().next().cloned();
         }
         
-        self.save_store()?;
+        self.save_store().await?;
         Ok(())
     }
 
@@ -483,7 +520,7 @@ impl SiteManager {
             stored_site.config_updated_at = Some(now);
         }
         
-        self.save_store()?;
+        self.save_store().await?;
         
         tracing::info!("Refreshed config for site {}, new hash: {}", site_id, hash_response.hash);
         Ok(hash_response.hash)

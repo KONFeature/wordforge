@@ -1,51 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ExternalLink, Square } from 'lucide-react';
 import { useState } from 'react';
+import { useOpenCodeClient } from '../context/OpenCodeClientContext';
 import type { UseOpenCodeReturn } from '../hooks/useOpenCode';
-import {
-  buildOpenCodeUrl,
-  createLocalClient,
-} from '../hooks/useOpenCodeClient';
 
 interface OpenCodeViewProps {
   opencode: UseOpenCodeReturn;
   siteName: string;
-  projectDir: string;
   onBack: () => void;
 }
 
 export function OpenCodeView({
   opencode,
   siteName,
-  projectDir,
   onBack,
 }: OpenCodeViewProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const port = opencode.port;
+  const { client, projectDir, buildUrl, openInWebview } = useOpenCodeClient();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['opencode-init', port, projectDir],
+    queryKey: ['opencode-init', projectDir],
     queryFn: async () => {
-      if (!port) throw new Error('No port');
-
-      const client = createLocalClient(port);
-
-      const projectResult = await client.project.current({
-        directory: projectDir,
-      });
+      const projectResult = await client.project.current();
       const project = projectResult.data!;
 
       if (project.name !== siteName) {
         await client.project.update({
           projectID: project.id,
           name: siteName,
-          directory: projectDir,
         });
       }
 
-      const sessionsResult = await client.session.list({
-        directory: projectDir,
-      });
+      const sessionsResult = await client.session.list();
       const sessions = sessionsResult.data ?? [];
 
       let sessionId: string;
@@ -53,7 +39,6 @@ export function OpenCodeView({
         sessionId = sessions[0].id;
       } else {
         const newSession = await client.session.create({
-          directory: projectDir,
           title: `${siteName} Session`,
         });
         sessionId = newSession.data!.id;
@@ -61,16 +46,11 @@ export function OpenCodeView({
 
       return { projectId: project.id, sessionId };
     },
-    enabled: !!port,
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
 
-  if (!port) return null;
-
-  const iframeUrl = data
-    ? buildOpenCodeUrl(port, projectDir, data.sessionId)
-    : null;
+  const iframeUrl = data ? buildUrl(data.sessionId) : null;
 
   return (
     <div className="opencode-view">
@@ -94,8 +74,9 @@ export function OpenCodeView({
           <button
             type="button"
             className="btn-icon"
-            onClick={() => opencode.openView()}
+            onClick={() => data && openInWebview(data.sessionId)}
             title="Open in Browser"
+            disabled={!data}
           >
             <ExternalLink size={16} />
           </button>
