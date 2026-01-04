@@ -8,8 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri:dev": "bun run build:mcp-sidecar && tauri dev",
+    "tauri:build": "bun run build:mcp-sidecar && tauri build",
+    "build:mcp-sidecar": "bun run scripts/build-mcp-sidecar.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --fix ."

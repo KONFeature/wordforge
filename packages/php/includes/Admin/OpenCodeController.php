@@ -810,12 +810,14 @@ class OpenCodeController {
 			LocalServerConfig::RUNTIME_NODE,
 			LocalServerConfig::RUNTIME_BUN,
 			LocalServerConfig::RUNTIME_NONE,
+			LocalServerConfig::RUNTIME_DESKTOP,
 		);
 		if ( ! in_array( $runtime, $valid_runtimes, true ) ) {
 			$runtime = LocalServerConfig::RUNTIME_NODE;
 		}
 
-		$config      = LocalServerConfig::generate( $runtime );
+		$mcp_command = $request->get_param( 'mcp_command' );
+		$config      = LocalServerConfig::generate( $runtime, $mcp_command );
 		$site_name   = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
@@ -865,7 +867,12 @@ class OpenCodeController {
 			}
 		}
 
-		if ( LocalServerConfig::RUNTIME_NONE !== $runtime ) {
+		$needs_mcp_binary = ! in_array(
+			$runtime,
+			array( LocalServerConfig::RUNTIME_NONE, LocalServerConfig::RUNTIME_DESKTOP ),
+			true
+		);
+		if ( $needs_mcp_binary ) {
 			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
 			if ( $mcp_binary_path ) {
 				$zip->addFile( $mcp_binary_path, '.opencode/wordforge-mcp.cjs' );

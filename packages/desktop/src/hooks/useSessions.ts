@@ -37,9 +37,9 @@ export function useSessions() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (title?: string) => {
+    mutationFn: async () => {
       if (!clientContext) throw new Error('Server not running');
-      const result = await clientContext.client.session.create({ title });
+      const result = await clientContext.client.session.create();
       return result.data!;
     },
     onSuccess: (newSession) => {
@@ -94,8 +94,8 @@ export function useSessions() {
     await clientContext.openInWebview(sessionId);
   };
 
-  const createAndOpenSession = async (title?: string) => {
-    const newSession = await createMutation.mutateAsync(title);
+  const createAndOpenSession = async () => {
+    const newSession = await createMutation.mutateAsync();
     await openSession(newSession.id);
     return newSession;
   };

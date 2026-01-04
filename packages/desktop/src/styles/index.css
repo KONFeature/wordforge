@@ -361,6 +361,15 @@ body {
   color: var(--color-error);
 }
 
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
 .site-dashboard {
   flex: 1;
   padding: 1.5rem;

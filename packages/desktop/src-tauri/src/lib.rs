@@ -1,3 +1,4 @@
+mod mcp;
 mod opencode;
 mod sites;
 mod state;
@@ -142,6 +143,19 @@ async fn check_update_available(
 ) -> Result<bool, String> {
     let state = state.lock().await;
     state.check_update_available().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn is_mcp_sidecar_available() -> bool {
+    mcp::McpSidecar::is_available()
+}
+
+#[tauri::command]
+fn copy_mcp_to_project(project_dir: String) -> Result<String, String> {
+    let path = std::path::PathBuf::from(&project_dir);
+    mcp::McpSidecar::copy_to_project_dir(&path)
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -432,6 +446,8 @@ pub fn run() {
             get_opencode_port,
             open_opencode_view,
             check_update_available,
+            is_mcp_sidecar_available,
+            copy_mcp_to_project,
             list_sites,
             get_active_site,
             set_active_site,

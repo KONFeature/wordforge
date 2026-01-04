@@ -1,5 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
-import { ExternalLink, FolderOpen, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  ExternalLink,
+  FolderOpen,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { useConfigSync } from '../hooks/useConfigSync';
 import { useOpenCodeStatus } from '../hooks/useOpenCode';
 import { useSessions } from '../hooks/useSessions';
@@ -25,6 +31,10 @@ export function SiteDashboard({ site }: SiteDashboardProps) {
   const isRunning = status === 'running' && port !== null;
 
   const handleConfigUpdate = async () => {
+    await configSync.applyUpdate(isRunning);
+  };
+
+  const handleForceRefresh = async () => {
     await configSync.applyUpdate(isRunning);
   };
 
@@ -68,6 +78,18 @@ export function SiteDashboard({ site }: SiteDashboardProps) {
           title="Open Site Folder"
         >
           <FolderOpen size={16} />
+        </button>
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={handleForceRefresh}
+          disabled={configSync.isUpdating}
+          title="Refresh OpenCode Config"
+        >
+          <RotateCcw
+            size={16}
+            className={configSync.isUpdating ? 'spinning' : ''}
+          />
         </button>
         <button
           type="button"
