@@ -1,4 +1,4 @@
-import type { Message, Session } from '@opencode-ai/sdk/client';
+import type { Message, Session } from '@opencode-ai/sdk/v2';
 import { Spinner } from '@wordpress/components';
 import { useEffect, useMemo, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -38,6 +38,7 @@ const SessionTurn = ({ turn, onRevert, onOpenSession }: SessionTurnProps) => {
       <UserMessage message={turn.userMessage} onRevert={onRevert} />
       <AssistantMessage
         messages={turn.assistantMessages}
+        isComplete={turn.isComplete}
         onOpenSession={onOpenSession}
       />
     </div>
@@ -68,7 +69,7 @@ export const MessageList = ({
     }
 
     const revertIndex = turns.findIndex(
-      (turn) => turn.userMessage.info.id === session.revert.messageID,
+      (turn) => turn.userMessage.info.id === session.revert?.messageID,
     );
 
     if (revertIndex === -1) {

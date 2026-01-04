@@ -1,4 +1,4 @@
-import type { ProviderListResponses } from '@opencode-ai/sdk/client';
+import type { ProviderListResponses } from '@opencode-ai/sdk/v2';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useOpencodeClientOptional } from '../../lib/ClientProvider';
 import { hasProviderFreeModels } from '../../lib/filterModels';

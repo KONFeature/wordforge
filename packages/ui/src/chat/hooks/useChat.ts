@@ -5,7 +5,7 @@ import type {
   Provider,
   Session,
   SessionStatus,
-} from '@opencode-ai/sdk/client';
+} from '@opencode-ai/sdk/v2';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import type { ChatMessage } from '../components/MessageList';
 import { isAssistantMessage } from '../components/messages';

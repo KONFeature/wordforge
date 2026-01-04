@@ -37,6 +37,7 @@ export { AgentBadge } from './AgentBadge';
 export { AssistantMessage } from './AssistantMessage';
 export { CollapsibleStep } from './CollapsibleStep';
 export type { StepStatus } from './CollapsibleStep';
+export { CollapsibleSteps } from './CollapsibleSteps';
 export { CompactionNotice } from './CompactionNotice';
 export { FileAttachment } from './FileAttachment';
 export { Markdown } from './Markdown';

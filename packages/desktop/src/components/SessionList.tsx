@@ -1,0 +1,224 @@
+import type { Session } from '@opencode-ai/sdk/v2/client';
+import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import type { SessionWithChildren } from '../hooks/useSessions';
+import styles from './SessionList.module.css';
+import { Button, Card, IconButton } from './ui';
+
+interface SessionListProps {
+  sessions: SessionWithChildren[];
+  isLoading: boolean;
+  isServerRunning: boolean;
+  onOpenSession: (sessionId: string) => void;
+  onCreateSession: () => void;
+  onDeleteSession: (sessionId: string) => void;
+  isCreating: boolean;
+  isDeleting: boolean;
+}
+
+const INITIAL_VISIBLE_COUNT = 5;
+
+function formatTimeAgo(timestamp: number): string {
+  const now = Date.now() / 1000;
+  const diff = now - timestamp;
+
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(timestamp * 1000).toLocaleDateString();
+}
+
+interface SessionItemProps {
+  session: Session;
+  isChild?: boolean;
+  onOpen: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}
+
+function SessionItem({
+  session,
+  isChild = false,
+  onOpen,
+  onDelete,
+  isDeleting,
+}: SessionItemProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showConfirm) {
+      onDelete();
+      setShowConfirm(false);
+    } else {
+      setShowConfirm(true);
+      setTimeout(() => setShowConfirm(false), 3000);
+    }
+  };
+
+  return (
+    <div className={`${styles.item} ${isChild ? styles.itemChild : ''}`}>
+      {isChild && <span className={styles.childIndicator}>↳</span>}
+      <button type="button" className={styles.itemContent} onClick={onOpen}>
+        <span className={styles.itemTitle}>
+          {session.title || 'Untitled Session'}
+        </span>
+        <span className={styles.itemTime}>
+          {formatTimeAgo(session.time.updated)}
+        </span>
+      </button>
+      <IconButton
+        aria-label={showConfirm ? 'Click again to confirm' : 'Delete session'}
+        onClick={handleDelete}
+        disabled={isDeleting}
+        className={`${styles.deleteBtn} ${showConfirm ? styles.deleteBtnConfirm : ''}`}
+      >
+        {isDeleting ? <div className={styles.spinner} /> : <Trash2 size={14} />}
+      </IconButton>
+    </div>
+  );
+}
+
+interface SessionGroupProps {
+  session: SessionWithChildren;
+  onOpenSession: (sessionId: string) => void;
+  onDeleteSession: (sessionId: string) => void;
+  isDeleting: boolean;
+}
+
+function SessionGroup({
+  session,
+  onOpenSession,
+  onDeleteSession,
+  isDeleting,
+}: SessionGroupProps) {
+  const [expanded, setExpanded] = useState(false);
+  const hasChildren = session.children.length > 0;
+
+  return (
+    <div className={styles.group}>
+      <div className={styles.groupHeader}>
+        {hasChildren && (
+          <button
+            type="button"
+            className={styles.expandBtn}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+        )}
+        <SessionItem
+          session={session}
+          onOpen={() => onOpenSession(session.id)}
+          onDelete={() => onDeleteSession(session.id)}
+          isDeleting={isDeleting}
+        />
+      </div>
+      {hasChildren && expanded && (
+        <div className={styles.children}>
+          {session.children.map((child) => (
+            <SessionItem
+              key={child.id}
+              session={child}
+              isChild
+              onOpen={() => onOpenSession(child.id)}
+              onDelete={() => onDeleteSession(child.id)}
+              isDeleting={isDeleting}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SessionList({
+  sessions,
+  isLoading,
+  isServerRunning,
+  onOpenSession,
+  onCreateSession,
+  onDeleteSession,
+  isCreating,
+  isDeleting,
+}: SessionListProps) {
+  const [showAll, setShowAll] = useState(false);
+
+  const visibleSessions = showAll
+    ? sessions
+    : sessions.slice(0, INITIAL_VISIBLE_COUNT);
+  const hiddenCount = sessions.length - INITIAL_VISIBLE_COUNT;
+
+  return (
+    <Card className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Sessions</h3>
+        {isServerRunning && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onCreateSession}
+            disabled={isCreating}
+            isLoading={isCreating}
+            leftIcon={!isCreating ? <Plus size={16} /> : undefined}
+          >
+            New Session
+          </Button>
+        )}
+      </div>
+
+      <div className={styles.list}>
+        {!isServerRunning ? (
+          <div className={styles.empty}>
+            <span className={styles.emptyText}>
+              Start the server to manage sessions
+            </span>
+          </div>
+        ) : isLoading && sessions.length === 0 ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
+            <span>Loading sessions...</span>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className={styles.empty}>
+            <span className={styles.emptyText}>No sessions yet</span>
+            <span className={styles.emptyHint}>
+              Create a new session to get started
+            </span>
+          </div>
+        ) : (
+          <>
+            {visibleSessions.map((session) => (
+              <SessionGroup
+                key={session.id}
+                session={session}
+                onOpenSession={onOpenSession}
+                onDeleteSession={onDeleteSession}
+                isDeleting={isDeleting}
+              />
+            ))}
+            {!showAll && hiddenCount > 0 && (
+              <button
+                type="button"
+                className={styles.showMore}
+                onClick={() => setShowAll(true)}
+              >
+                Show {hiddenCount} more session{hiddenCount > 1 ? 's' : ''}
+              </button>
+            )}
+            {showAll && hiddenCount > 0 && (
+              <button
+                type="button"
+                className={styles.showMore}
+                onClick={() => setShowAll(false)}
+              >
+                Show less
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}

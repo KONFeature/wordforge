@@ -2,9 +2,7 @@ import type {
   Model,
   Provider,
   ProviderListResponses,
-} from '@opencode-ai/sdk/client';
-
-type ModelWithReleaseDate = Model & { release_date?: string };
+} from '@opencode-ai/sdk/v2';
 
 export const isModelFree = (model: Model): boolean => {
   return model.cost?.input === 0 && model.cost?.output === 0;
@@ -38,8 +36,7 @@ export const isModelValid = (model: Model): boolean => {
   if (!model.capabilities?.toolcall) return false;
   if (!model.capabilities?.input?.text) return false;
 
-  const modelWithDate = model as ModelWithReleaseDate;
-  return isReleaseDateValid(modelWithDate.release_date);
+  return isReleaseDateValid(model.release_date);
 };
 
 export const filterProviderModels = (provider: Provider): Provider | null => {

@@ -1,0 +1,83 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--color-primary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.dangerBtn:hover {
+  background-color: var(--color-error-muted);
+  color: var(--color-error);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.updateBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-muted) 0%,
+    rgba(37, 99, 235, 0.1) 100%
+  );
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.updateInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.statLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

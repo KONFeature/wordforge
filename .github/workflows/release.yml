@@ -36,6 +36,18 @@ jobs:
         run: |
           sed -i "s/version: '.*',/version: '${{ steps.version.outputs.VERSION }}',/" packages/mcp/src/index.ts
 
+      - name: Update version in Desktop package.json
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/desktop/package.json
+
+      - name: Update version in Desktop Tauri config
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' packages/desktop/src-tauri/tauri.conf.json
+
+      - name: Update version in Desktop Cargo.toml
+        run: |
+          sed -i 's/^version = ".*"/version = "'"${{ steps.version.outputs.VERSION }}'"/' packages/desktop/src-tauri/Cargo.toml
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -69,6 +81,7 @@ jobs:
           cp packages/mcp/dist/index.cjs wordforge-server.js
 
       - name: Create Release
+        id: create-release
         uses: softprops/action-gh-release@v2
         with:
           name: WordForge ${{ steps.version.outputs.VERSION }}
@@ -77,3 +90,67 @@ jobs:
             packages/php/dist/wordforge.zip
             packages/mcp/wordforge.mcpb
             wordforge-server.js
+
+      - name: Output release info
+        run: |
+          echo "release_id=${{ steps.create-release.outputs.id }}" >> $GITHUB_OUTPUT
+
+  publish-tauri:
+    needs: release
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: macos-latest
+            target: aarch64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.settings.target }}
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Build MCP sidecar
+        env:
+          RUST_TARGET: ${{ matrix.settings.target }}
+        working-directory: packages/desktop
+        run: bun run build:mcp-sidecar
+
+      - name: Build and upload artifacts
+        uses: tauri-apps/tauri-action@390cbe447412ced1303d35abe75287949e43437a
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: packages/desktop
+          uploadWorkflowArtifacts: true
+          args: --target ${{ matrix.settings.target }} --verbose
+          releaseId: ${{ needs.release.outputs.release_id }}
+          releaseAssetNamePattern: wordforge-desktop-[platform]-[arch][ext]
+          releaseDraft: true

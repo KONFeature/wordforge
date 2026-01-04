@@ -1,5 +1,5 @@
-import { createOpencodeClient } from '@opencode-ai/sdk/client';
-import type { OpencodeClient } from '@opencode-ai/sdk/client';
+import { createOpencodeClient } from '@opencode-ai/sdk/v2';
+import type { OpencodeClient } from '@opencode-ai/sdk/v2';
 
 export type ConnectionMode = 'local' | 'remote' | 'disconnected';
 
@@ -74,6 +74,7 @@ export function createProxyClient(
 ): OpencodeClient {
   return createOpencodeClient({
     baseUrl: proxyUrl,
+    // @ts-ignore
     fetch: createWpFetch(nonce),
   });
 }

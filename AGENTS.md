@@ -6,7 +6,10 @@ wordforge/                    # Bun monorepo
 ├── packages/
 │   ├── php/                  # WordPress plugin (PHP 8.0+, WPCS)
 │   ├── ui/                   # React admin UI (WordPress bundled React)
-│   └── mcp/                  # MCP server for Claude Desktop (Node 18+)
+│   ├── mcp/                  # MCP server for Claude Desktop (Node 18+)
+│   └── desktop/              # Tauri desktop app (React + Rust)
+│       ├── src/              # React frontend (TanStack Router/Query)
+│       └── src-tauri/        # Rust backend (OpenCode sidecar manager)
 ├── biome.json                # Shared TS/JS linting/formatting
 └── package.json              # Workspace root
 ```
@@ -44,6 +47,12 @@ cd packages/php
 composer install
 composer run lint:php         # WordPress coding standards
 composer run lint:php:fix     # Auto-fix
+
+# @wordforge/desktop
+cd packages/desktop
+bun run tauri:dev             # Start Tauri dev mode with HMR
+bun run tauri:build           # Build production app
+bun run typecheck             # Type-check TypeScript
 ```
 
 ## Code Style
@@ -84,6 +93,17 @@ export const MyComponent = ({ title, onAction }: MyComponentProps) => {
   return <div className={styles.container}>...</div>;
 };
 ```
+
+### React (@wordforge/desktop)
+**Standard React** - Desktop app uses regular React imports (NOT WordPress bundled).
+```typescript
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api/core';
+```
+
+Uses TanStack Router (file-based routing) and TanStack Query for state management.
+Hash history for Tauri compatibility (no web server).
 
 ### PHP (WordPress Coding Standards)
 - Tabs for indentation

@@ -1,0 +1,51 @@
+{
+  "name": "@wordforge/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "bun run build:mcp-sidecar && tauri dev",
+    "tauri:build": "bun run build:mcp-sidecar && tauri build",
+    "build:mcp-sidecar": "bun run scripts/build-mcp-sidecar.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix ."
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.0.224",
+    "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-progress": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-query": "^5.90.16",
+    "@tanstack/react-router": "^1.144.0",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-deep-link": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-http": "^2.0.0",
+    "@tauri-apps/plugin-opener": "^2.0.0",
+    "@tauri-apps/plugin-process": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0",
+    "@tauri-apps/plugin-store": "^2.0.0",
+    "lucide-react": "^0.562.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "^1.145.2",
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}

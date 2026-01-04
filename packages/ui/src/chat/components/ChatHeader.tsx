@@ -1,4 +1,4 @@
-import type { Provider } from '@opencode-ai/sdk/client';
+import type { Provider } from '@opencode-ai/sdk/v2';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import type { ExportFormat } from '../hooks/useExport';

@@ -122,9 +122,7 @@ describe('AbilityLoader', () => {
     expect(abilities.some((a) => a.name === 'wordforge/list-content')).toBe(
       false,
     );
-    expect(
-      abilities.some((a) => a.name === 'wordforge/get-styles'),
-    ).toBe(true);
+    expect(abilities.some((a) => a.name === 'wordforge/get-styles')).toBe(true);
   });
 });
 

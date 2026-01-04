@@ -1,4 +1,4 @@
-import type { Provider } from '@opencode-ai/sdk/client';
+import type { Provider } from '@opencode-ai/sdk/v2';
 import {
   Button,
   Card,

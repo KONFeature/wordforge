@@ -1,4 +1,4 @@
-import type { Session } from '@opencode-ai/sdk/client';
+import type { Session } from '@opencode-ai/sdk/v2';
 import { useMemo } from '@wordpress/element';
 
 export interface SessionWithChildren extends Session {

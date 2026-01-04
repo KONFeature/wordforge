@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast);
+}
+
+.success {
+  background-color: var(--color-success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.warning {
+  background-color: var(--color-warning);
+}
+
+.error {
+  background-color: var(--color-error);
+}
+
+.idle {
+  background-color: var(--color-text-muted);
+}
+
+.loading {
+  background-color: var(--color-warning);
+}
+
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

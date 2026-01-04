@@ -1,4 +1,4 @@
-import type { Model, Provider } from '@opencode-ai/sdk/client';
+import type { Model, Provider } from '@opencode-ai/sdk/v2';
 import { Button, Popover, TextControl } from '@wordpress/components';
 import { memo, useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -94,8 +94,8 @@ const ProviderGroup = memo(
         );
       }
       return entries.sort(([, a], [, b]) => {
-        const dateA = (a as { release_date?: string }).release_date;
-        const dateB = (b as { release_date?: string }).release_date;
+        const dateA = a.release_date;
+        const dateB = b.release_date;
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;

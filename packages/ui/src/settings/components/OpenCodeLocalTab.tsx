@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { checkLocalServerHealth } from '../../lib/openCodeClient';
+import { useGenerateConnectToken } from '../hooks/useDesktopConnection';
 import {
   type RuntimePreference,
   useDownloadLocalConfig,
@@ -82,6 +83,13 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     null,
   );
   const [isCheckingServer, setIsCheckingServer] = useState(false);
+  const [showManualSetup, setShowManualSetup] = useState(false);
+  const [connectUrl, setConnectUrl] = useState<string | null>(null);
+  const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const { mutate: generateToken, isPending: isGeneratingToken } =
+    useGenerateConnectToken();
 
   // Sync settings
   useEffect(() => {
@@ -179,7 +187,6 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     const portFlag = port !== '4096' ? ` --port ${port}` : '';
     const corsFlag = ` --cors ${window.location.origin}`;
 
-    // Using site name for folder suggestion if possible, else generic
     const folderName = 'wordforge-config';
 
     switch (os) {
@@ -191,470 +198,630 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
     }
   }, [os, port]);
 
+  const handleGenerateConnectUrl = useCallback(() => {
+    generateToken(undefined, {
+      onSuccess: (data) => {
+        setConnectUrl(data.connectUrl);
+        setTokenExpiresAt(Date.now() + data.expiresIn * 1000);
+        setHasCopied(false);
+      },
+    });
+  }, [generateToken]);
+
+  const handleOpenDesktopApp = useCallback(() => {
+    if (!connectUrl) {
+      generateToken(undefined, {
+        onSuccess: (data) => {
+          setConnectUrl(data.connectUrl);
+          setTokenExpiresAt(Date.now() + data.expiresIn * 1000);
+          window.location.href = data.connectUrl;
+        },
+      });
+    } else {
+      window.location.href = connectUrl;
+    }
+  }, [connectUrl, generateToken]);
+
+  const timeRemaining = useMemo(() => {
+    if (!tokenExpiresAt) return null;
+    const remaining = Math.max(
+      0,
+      Math.floor((tokenExpiresAt - Date.now()) / 1000),
+    );
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, [tokenExpiresAt]);
+
+  useEffect(() => {
+    if (!tokenExpiresAt) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= tokenExpiresAt) {
+        setConnectUrl(null);
+        setTokenExpiresAt(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [tokenExpiresAt]);
+
   return (
     <div className={styles.container}>
-      {/* Intro Card */}
-      <Card className="wordforge-card">
+      {/* Desktop App Connection - Recommended */}
+      <Card className={`wordforge-card ${styles.desktopCard}`}>
         <CardHeader>
-          <h2>{__('Connect from Your Computer', 'wordforge')}</h2>
+          <span className={styles.recommendedBadge}>
+            {__('Recommended', 'wordforge')}
+          </span>
+          <h2>{__('Connect with Desktop App', 'wordforge')}</h2>
         </CardHeader>
         <CardBody>
           <p className={styles.introText}>
             {__(
-              'Run OpenCode on your local machine and connect it to your WordPress site. This gives you faster performance, better privacy, and full access to your file system.',
+              "The easiest way to get started. Download the WordForge desktop app, click the button below, and you're ready to go!",
               'wordforge',
             )}
           </p>
+
+          <div className={styles.desktopActions}>
+            <Button
+              variant="primary"
+              className={styles.desktopButton}
+              onClick={handleOpenDesktopApp}
+              disabled={isGeneratingToken}
+            >
+              {isGeneratingToken ? (
+                <>
+                  <Spinner /> {__('Generating link...', 'wordforge')}
+                </>
+              ) : (
+                __('Open in WordForge Desktop', 'wordforge')
+              )}
+            </Button>
+
+            <p className={styles.downloadHint}>
+              {__("Don't have the app yet?", 'wordforge')}{' '}
+              <ExternalLink href="https://github.com/KONFeature/wordforge/releases">
+                {__('Download for', 'wordforge')}{' '}
+                {os === 'mac'
+                  ? 'macOS'
+                  : os === 'windows'
+                    ? 'Windows'
+                    : 'Linux'}
+              </ExternalLink>
+            </p>
+          </div>
+
+          <div className={styles.copySection}>
+            <p className={styles.orDivider}>
+              {__('— OR copy this link —', 'wordforge')}
+            </p>
+
+            {connectUrl ? (
+              <div className={styles.copyContainer}>
+                <code className={styles.connectUrlCode}>{connectUrl}</code>
+                <ClipboardButton
+                  text={connectUrl}
+                  onCopy={() => setHasCopied(true)}
+                >
+                  {hasCopied
+                    ? __('Copied!', 'wordforge')
+                    : __('Copy', 'wordforge')}
+                </ClipboardButton>
+              </div>
+            ) : (
+              <Button
+                variant="secondary"
+                onClick={handleGenerateConnectUrl}
+                disabled={isGeneratingToken}
+              >
+                {__('Generate Connection Link', 'wordforge')}
+              </Button>
+            )}
+
+            {tokenExpiresAt && timeRemaining && (
+              <p className={styles.expiryNote}>
+                {__('Token expires in', 'wordforge')} {timeRemaining}
+                {' · '}
+                <Button
+                  variant="link"
+                  onClick={handleGenerateConnectUrl}
+                  disabled={isGeneratingToken}
+                >
+                  {__('Regenerate', 'wordforge')}
+                </Button>
+              </p>
+            )}
+          </div>
         </CardBody>
       </Card>
 
-      {/* OS Selector */}
-      <div className={styles.osSelector}>
-        <button
-          className={`${styles.osButton} ${os === 'mac' ? styles.osButtonActive : ''}`}
-          onClick={() => setOs('mac')}
-          type="button"
-        >
-          {appleIcon} macOS
-        </button>
-        <button
-          className={`${styles.osButton} ${os === 'windows' ? styles.osButtonActive : ''}`}
-          onClick={() => setOs('windows')}
-          type="button"
-        >
-          {windowsIcon} Windows
-        </button>
-        <button
-          className={`${styles.osButton} ${os === 'linux' ? styles.osButtonActive : ''}`}
-          onClick={() => setOs('linux')}
-          type="button"
-        >
-          {linuxIcon} Linux
-        </button>
-      </div>
-
-      {/* Wizard Steps */}
-      <div className={styles.wizardContainer}>
-        {/* Step 1: Install */}
-        <div
-          className={`${styles.wizardStep} ${
-            activeStep === 1 ? styles.wizardStepActive : ''
-          } ${completedSteps.has(1) ? styles.wizardStepCompleted : ''}`}
-        >
-          <button
-            className={`${styles.stepHeader} ${activeStep < 1 ? styles.stepHeaderDisabled : ''}`}
-            onClick={() => handleStepClick(1)}
-            type="button"
-            style={{
-              width: '100%',
-              border: 'none',
-              background: 'white',
-              textAlign: 'left',
-            }}
-          >
-            <div className={styles.stepIndicator}>
-              {completedSteps.has(1) ? checkIcon : '1'}
-            </div>
-            <h3 className={styles.stepTitle}>
-              {__('Install OpenCode', 'wordforge')}
-            </h3>
-            {completedSteps.has(1) && (
-              <span className={styles.stepCheck}>✓</span>
-            )}
-          </button>
-
-          {activeStep === 1 && (
-            <div className={styles.stepBody}>
-              <p className={styles.stepDescription}>{installInstructions}</p>
-              <ExternalLink
-                href="https://opencode.ai/"
-                className="components-button is-primary"
-              >
-                {__('Download OpenCode', 'wordforge')}
-                <Icon icon="external" style={{ marginLeft: 4 }} />
-              </ExternalLink>
-
-              <div className={styles.stepActions}>
-                <CheckboxControl
-                  label={__('I have installed OpenCode', 'wordforge')}
-                  checked={completedSteps.has(1)}
-                  onChange={() => handleStepComplete(1)}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Step 2: Download Config */}
-        <div
-          className={`${styles.wizardStep} ${
-            activeStep === 2 ? styles.wizardStepActive : ''
-          } ${completedSteps.has(2) ? styles.wizardStepCompleted : ''}`}
-        >
-          <button
-            className={`${styles.stepHeader} ${activeStep < 2 ? styles.stepHeaderDisabled : ''}`}
-            onClick={() => handleStepClick(2)}
-            type="button"
-            style={{
-              width: '100%',
-              border: 'none',
-              background: 'white',
-              textAlign: 'left',
-            }}
-          >
-            <div className={styles.stepIndicator}>
-              {completedSteps.has(2) ? checkIcon : '2'}
-            </div>
-            <h3 className={styles.stepTitle}>
-              {__('Download Configuration', 'wordforge')}
-            </h3>
-            {completedSteps.has(2) && (
-              <span className={styles.stepCheck}>✓</span>
-            )}
-          </button>
-
-          {activeStep === 2 && (
-            <div className={styles.stepBody}>
-              <p className={styles.stepDescription}>
-                {__(
-                  'Get the configuration files specifically generated for this WordPress site.',
-                  'wordforge',
-                )}
-              </p>
-
-              <Notice
-                status="warning"
-                isDismissible={false}
-                className={styles.securityNote}
-              >
-                {__(
-                  'This file contains site credentials. Keep it safe!',
-                  'wordforge',
-                )}
-              </Notice>
-
-              <div style={{ marginTop: 16 }}>
-                <Button
-                  variant="primary"
-                  onClick={handleDownload}
-                  disabled={isDownloading}
-                >
-                  {isDownloading ? (
-                    <>
-                      <Spinner /> {__('Downloading...', 'wordforge')}
-                    </>
-                  ) : (
-                    __('Download Config ZIP', 'wordforge')
-                  )}
-                </Button>
-              </div>
-
-              <div className={styles.advancedSection}>
-                <button
-                  className={styles.advancedToggle}
-                  onClick={() => setShowRuntimeOptions(!showRuntimeOptions)}
-                  type="button"
-                >
-                  <Icon icon={showRuntimeOptions ? 'arrow-up' : 'arrow-down'} />
-                  {__('Advanced Options', 'wordforge')}
-                </button>
-
-                {showRuntimeOptions && (
-                  <div className={styles.advancedOptions}>
-                    <SelectControl
-                      label={__('JavaScript Runtime', 'wordforge')}
-                      value={runtime}
-                      options={[
-                        { value: 'node', label: 'Node.js' },
-                        { value: 'bun', label: 'Bun' },
-                        {
-                          value: 'none',
-                          label: __('None (Remote only)', 'wordforge'),
-                        },
-                      ]}
-                      onChange={(val) => {
-                        const newRuntime = val as RuntimePreference;
-                        setRuntime(newRuntime);
-                        saveSettings({ runtime: newRuntime });
-                      }}
-                      help={__(
-                        'The runtime used to run the local MCP server.',
-                        'wordforge',
-                      )}
-                      disabled={isSaving}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.stepActions}>
-                <CheckboxControl
-                  label={__('I have downloaded the config', 'wordforge')}
-                  checked={completedSteps.has(2)}
-                  onChange={(checked) => {
-                    if (checked) handleStepComplete(2);
-                    else {
-                      const next = new Set(completedSteps);
-                      next.delete(2);
-                      setCompletedSteps(next);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Step 3: Extract */}
-        <div
-          className={`${styles.wizardStep} ${
-            activeStep === 3 ? styles.wizardStepActive : ''
-          } ${completedSteps.has(3) ? styles.wizardStepCompleted : ''}`}
-        >
-          <button
-            className={`${styles.stepHeader} ${activeStep < 3 ? styles.stepHeaderDisabled : ''}`}
-            onClick={() => handleStepClick(3)}
-            type="button"
-            style={{
-              width: '100%',
-              border: 'none',
-              background: 'white',
-              textAlign: 'left',
-            }}
-          >
-            <div className={styles.stepIndicator}>
-              {completedSteps.has(3) ? checkIcon : '3'}
-            </div>
-            <h3 className={styles.stepTitle}>
-              {__('Extract Files', 'wordforge')}
-            </h3>
-            {completedSteps.has(3) && (
-              <span className={styles.stepCheck}>✓</span>
-            )}
-          </button>
-
-          {activeStep === 3 && (
-            <div className={styles.stepBody}>
-              <p className={styles.stepDescription}>{extractInstructions}</p>
-
-              <div className={styles.stepActions}>
-                <CheckboxControl
-                  label={__('I have extracted the files', 'wordforge')}
-                  checked={completedSteps.has(3)}
-                  onChange={() => handleStepComplete(3)}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Step 4: Start */}
-        <div
-          className={`${styles.wizardStep} ${
-            activeStep === 4 ? styles.wizardStepActive : ''
-          } ${completedSteps.has(4) ? styles.wizardStepCompleted : ''}`}
-        >
-          <button
-            className={`${styles.stepHeader} ${activeStep < 4 ? styles.stepHeaderDisabled : ''}`}
-            onClick={() => handleStepClick(4)}
-            type="button"
-            style={{
-              width: '100%',
-              border: 'none',
-              background: 'white',
-              textAlign: 'left',
-            }}
-          >
-            <div className={styles.stepIndicator}>
-              {completedSteps.has(4) ? checkIcon : '4'}
-            </div>
-            <h3 className={styles.stepTitle}>
-              {__('Start OpenCode', 'wordforge')}
-            </h3>
-            {completedSteps.has(4) && (
-              <span className={styles.stepCheck}>✓</span>
-            )}
-          </button>
-
-          {activeStep === 4 && (
-            <div className={styles.stepBody}>
-              <div className={styles.terminalInstructions}>
-                {os === 'mac' && (
-                  <p className={styles.stepDescription}>
-                    {__('Open Terminal using', 'wordforge')}{' '}
-                    <kbd className={styles.kbd}>⌘</kbd>{' '}
-                    <kbd className={styles.kbd}>Space</kbd>
-                    {__(
-                      ', type "Terminal", and press Enter. Then run:',
-                      'wordforge',
-                    )}
-                  </p>
-                )}
-                {os === 'windows' && (
-                  <p className={styles.stepDescription}>
-                    {__('Press', 'wordforge')}{' '}
-                    <kbd className={styles.kbd}>Win</kbd>{' '}
-                    <kbd className={styles.kbd}>X</kbd>
-                    {__(
-                      ', select "Terminal" or "PowerShell". Then run:',
-                      'wordforge',
-                    )}
-                  </p>
-                )}
-                {os === 'linux' && (
-                  <p className={styles.stepDescription}>
-                    {__('Open Terminal using', 'wordforge')}{' '}
-                    <kbd className={styles.kbd}>Ctrl</kbd>{' '}
-                    <kbd className={styles.kbd}>Alt</kbd>{' '}
-                    <kbd className={styles.kbd}>T</kbd>
-                    {__('. Then run:', 'wordforge')}
-                  </p>
-                )}
-              </div>
-
-              <div className={styles.codeBlock}>
-                <div className={styles.codeContent}>{startCommand}</div>
-                <ClipboardButton
-                  className={styles.copyButton}
-                  text={startCommand}
-                  onCopy={() => {}}
-                >
-                  {__('Copy', 'wordforge')}
-                </ClipboardButton>
-              </div>
-
-              <p className={styles.enterHint}>
-                {__('After pasting, press', 'wordforge')}{' '}
-                <kbd className={styles.kbd}>Enter</kbd>{' '}
-                {__('to run the command.', 'wordforge')}
-              </p>
-
-              <div className={styles.advancedSection}>
-                <button
-                  className={styles.advancedToggle}
-                  onClick={() => setShowPortOptions(!showPortOptions)}
-                  type="button"
-                >
-                  <Icon icon={showPortOptions ? 'arrow-up' : 'arrow-down'} />
-                  {__('Advanced Options', 'wordforge')}
-                </button>
-
-                {showPortOptions && (
-                  <div className={styles.advancedOptions}>
-                    <TextControl
-                      label={__('Server Port', 'wordforge')}
-                      help={__(
-                        'Change if port 4096 is already in use. The command above will update automatically.',
-                        'wordforge',
-                      )}
-                      value={port}
-                      onChange={handlePortChange}
-                      onBlur={handlePortBlur}
-                      type="number"
-                      min={1024}
-                      max={65535}
-                      disabled={isSaving}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.stepActions}>
-                <Button
-                  variant="primary"
-                  onClick={checkServer}
-                  isBusy={isCheckingServer}
-                  disabled={isCheckingServer || localServerOnline === true}
-                >
-                  {localServerOnline
-                    ? __('Connected!', 'wordforge')
-                    : __('Test Connection', 'wordforge')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Connection Status Banner */}
-      <div
-        className={`${styles.statusBanner} ${
-          localServerOnline
-            ? styles.statusBannerOnline
-            : styles.statusBannerOffline
-        }`}
+      {/* Manual Setup Toggle */}
+      <button
+        type="button"
+        className={styles.manualSetupToggle}
+        onClick={() => setShowManualSetup(!showManualSetup)}
       >
-        <div className={styles.statusText}>
-          <span className={styles.statusTitle}>
-            {localServerOnline
-              ? __('You are connected!', 'wordforge')
-              : __('Waiting for connection...', 'wordforge')}
-          </span>
-          <span className={styles.statusSubtitle}>
-            {localServerOnline
-              ? `${__('OpenCode is running locally on port', 'wordforge')} ${port}`
-              : __('Start OpenCode on your computer to connect', 'wordforge')}
-          </span>
-        </div>
-        {!localServerOnline && (
-          <Button
-            variant="secondary"
-            onClick={checkServer}
-            isBusy={isCheckingServer}
-          >
-            {__('Check Again', 'wordforge')}
-          </Button>
-        )}
-      </div>
+        <Icon icon={showManualSetup ? 'arrow-up' : 'arrow-down'} />
+        {__('Manual Setup (Advanced)', 'wordforge')}
+      </button>
 
-      {/* Troubleshooting */}
-      <div className={styles.troubleshooting}>
-        <details>
-          <summary
-            style={{ cursor: 'pointer', color: 'var(--wf-color-primary)' }}
-          >
-            {__('Having trouble connecting?', 'wordforge')}
-          </summary>
-          <div className={styles.troubleDetails}>
-            <ul className={styles.troubleList}>
-              <li>
-                <strong>{__('Check the port:', 'wordforge')}</strong>{' '}
-                {__('Ensure OpenCode is running on port', 'wordforge')} {port}.{' '}
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    const newPort = prompt(
-                      __('Enter new port number:', 'wordforge'),
-                      port,
-                    );
-                    if (newPort) {
-                      setPort(newPort);
-                      saveSettings({ port: Number.parseInt(newPort, 10) });
-                    }
-                  }}
-                  isSmall
-                >
-                  {__('Change Port', 'wordforge')}
-                </Button>
-              </li>
-              <li>
-                <strong>{__('Check CORS:', 'wordforge')}</strong>{' '}
+      {showManualSetup && (
+        <>
+          {/* Intro Card */}
+          <Card className="wordforge-card">
+            <CardHeader>
+              <h2>{__('Connect from Your Computer', 'wordforge')}</h2>
+            </CardHeader>
+            <CardBody>
+              <p className={styles.introText}>
                 {__(
-                  'Make sure you include the --cors flag in your command.',
+                  'Run OpenCode on your local machine and connect it to your WordPress site. This gives you faster performance, better privacy, and full access to your file system.',
                   'wordforge',
                 )}
-              </li>
-              <li>
-                <strong>{__('Firewall:', 'wordforge')}</strong>{' '}
-                {__(
-                  'Ensure your firewall allows connections on the selected port.',
-                  'wordforge',
-                )}
-              </li>
-            </ul>
+              </p>
+            </CardBody>
+          </Card>
+
+          {/* OS Selector */}
+          <div className={styles.osSelector}>
+            <button
+              className={`${styles.osButton} ${os === 'mac' ? styles.osButtonActive : ''}`}
+              onClick={() => setOs('mac')}
+              type="button"
+            >
+              {appleIcon} macOS
+            </button>
+            <button
+              className={`${styles.osButton} ${os === 'windows' ? styles.osButtonActive : ''}`}
+              onClick={() => setOs('windows')}
+              type="button"
+            >
+              {windowsIcon} Windows
+            </button>
+            <button
+              className={`${styles.osButton} ${os === 'linux' ? styles.osButtonActive : ''}`}
+              onClick={() => setOs('linux')}
+              type="button"
+            >
+              {linuxIcon} Linux
+            </button>
           </div>
-        </details>
-      </div>
+
+          {/* Wizard Steps */}
+          <div className={styles.wizardContainer}>
+            {/* Step 1: Install */}
+            <div
+              className={`${styles.wizardStep} ${
+                activeStep === 1 ? styles.wizardStepActive : ''
+              } ${completedSteps.has(1) ? styles.wizardStepCompleted : ''}`}
+            >
+              <button
+                className={`${styles.stepHeader} ${activeStep < 1 ? styles.stepHeaderDisabled : ''}`}
+                onClick={() => handleStepClick(1)}
+                type="button"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  background: 'white',
+                  textAlign: 'left',
+                }}
+              >
+                <div className={styles.stepIndicator}>
+                  {completedSteps.has(1) ? checkIcon : '1'}
+                </div>
+                <h3 className={styles.stepTitle}>
+                  {__('Install OpenCode', 'wordforge')}
+                </h3>
+                {completedSteps.has(1) && (
+                  <span className={styles.stepCheck}>✓</span>
+                )}
+              </button>
+
+              {activeStep === 1 && (
+                <div className={styles.stepBody}>
+                  <p className={styles.stepDescription}>
+                    {installInstructions}
+                  </p>
+                  <ExternalLink
+                    href="https://opencode.ai/"
+                    className="components-button is-primary"
+                  >
+                    {__('Download OpenCode', 'wordforge')}
+                    <Icon icon="external" style={{ marginLeft: 4 }} />
+                  </ExternalLink>
+
+                  <div className={styles.stepActions}>
+                    <CheckboxControl
+                      label={__('I have installed OpenCode', 'wordforge')}
+                      checked={completedSteps.has(1)}
+                      onChange={() => handleStepComplete(1)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: Download Config */}
+            <div
+              className={`${styles.wizardStep} ${
+                activeStep === 2 ? styles.wizardStepActive : ''
+              } ${completedSteps.has(2) ? styles.wizardStepCompleted : ''}`}
+            >
+              <button
+                className={`${styles.stepHeader} ${activeStep < 2 ? styles.stepHeaderDisabled : ''}`}
+                onClick={() => handleStepClick(2)}
+                type="button"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  background: 'white',
+                  textAlign: 'left',
+                }}
+              >
+                <div className={styles.stepIndicator}>
+                  {completedSteps.has(2) ? checkIcon : '2'}
+                </div>
+                <h3 className={styles.stepTitle}>
+                  {__('Download Configuration', 'wordforge')}
+                </h3>
+                {completedSteps.has(2) && (
+                  <span className={styles.stepCheck}>✓</span>
+                )}
+              </button>
+
+              {activeStep === 2 && (
+                <div className={styles.stepBody}>
+                  <p className={styles.stepDescription}>
+                    {__(
+                      'Get the configuration files specifically generated for this WordPress site.',
+                      'wordforge',
+                    )}
+                  </p>
+
+                  <Notice
+                    status="warning"
+                    isDismissible={false}
+                    className={styles.securityNote}
+                  >
+                    {__(
+                      'This file contains site credentials. Keep it safe!',
+                      'wordforge',
+                    )}
+                  </Notice>
+
+                  <div style={{ marginTop: 16 }}>
+                    <Button
+                      variant="primary"
+                      onClick={handleDownload}
+                      disabled={isDownloading}
+                    >
+                      {isDownloading ? (
+                        <>
+                          <Spinner /> {__('Downloading...', 'wordforge')}
+                        </>
+                      ) : (
+                        __('Download Config ZIP', 'wordforge')
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className={styles.advancedSection}>
+                    <button
+                      className={styles.advancedToggle}
+                      onClick={() => setShowRuntimeOptions(!showRuntimeOptions)}
+                      type="button"
+                    >
+                      <Icon
+                        icon={showRuntimeOptions ? 'arrow-up' : 'arrow-down'}
+                      />
+                      {__('Advanced Options', 'wordforge')}
+                    </button>
+
+                    {showRuntimeOptions && (
+                      <div className={styles.advancedOptions}>
+                        <SelectControl
+                          label={__('JavaScript Runtime', 'wordforge')}
+                          value={runtime}
+                          options={[
+                            { value: 'node', label: 'Node.js' },
+                            { value: 'bun', label: 'Bun' },
+                            {
+                              value: 'none',
+                              label: __('None (Remote only)', 'wordforge'),
+                            },
+                          ]}
+                          onChange={(val) => {
+                            const newRuntime = val as RuntimePreference;
+                            setRuntime(newRuntime);
+                            saveSettings({ runtime: newRuntime });
+                          }}
+                          help={__(
+                            'The runtime used to run the local MCP server.',
+                            'wordforge',
+                          )}
+                          disabled={isSaving}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.stepActions}>
+                    <CheckboxControl
+                      label={__('I have downloaded the config', 'wordforge')}
+                      checked={completedSteps.has(2)}
+                      onChange={(checked) => {
+                        if (checked) handleStepComplete(2);
+                        else {
+                          const next = new Set(completedSteps);
+                          next.delete(2);
+                          setCompletedSteps(next);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 3: Extract */}
+            <div
+              className={`${styles.wizardStep} ${
+                activeStep === 3 ? styles.wizardStepActive : ''
+              } ${completedSteps.has(3) ? styles.wizardStepCompleted : ''}`}
+            >
+              <button
+                className={`${styles.stepHeader} ${activeStep < 3 ? styles.stepHeaderDisabled : ''}`}
+                onClick={() => handleStepClick(3)}
+                type="button"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  background: 'white',
+                  textAlign: 'left',
+                }}
+              >
+                <div className={styles.stepIndicator}>
+                  {completedSteps.has(3) ? checkIcon : '3'}
+                </div>
+                <h3 className={styles.stepTitle}>
+                  {__('Extract Files', 'wordforge')}
+                </h3>
+                {completedSteps.has(3) && (
+                  <span className={styles.stepCheck}>✓</span>
+                )}
+              </button>
+
+              {activeStep === 3 && (
+                <div className={styles.stepBody}>
+                  <p className={styles.stepDescription}>
+                    {extractInstructions}
+                  </p>
+
+                  <div className={styles.stepActions}>
+                    <CheckboxControl
+                      label={__('I have extracted the files', 'wordforge')}
+                      checked={completedSteps.has(3)}
+                      onChange={() => handleStepComplete(3)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 4: Start */}
+            <div
+              className={`${styles.wizardStep} ${
+                activeStep === 4 ? styles.wizardStepActive : ''
+              } ${completedSteps.has(4) ? styles.wizardStepCompleted : ''}`}
+            >
+              <button
+                className={`${styles.stepHeader} ${activeStep < 4 ? styles.stepHeaderDisabled : ''}`}
+                onClick={() => handleStepClick(4)}
+                type="button"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  background: 'white',
+                  textAlign: 'left',
+                }}
+              >
+                <div className={styles.stepIndicator}>
+                  {completedSteps.has(4) ? checkIcon : '4'}
+                </div>
+                <h3 className={styles.stepTitle}>
+                  {__('Start OpenCode', 'wordforge')}
+                </h3>
+                {completedSteps.has(4) && (
+                  <span className={styles.stepCheck}>✓</span>
+                )}
+              </button>
+
+              {activeStep === 4 && (
+                <div className={styles.stepBody}>
+                  <div className={styles.terminalInstructions}>
+                    {os === 'mac' && (
+                      <p className={styles.stepDescription}>
+                        {__('Open Terminal using', 'wordforge')}{' '}
+                        <kbd className={styles.kbd}>⌘</kbd>{' '}
+                        <kbd className={styles.kbd}>Space</kbd>
+                        {__(
+                          ', type "Terminal", and press Enter. Then run:',
+                          'wordforge',
+                        )}
+                      </p>
+                    )}
+                    {os === 'windows' && (
+                      <p className={styles.stepDescription}>
+                        {__('Press', 'wordforge')}{' '}
+                        <kbd className={styles.kbd}>Win</kbd>{' '}
+                        <kbd className={styles.kbd}>X</kbd>
+                        {__(
+                          ', select "Terminal" or "PowerShell". Then run:',
+                          'wordforge',
+                        )}
+                      </p>
+                    )}
+                    {os === 'linux' && (
+                      <p className={styles.stepDescription}>
+                        {__('Open Terminal using', 'wordforge')}{' '}
+                        <kbd className={styles.kbd}>Ctrl</kbd>{' '}
+                        <kbd className={styles.kbd}>Alt</kbd>{' '}
+                        <kbd className={styles.kbd}>T</kbd>
+                        {__('. Then run:', 'wordforge')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className={styles.codeBlock}>
+                    <div className={styles.codeContent}>{startCommand}</div>
+                    <ClipboardButton
+                      className={styles.copyButton}
+                      text={startCommand}
+                      onCopy={() => {}}
+                    >
+                      {__('Copy', 'wordforge')}
+                    </ClipboardButton>
+                  </div>
+
+                  <p className={styles.enterHint}>
+                    {__('After pasting, press', 'wordforge')}{' '}
+                    <kbd className={styles.kbd}>Enter</kbd>{' '}
+                    {__('to run the command.', 'wordforge')}
+                  </p>
+
+                  <div className={styles.advancedSection}>
+                    <button
+                      className={styles.advancedToggle}
+                      onClick={() => setShowPortOptions(!showPortOptions)}
+                      type="button"
+                    >
+                      <Icon
+                        icon={showPortOptions ? 'arrow-up' : 'arrow-down'}
+                      />
+                      {__('Advanced Options', 'wordforge')}
+                    </button>
+
+                    {showPortOptions && (
+                      <div className={styles.advancedOptions}>
+                        <TextControl
+                          label={__('Server Port', 'wordforge')}
+                          help={__(
+                            'Change if port 4096 is already in use. The command above will update automatically.',
+                            'wordforge',
+                          )}
+                          value={port}
+                          onChange={handlePortChange}
+                          onBlur={handlePortBlur}
+                          type="number"
+                          min={1024}
+                          max={65535}
+                          disabled={isSaving}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.stepActions}>
+                    <Button
+                      variant="primary"
+                      onClick={checkServer}
+                      isBusy={isCheckingServer}
+                      disabled={isCheckingServer || localServerOnline === true}
+                    >
+                      {localServerOnline
+                        ? __('Connected!', 'wordforge')
+                        : __('Test Connection', 'wordforge')}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Connection Status Banner */}
+          <div
+            className={`${styles.statusBanner} ${
+              localServerOnline
+                ? styles.statusBannerOnline
+                : styles.statusBannerOffline
+            }`}
+          >
+            <div className={styles.statusText}>
+              <span className={styles.statusTitle}>
+                {localServerOnline
+                  ? __('You are connected!', 'wordforge')
+                  : __('Waiting for connection...', 'wordforge')}
+              </span>
+              <span className={styles.statusSubtitle}>
+                {localServerOnline
+                  ? `${__('OpenCode is running locally on port', 'wordforge')} ${port}`
+                  : __(
+                      'Start OpenCode on your computer to connect',
+                      'wordforge',
+                    )}
+              </span>
+            </div>
+            {!localServerOnline && (
+              <Button
+                variant="secondary"
+                onClick={checkServer}
+                isBusy={isCheckingServer}
+              >
+                {__('Check Again', 'wordforge')}
+              </Button>
+            )}
+          </div>
+
+          <div className={styles.troubleshooting}>
+            <details>
+              <summary
+                style={{ cursor: 'pointer', color: 'var(--wf-color-primary)' }}
+              >
+                {__('Having trouble connecting?', 'wordforge')}
+              </summary>
+              <div className={styles.troubleDetails}>
+                <ul className={styles.troubleList}>
+                  <li>
+                    <strong>{__('Check the port:', 'wordforge')}</strong>{' '}
+                    {__('Ensure OpenCode is running on port', 'wordforge')}{' '}
+                    {port}.{' '}
+                    <Button
+                      variant="link"
+                      onClick={() => {
+                        const newPort = prompt(
+                          __('Enter new port number:', 'wordforge'),
+                          port,
+                        );
+                        if (newPort) {
+                          setPort(newPort);
+                          saveSettings({ port: Number.parseInt(newPort, 10) });
+                        }
+                      }}
+                      isSmall
+                    >
+                      {__('Change Port', 'wordforge')}
+                    </Button>
+                  </li>
+                  <li>
+                    <strong>{__('Check CORS:', 'wordforge')}</strong>{' '}
+                    {__(
+                      'Make sure you include the --cors flag in your command.',
+                      'wordforge',
+                    )}
+                  </li>
+                  <li>
+                    <strong>{__('Firewall:', 'wordforge')}</strong>{' '}
+                    {__(
+                      'Ensure your firewall allows connections on the selected port.',
+                      'wordforge',
+                    )}
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </>
+      )}
     </div>
   );
 };

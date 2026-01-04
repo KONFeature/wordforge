@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "WordForge",
+  "version": "0.1.0",
+  "identifier": "ai.wordforge.desktop",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "WordForge",
+        "width": 1000,
+        "height": 700
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "externalBin": ["sidecars/wordforge-mcp"]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["wordforge"]
+      }
+    }
+  }
+}

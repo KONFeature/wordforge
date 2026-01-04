@@ -631,7 +631,7 @@ class OpenCodeController {
 			);
 		}
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -653,7 +653,7 @@ class OpenCodeController {
 
 		ProviderConfig::remove_provider_key( $provider_id );
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -690,7 +690,7 @@ class OpenCodeController {
 			);
 		}
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -703,7 +703,7 @@ class OpenCodeController {
 	public function reset_agents(): WP_REST_Response {
 		AgentConfig::reset_to_recommended();
 
-		$this->restart_server_if_running();
+		do_action( 'wordforge_config_changed' );
 
 		return new WP_REST_Response(
 			array(
@@ -803,22 +803,6 @@ class OpenCodeController {
 		);
 	}
 
-	private function restart_server_if_running(): void {
-		if ( ! ServerProcess::is_running() ) {
-			return;
-		}
-
-		ServerProcess::stop();
-		usleep( 300000 );
-
-		$token = $this->generate_mcp_auth_token();
-		ServerProcess::start(
-			array(
-				'mcp_auth_token' => $token,
-			)
-		);
-	}
-
 	public function download_local_config( WP_REST_Request $request ): void {
 		$runtime = $request->get_param( 'runtime' ) ?? LocalServerConfig::RUNTIME_NODE;
 
@@ -826,12 +810,14 @@ class OpenCodeController {
 			LocalServerConfig::RUNTIME_NODE,
 			LocalServerConfig::RUNTIME_BUN,
 			LocalServerConfig::RUNTIME_NONE,
+			LocalServerConfig::RUNTIME_DESKTOP,
 		);
 		if ( ! in_array( $runtime, $valid_runtimes, true ) ) {
 			$runtime = LocalServerConfig::RUNTIME_NODE;
 		}
 
-		$config      = LocalServerConfig::generate( $runtime );
+		$mcp_command = $request->get_param( 'mcp_command' );
+		$config      = LocalServerConfig::generate( $runtime, $mcp_command );
 		$site_name   = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
@@ -881,7 +867,12 @@ class OpenCodeController {
 			}
 		}
 
-		if ( LocalServerConfig::RUNTIME_NONE !== $runtime ) {
+		$needs_mcp_binary = ! in_array(
+			$runtime,
+			array( LocalServerConfig::RUNTIME_NONE, LocalServerConfig::RUNTIME_DESKTOP ),
+			true
+		);
+		if ( $needs_mcp_binary ) {
 			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
 			if ( $mcp_binary_path ) {
 				$zip->addFile( $mcp_binary_path, '.opencode/wordforge-mcp.cjs' );
@@ -930,17 +921,21 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'port'    => $settings['port'],
-				'enabled' => $settings['enabled'],
-				'runtime' => $settings['runtime'],
+				'port'        => $settings['port'],
+				'enabled'     => $settings['enabled'],
+				'device_id'   => $settings['device_id'],
+				'project_id'  => $settings['project_id'],
+				'project_dir' => $settings['project_dir'],
 			)
 		);
 	}
 
 	public function save_local_settings( WP_REST_Request $request ): WP_REST_Response {
-		$port    = $request->get_param( 'port' );
-		$enabled = $request->get_param( 'enabled' );
-		$runtime = $request->get_param( 'runtime' );
+		$port        = $request->get_param( 'port' );
+		$enabled     = $request->get_param( 'enabled' );
+		$device_id   = $request->get_param( 'device_id' );
+		$project_id  = $request->get_param( 'project_id' );
+		$project_dir = $request->get_param( 'project_dir' );
 
 		$settings = array();
 
@@ -952,16 +947,24 @@ class OpenCodeController {
 			$settings['enabled'] = (bool) $enabled;
 		}
 
-		if ( null !== $runtime ) {
-			$settings['runtime'] = sanitize_text_field( $runtime );
+		if ( null !== $device_id ) {
+			$settings['device_id'] = sanitize_text_field( $device_id );
+		}
+
+		if ( null !== $project_id ) {
+			$settings['project_id'] = sanitize_text_field( $project_id );
+		}
+
+		if ( null !== $project_dir ) {
+			$settings['project_dir'] = sanitize_text_field( $project_dir );
 		}
 
 		$result = LocalServerConfig::save_settings( $settings );
 
 		if ( ! $result ) {
 			return new WP_REST_Response(
-				array( 'error' => 'Failed to save settings' ),
-				500
+				array( 'error' => 'Failed to save settings. device_id is required.' ),
+				400
 			);
 		}
 
@@ -969,10 +972,12 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success' => true,
-				'port'    => $updated['port'],
-				'enabled' => $updated['enabled'],
-				'runtime' => $updated['runtime'],
+				'success'     => true,
+				'port'        => $updated['port'],
+				'enabled'     => $updated['enabled'],
+				'device_id'   => $updated['device_id'],
+				'project_id'  => $updated['project_id'],
+				'project_dir' => $updated['project_dir'],
 			)
 		);
 	}
