@@ -115,10 +115,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Use macos-13 (Intel runner) for x64 builds - native compilation
-          - host: macos-13
+          # macOS x64 (cross-compile on ARM runner, Intel runners retired)
+          - host: macos-latest
             target: x86_64-apple-darwin
-          # Use macos-latest (ARM runner) for ARM64 builds - native compilation
+          # macOS ARM64 (native on ARM runner)
           - host: macos-latest
             target: aarch64-apple-darwin
           # Windows

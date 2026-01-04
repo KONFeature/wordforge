@@ -1,3 +1,5 @@
+import { fetch } from '@tauri-apps/plugin-http';
+
 interface WPRestResponse<T> {
   data: T | null;
   total?: number;
@@ -17,6 +19,7 @@ export async function wpFetch<T>(
 
   try {
     const response = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
