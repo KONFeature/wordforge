@@ -914,17 +914,21 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'port'      => $settings['port'],
-				'enabled'   => $settings['enabled'],
-				'device_id' => $settings['device_id'],
+				'port'        => $settings['port'],
+				'enabled'     => $settings['enabled'],
+				'device_id'   => $settings['device_id'],
+				'project_id'  => $settings['project_id'],
+				'project_dir' => $settings['project_dir'],
 			)
 		);
 	}
 
 	public function save_local_settings( WP_REST_Request $request ): WP_REST_Response {
-		$port      = $request->get_param( 'port' );
-		$enabled   = $request->get_param( 'enabled' );
-		$device_id = $request->get_param( 'device_id' );
+		$port        = $request->get_param( 'port' );
+		$enabled     = $request->get_param( 'enabled' );
+		$device_id   = $request->get_param( 'device_id' );
+		$project_id  = $request->get_param( 'project_id' );
+		$project_dir = $request->get_param( 'project_dir' );
 
 		$settings = array();
 
@@ -940,6 +944,14 @@ class OpenCodeController {
 			$settings['device_id'] = sanitize_text_field( $device_id );
 		}
 
+		if ( null !== $project_id ) {
+			$settings['project_id'] = sanitize_text_field( $project_id );
+		}
+
+		if ( null !== $project_dir ) {
+			$settings['project_dir'] = sanitize_text_field( $project_dir );
+		}
+
 		$result = LocalServerConfig::save_settings( $settings );
 
 		if ( ! $result ) {
@@ -953,10 +965,12 @@ class OpenCodeController {
 
 		return new WP_REST_Response(
 			array(
-				'success'   => true,
-				'port'      => $updated['port'],
-				'enabled'   => $updated['enabled'],
-				'device_id' => $updated['device_id'],
+				'success'     => true,
+				'port'        => $updated['port'],
+				'enabled'     => $updated['enabled'],
+				'device_id'   => $updated['device_id'],
+				'project_id'  => $updated['project_id'],
+				'project_dir' => $updated['project_dir'],
 			)
 		);
 	}

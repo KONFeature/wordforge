@@ -12,8 +12,9 @@ use tracing::{error, info};
 
 const GITHUB_REPO: &str = "sst/opencode";
 const GITHUB_API_URL: &str = "https://api.github.com";
-const IDLE_TIMEOUT_SECS: u64 = 30 * 60; // 30 minutes
-const IDLE_CHECK_INTERVAL_SECS: u64 = 60; // Check every minute
+const GITHUB_LATEST_DOWNLOAD: &str = "https://github.com/sst/opencode/releases/latest/download";
+const IDLE_TIMEOUT_SECS: u64 = 30 * 60;
+const IDLE_CHECK_INTERVAL_SECS: u64 = 60;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -50,13 +51,6 @@ pub enum Status {
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
-    assets: Vec<GitHubAsset>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GitHubAsset {
-    name: String,
-    browser_download_url: String,
 }
 
 #[derive(Deserialize)]
@@ -140,32 +134,54 @@ impl OpenCodeManager {
 
     pub async fn download(&mut self, app: &AppHandle) -> Result<(), Error> {
         info!("Starting OpenCode download");
-        self.emit_progress(app, "Fetching release info...", 0);
+        self.emit_progress(app, "Preparing download...", 0);
 
-        let release = self.fetch_latest_release().await?;
-        let asset = self.find_platform_asset(&release)?;
+        let archive_name = get_archive_name()?;
+        let download_url = format!("{}/{}", GITHUB_LATEST_DOWNLOAD, archive_name);
 
         self.emit_progress(app, "Creating directories...", 10);
         tokio::fs::create_dir_all(&self.install_dir).await?;
 
         self.emit_progress(app, "Downloading OpenCode...", 20);
-        let archive_path = self.install_dir.join(&asset.name);
-        self.download_file(&asset.browser_download_url, &archive_path, app)
-            .await?;
+        let archive_path = self.install_dir.join(&archive_name);
+        self.download_file(&download_url, &archive_path, app).await?;
 
         self.emit_progress(app, "Extracting archive...", 80);
         self.extract_archive(&archive_path).await?;
 
-        self.emit_progress(app, "Saving version info...", 95);
+        self.emit_progress(app, "Detecting version...", 95);
+        let version = self.detect_installed_version().unwrap_or_else(|| "unknown".to_string());
         let version_file = self.install_dir.join(".version");
-        tokio::fs::write(&version_file, &release.tag_name).await?;
+        tokio::fs::write(&version_file, &version).await?;
 
         tokio::fs::remove_file(&archive_path).await.ok();
 
         self.emit_progress(app, "Download complete!", 100);
-        info!("OpenCode {} installed successfully", release.tag_name);
+        info!("OpenCode {} installed successfully", version);
 
         Ok(())
+    }
+
+    fn detect_installed_version(&self) -> Option<String> {
+        let binary = self.binary_path();
+        if !binary.exists() {
+            return None;
+        }
+        
+        let output = std::process::Command::new(&binary)
+            .arg("version")
+            .output()
+            .ok()?;
+        
+        if !output.status.success() {
+            return None;
+        }
+        
+        let version_str = String::from_utf8_lossy(&output.stdout);
+        let re = regex::Regex::new(r"(\d+\.\d+\.\d+)").ok()?;
+        re.captures(&version_str)
+            .and_then(|c| c.get(1))
+            .map(|m| m.as_str().to_string())
     }
 
     pub async fn start(
@@ -285,17 +301,6 @@ impl OpenCodeManager {
             .json::<GitHubRelease>()
             .await?;
         Ok(response)
-    }
-
-    fn find_platform_asset<'a>(&self, release: &'a GitHubRelease) -> Result<&'a GitHubAsset, Error> {
-        let (os, arch) = get_platform_identifier()?;
-        let pattern = format!("{}-{}", os, arch);
-
-        release
-            .assets
-            .iter()
-            .find(|a| a.name.contains(&pattern) && (a.name.ends_with(".tar.gz") || a.name.ends_with(".zip")))
-            .ok_or_else(|| Error::UnsupportedPlatform(format!("{}-{}", os, arch)))
     }
 
     async fn download_file(
@@ -464,6 +469,13 @@ fn get_platform_identifier() -> Result<(&'static str, &'static str), Error> {
     };
 
     Ok((os, arch))
+}
+
+fn get_archive_name() -> Result<String, Error> {
+    let (os, arch) = get_platform_identifier()?;
+    let target = format!("opencode-{}-{}", os, arch);
+    let extension = if os == "linux" { "tar.gz" } else { "zip" };
+    Ok(format!("{}.{}", target, extension))
 }
 
 async fn fetch_last_activity(client: &Client, port: u16) -> Option<u64> {

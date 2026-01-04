@@ -179,11 +179,13 @@ class LocalServerConfig {
 		$latest  = self::get_latest_device( $devices );
 
 		return array(
-			'port'      => $latest['port'] ?? 4096,
-			'enabled'   => ! empty( $latest ),
-			'runtime'   => self::RUNTIME_NONE,
-			'device_id' => $latest['device_id'] ?? null,
-			'devices'   => $devices,
+			'port'        => $latest['port'] ?? 4096,
+			'enabled'     => ! empty( $latest ),
+			'runtime'     => self::RUNTIME_NONE,
+			'device_id'   => $latest['device_id'] ?? null,
+			'project_id'  => $latest['project_id'] ?? null,
+			'project_dir' => $latest['project_dir'] ?? null,
+			'devices'     => $devices,
 		);
 	}
 
@@ -198,14 +200,23 @@ class LocalServerConfig {
 		$port = isset( $settings['port'] ) ? \absint( $settings['port'] ) : 4096;
 		$port = max( 1024, min( 65535, $port ) );
 
-		$devices              = self::get_user_devices( $user_id );
-		$devices[ $device_id ] = array(
+		$device_data = array(
 			'port'      => $port,
 			'enabled'   => isset( $settings['enabled'] ) ? (bool) $settings['enabled'] : true,
 			'last_seen' => time(),
 		);
 
-		$devices = self::cleanup_stale_devices( $devices );
+		if ( isset( $settings['project_id'] ) ) {
+			$device_data['project_id'] = \sanitize_text_field( $settings['project_id'] );
+		}
+
+		if ( isset( $settings['project_dir'] ) ) {
+			$device_data['project_dir'] = \sanitize_text_field( $settings['project_dir'] );
+		}
+
+		$devices               = self::get_user_devices( $user_id );
+		$devices[ $device_id ] = $device_data;
+		$devices               = self::cleanup_stale_devices( $devices );
 
 		return (bool) \update_user_meta( $user_id, self::USER_META_KEY, $devices );
 	}

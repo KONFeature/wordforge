@@ -1,5 +1,7 @@
+use deunicode::deunicode;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use sha2::{Sha256, Digest};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -185,6 +187,7 @@ impl SiteManager {
             .as_secs();
 
         let project_dir = self.create_project_dir(&exchange_response.site.name)?;
+        Self::ensure_opencode_project(&project_dir)?;
         
         self.download_and_extract_config(
             base_url,
@@ -237,8 +240,10 @@ impl SiteManager {
 
     pub async fn sync_port_to_wordpress(&self, site: &WordPressSite, port: u16, device_id: &str) -> Result<(), SiteError> {
         let settings_url = format!("{}/wp-json/wordforge/v1/opencode/local-settings", site.url.trim_end_matches('/'));
+        let project_id = Self::generate_opencode_project_id(&site.project_dir);
+        let project_dir = site.project_dir.to_string_lossy().to_string();
         
-        tracing::info!("Syncing port {} (device: {}) to WordPress", port, device_id);
+        tracing::info!("Syncing port {} (device: {}, project: {}) to WordPress", port, device_id, project_id);
 
         let response = self.client
             .post(&settings_url)
@@ -247,17 +252,19 @@ impl SiteManager {
             .json(&serde_json::json!({
                 "port": port,
                 "device_id": device_id,
-                "enabled": true
+                "enabled": true,
+                "project_id": project_id,
+                "project_dir": project_dir
             }))
             .send()
             .await?;
 
         if !response.status().is_success() {
             let body = response.text().await.unwrap_or_default();
-            return Err(SiteError::ApiError(format!("Failed to sync port: {}", body)));
+            return Err(SiteError::ApiError(format!("Failed to sync settings: {}", body)));
         }
 
-        tracing::info!("Port synced successfully");
+        tracing::info!("Settings synced successfully");
         Ok(())
     }
 
@@ -332,7 +339,9 @@ impl SiteManager {
     }
 
     fn sanitize_site_name(site_name: &str) -> String {
-        let sanitized: String = site_name
+        let ascii = deunicode(site_name);
+        
+        let sanitized: String = ascii
             .chars()
             .map(|c| {
                 if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
@@ -417,6 +426,12 @@ impl SiteManager {
     }
 
     pub async fn remove_site(&mut self, id: &str) -> Result<(), SiteError> {
+        if let Some(site) = self.store.sites.get(id) {
+            if let Err(e) = self.cleanup_opencode_project(&site.project_dir) {
+                tracing::warn!("Failed to cleanup OpenCode project: {}", e);
+            }
+        }
+        
         self.store.sites.remove(id);
         
         if self.store.active_site_id.as_deref() == Some(id) {
@@ -524,6 +539,57 @@ impl SiteManager {
         
         tracing::info!("Refreshed config for site {}, new hash: {}", site_id, hash_response.hash);
         Ok(hash_response.hash)
+    }
+
+    pub fn generate_opencode_project_id(project_dir: &PathBuf) -> String {
+        let path_str = project_dir.to_string_lossy();
+        let mut hasher = Sha256::new();
+        hasher.update(path_str.as_bytes());
+        let result = hasher.finalize();
+        hex::encode(&result[..20])
+    }
+
+    pub fn ensure_opencode_project(project_dir: &PathBuf) -> Result<String, SiteError> {
+        let project_id = Self::generate_opencode_project_id(project_dir);
+        let git_dir = project_dir.join(".git");
+        let opencode_file = git_dir.join("opencode");
+
+        std::fs::create_dir_all(&git_dir)?;
+        std::fs::write(&opencode_file, &project_id)?;
+
+        tracing::info!("Created OpenCode project {} at {:?}", project_id, project_dir);
+        Ok(project_id)
+    }
+
+    pub fn cleanup_opencode_project(&self, project_dir: &PathBuf) -> Result<(), SiteError> {
+        let project_id = Self::generate_opencode_project_id(project_dir);
+        
+        let git_dir = project_dir.join(".git");
+        if git_dir.exists() {
+            std::fs::remove_dir_all(&git_dir)?;
+            tracing::info!("Removed .git directory from {:?}", project_dir);
+        }
+
+        let opencode_storage = dirs::data_local_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("wordforge")
+            .join("opencode-state")
+            .join("data")
+            .join("storage");
+
+        let project_file = opencode_storage.join("project").join(format!("{}.json", project_id));
+        if project_file.exists() {
+            std::fs::remove_file(&project_file)?;
+            tracing::info!("Removed OpenCode project file: {:?}", project_file);
+        }
+
+        let session_dir = opencode_storage.join("session").join(&project_id);
+        if session_dir.exists() {
+            std::fs::remove_dir_all(&session_dir)?;
+            tracing::info!("Removed OpenCode sessions for project: {}", project_id);
+        }
+
+        Ok(())
     }
 
 }
