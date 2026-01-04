@@ -6,8 +6,8 @@ import {
   Plus,
   Settings as SettingsIcon,
   ShoppingCart,
-  Sparkles,
 } from 'lucide-react';
+import logoWordforge from '../../assets/logo-wordforge.webp';
 import { type ReactNode, useState } from 'react';
 import {
   Dropdown,
@@ -49,7 +49,7 @@ export function Sidebar({
     <div className={styles.sidebar}>
       <div className={styles.header}>
         <div className={styles.logo}>
-          <Sparkles size={20} />
+          <img src={logoWordforge} alt="WordForge" width={20} height={20} />
           <span>WordForge</span>
         </div>
       </div>

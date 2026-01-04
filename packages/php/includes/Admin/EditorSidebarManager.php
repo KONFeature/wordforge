@@ -63,6 +63,7 @@ class EditorSidebarManager {
 			'nonce'              => wp_create_nonce( 'wp_rest' ),
 			'localServerPort'    => $local_settings['port'],
 			'localServerEnabled' => $local_settings['enabled'],
+			'logoUrl'            => plugins_url( 'assets/images/logo-wordforge.webp', WORDFORGE_PLUGIN_FILE ),
 		);
 
 		wp_add_inline_script(

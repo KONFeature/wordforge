@@ -33,9 +33,24 @@ sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/mcp/packag
 echo "  - packages/mcp/src/index.ts"
 sed -i '' "s/version: \".*\",/version: \"$VERSION\",/" packages/mcp/src/index.ts
 
+# Desktop app package.json
+echo "  - packages/desktop/package.json"
+sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/desktop/package.json
+
+# Desktop Tauri config
+echo "  - packages/desktop/src-tauri/tauri.conf.json"
+sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/desktop/src-tauri/tauri.conf.json
+
+# Desktop Cargo.toml
+echo "  - packages/desktop/src-tauri/Cargo.toml"
+sed -i '' "s/^version = \".*\"/version = \"$VERSION\"/" packages/desktop/src-tauri/Cargo.toml
+
 echo ""
 echo "Done! Updated version to $VERSION in:"
 echo "  - packages/php/wordforge.php (plugin header + WORDFORGE_VERSION)"
 echo "  - packages/mcp/manifest.json"
 echo "  - packages/mcp/package.json"
 echo "  - packages/mcp/src/index.ts"
+echo "  - packages/desktop/package.json"
+echo "  - packages/desktop/src-tauri/tauri.conf.json"
+echo "  - packages/desktop/src-tauri/Cargo.toml"

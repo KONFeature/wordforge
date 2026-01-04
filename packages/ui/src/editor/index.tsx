@@ -8,21 +8,28 @@ import { EditorSidebar } from './components/EditorSidebar';
 import { useEditorContext } from './hooks/useEditorContext';
 
 const SIDEBAR_NAME = 'wordforge-ai';
-const SIDEBAR_ICON = 'superhero-alt';
+
+const WordForgeLogo = () => {
+  const logoUrl = window.wordforgeEditor?.logoUrl;
+  if (!logoUrl) {
+    return null;
+  }
+  return <img src={logoUrl} alt="WordForge" width={20} height={20} />;
+};
 
 const WordForgeSidebarPlugin = () => {
   const { context } = useEditorContext();
 
   return (
     <>
-      <PluginSidebarMoreMenuItem target={SIDEBAR_NAME} icon={SIDEBAR_ICON}>
+      <PluginSidebarMoreMenuItem target={SIDEBAR_NAME} icon={<WordForgeLogo />}>
         {__('WordForge AI', 'wordforge')}
       </PluginSidebarMoreMenuItem>
 
       <PluginSidebar
         name={SIDEBAR_NAME}
         title={__('WordForge AI', 'wordforge')}
-        icon={SIDEBAR_ICON}
+        icon={<WordForgeLogo />}
       >
         <QueryProvider>
           <ClientProvider>
@@ -42,5 +49,5 @@ registerPlugin('wordforge', {
       </ClientProvider>
     </QueryProvider>
   ),
-  icon: SIDEBAR_ICON,
+  icon: <WordForgeLogo />,
 });

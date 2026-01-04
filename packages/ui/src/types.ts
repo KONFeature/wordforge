@@ -54,6 +54,7 @@ export interface WordForgeEditorConfig {
   nonce: string;
   localServerPort?: number;
   localServerEnabled?: boolean;
+  logoUrl?: string;
 }
 
 export interface WordForgeWidgetConfig {

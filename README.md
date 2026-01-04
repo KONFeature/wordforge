@@ -25,6 +25,7 @@ WordForge consists of three packages:
 
 | Package | Description |
 |---------|-------------|
+| **WordForge Desktop** | **(Recommended)** Desktop app to manage sites, run the MCP server, and view rapid stats (Jetpack/WooCommerce). |
 | **WordPress Plugin** | Exposes WordPress abilities (content, media, blocks, styles, WooCommerce) via the MCP protocol |
 | **MCP Server** | Node.js server for Claude Desktop and other MCP clients |
 | **Admin UI** | React-based chat interface built into WordPress admin |
@@ -38,15 +39,26 @@ WordForge consists of three packages:
 - **Theme Styling** — Update global styles (theme.json) for colors, typography, spacing
 - **Taxonomy** — Manage categories, tags, and custom taxonomies
 - **WooCommerce** — Full product CRUD (auto-detected when WooCommerce is active)
+- **Analytics (Jetpack)** — Retrieve traffic stats, insights, top posts, search terms, and more (requires Jetpack)
 - **AI Prompts** — Built-in prompt templates for content generation and SEO optimization
 
 ---
 
 ## How to Use WordForge
 
-There are two ways to interact with WordForge:
+There are three ways to interact with WordForge:
 
-### Option A: WordPress Admin Interface
+### Option A: WordForge Desktop (Recommended)
+
+The **WordForge Desktop App** is the fastest way to get started. It bundles the OpenCode MCP server and provides a unified dashboard for all your WordPress sites.
+
+**Why use the Desktop App?**
+- **Easy Setup**: Embeds OpenCode locally—no complex server configuration or terminal commands required.
+- **Rapid Stats**: Get an "at a glance" view of your site's performance (Jetpack stats, WooCommerce sales) without logging into the WordPress admin.
+- **Connection Helper**: Provides easy tools to connect your WordPress sites via deep links.
+- **Bridge**: Acts as a bridge for the WordPress Admin chat interface (perfect for local environments or shared hosting where running a server process is difficult).
+
+### Option B: WordPress Admin Interface
 
 Use the built-in chat interface directly in your WordPress admin. WordForge can download and run [OpenCode](https://github.com/sst/opencode) on your server, providing three integration points:
 
@@ -159,7 +171,7 @@ Configure AI providers in **WordForge → Settings → Providers**:
 
 ---
 
-### Option B: MCP Client (Claude Desktop, OpenCode, etc.)
+### Option C: MCP Client (Claude Desktop, OpenCode, etc.)
 
 Use WordForge from your local machine with any MCP-compatible AI client. The AI connects to your WordPress site remotely and can manage content through natural language.
 
@@ -175,7 +187,7 @@ Use WordForge from your local machine with any MCP-compatible AI client. The AI 
 
 ## Installation
 
-### WordPress Plugin
+### 1. WordPress Plugin (Required)
 
 1. Download `wordforge.zip` from the [latest release](https://github.com/KONFeature/wordforge/releases)
 2. In WordPress admin, go to **Plugins → Add New → Upload Plugin**
@@ -186,9 +198,15 @@ Use WordForge from your local machine with any MCP-compatible AI client. The AI 
 - PHP 8.0+
 - WordPress 6.8+
 
-### MCP Tool (for Claude Desktop, OpenCode, etc.)
+### 2. Desktop App (Recommended)
 
-If you want to use WordForge from an external MCP client, you'll need to set up the MCP server.
+1. Download the installer for your OS from the [latest release](https://github.com/KONFeature/wordforge/releases).
+2. Install and launch the application.
+3. Use the "Connect Site" button to easily link your WordPress installation.
+
+### 3. MCP Tool (Optional - for Manual Setup)
+
+If you prefer to use WordForge from an external MCP client manually (without the Desktop App):
 
 #### Claude Desktop
 
@@ -358,6 +376,14 @@ Visit **WordForge → Settings** in WordPress admin to:
 | `wordforge/get-product` | Get product details |
 | `wordforge/save-product` | Create or update a product |
 | `wordforge/delete-product` | Delete a product |
+
+### Analytics (Jetpack)
+
+*Only available when Jetpack is active and connected.*
+
+| Tool | Description |
+|------|-------------|
+| `wordforge/get-jetpack-stats` | Retrieve site stats, insights, top posts, search terms, and more |
 
 ### AI Prompts
 

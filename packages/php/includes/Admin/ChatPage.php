@@ -21,7 +21,7 @@ class ChatPage {
 		?>
 		<div class="wrap wordforge-wrap wordforge-chat-wrap">
 			<h1>
-				<span class="wordforge-logo">⚒️</span>
+				<img class="wordforge-logo" src="<?php echo \esc_url( \plugins_url( 'assets/images/logo-wordforge.webp', WORDFORGE_PLUGIN_FILE ) ); ?>" alt="WordForge" width="24" height="24" />
 				<?php \esc_html_e( 'OpenCode Chat', 'wordforge' ); ?>
 			</h1>
 
