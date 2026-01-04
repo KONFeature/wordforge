@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { ExternalLink } from 'lucide-react';
 import { useEffect } from 'react';
 import { Card } from '../components/ui';
 import { useSidebarNavItems } from '../context/SidebarContext';
@@ -41,7 +43,7 @@ function SettingsRoute() {
             {AVAILABLE_PLUGINS.map((plugin) => {
               const enabled = isPluginEnabled(plugin.packageName);
               return (
-                <Card key={plugin.id} className={styles.pluginCard}>
+                <Card key={plugin.packageName} className={styles.pluginCard}>
                   <div className={styles.pluginInfo}>
                     <div className={styles.pluginHeader}>
                       <span className={styles.pluginName}>{plugin.name}</span>
@@ -60,7 +62,19 @@ function SettingsRoute() {
                     <p className={styles.pluginDescription}>
                       {plugin.description}
                     </p>
-                    <span className={styles.pluginModels}>{plugin.models}</span>
+                    <div className={styles.pluginFooter}>
+                      <span className={styles.pluginModels}>
+                        {plugin.models}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.githubLink}
+                        onClick={() => openUrl(plugin.github)}
+                      >
+                        <ExternalLink size={12} />
+                        <span>GitHub</span>
+                      </button>
+                    </div>
                   </div>
                 </Card>
               );

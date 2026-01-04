@@ -197,6 +197,7 @@ export interface OpenCodePlugin {
   description: string;
   models: string;
   packageName: string;
+  github: string;
   /** Provider configuration to add when this plugin is enabled */
   providerConfig?: {
     [key: string]: ProviderConfig;
