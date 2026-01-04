@@ -4,7 +4,7 @@ import {
   ChevronDown,
   Home,
   Plus,
-  Settings,
+  Settings as SettingsIcon,
   ShoppingCart,
   Sparkles,
 } from 'lucide-react';
@@ -154,6 +154,16 @@ export function Sidebar({
       )}
 
       {children && <div className={styles.content}>{children}</div>}
+
+      <div className={styles.footer}>
+        <Link
+          to="/settings"
+          className={`${styles.footerLink} ${location.pathname === '/settings' ? styles.footerLinkActive : ''}`}
+        >
+          <SettingsIcon size={18} />
+          <span>Settings</span>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -181,7 +191,7 @@ export function createSiteNavItems(siteId: string): NavItem[] {
     {
       to: '/site/$siteId/system',
       label: 'System',
-      icon: <Settings size={18} />,
+      icon: <SettingsIcon size={18} />,
       params: { siteId },
     },
   ];

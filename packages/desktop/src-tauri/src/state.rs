@@ -1,4 +1,5 @@
-use crate::opencode::{OpenCodeManager, Status};
+use crate::opencode::{GlobalConfig, OpenCodeManager, Status};
+use serde_json::Value;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
@@ -47,5 +48,13 @@ impl AppState {
 
     pub async fn check_update_available(&self) -> Result<bool, crate::opencode::Error> {
         self.opencode.check_update_available().await
+    }
+
+    pub async fn get_global_config(&self) -> GlobalConfig {
+        self.opencode.get_global_config().await
+    }
+
+    pub async fn set_global_config(&self, config: Value) -> Result<(), crate::opencode::Error> {
+        self.opencode.set_global_config(config).await
     }
 }

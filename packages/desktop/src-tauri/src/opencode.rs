@@ -1,6 +1,7 @@
 use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::path::PathBuf;
 use std::process::Stdio;
 use tauri::{AppHandle, Emitter};
@@ -37,6 +38,8 @@ pub enum Error {
     #[error("Download failed: {0}")]
     DownloadFailed(String),
 }
+
+pub type GlobalConfig = Value;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -215,14 +218,15 @@ impl OpenCodeManager {
         cmd.env("OPENCODE_FAKE_VCS", "git");
         
         let state_dir = self.isolated_state_dir();
+        let global_config_dir = self.install_dir.join("config");
         cmd.env("XDG_DATA_HOME", state_dir.join("data").to_string_lossy().to_string());
         cmd.env("XDG_CONFIG_HOME", state_dir.join("config").to_string_lossy().to_string());
         cmd.env("XDG_STATE_HOME", state_dir.join("state").to_string_lossy().to_string());
         cmd.env("XDG_CACHE_HOME", state_dir.join("cache").to_string_lossy().to_string());
+        cmd.env("OPENCODE_CONFIG_DIR", global_config_dir.to_string_lossy().to_string());
         
         if let Some(ref dir) = project_dir {
             cmd.current_dir(dir);
-            cmd.env("OPENCODE_CONFIG_DIR", dir.to_string_lossy().to_string());
         }
         
         cmd.stdout(Stdio::piped())
@@ -451,6 +455,46 @@ impl OpenCodeManager {
             "percent": percent
         }))
         .ok();
+    }
+
+    fn global_config_path(&self) -> PathBuf {
+        self.install_dir
+            .join("config")
+            .join("opencode.json")
+    }
+
+    pub async fn get_global_config(&self) -> GlobalConfig {
+        let config_path = self.global_config_path();
+        
+        let content = match tokio::fs::read_to_string(&config_path).await {
+            Ok(content) => content,
+            Err(_) => return serde_json::json!({}),
+        };
+
+        match serde_json::from_str(&content) {
+            Ok(json) => json,
+            Err(_) => serde_json::json!({}),
+        }
+    }
+
+    pub async fn set_global_config(&self, config: Value) -> Result<(), Error> {
+        let config_path = self.global_config_path();
+        
+        if let Some(parent) = config_path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
+        let mut json = config;
+        
+        if !json.get("$schema").is_some() {
+            json["$schema"] = Value::String("https://opencode.ai/config.json".to_string());
+        }
+
+        let content = serde_json::to_string_pretty(&json)?;
+        tokio::fs::write(&config_path, content).await?;
+
+        info!("Updated global OpenCode config at {:?}", config_path);
+        Ok(())
     }
 }
 

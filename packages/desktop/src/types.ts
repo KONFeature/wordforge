@@ -1,3 +1,5 @@
+import type { ProviderConfig } from '@opencode-ai/sdk/v2/client';
+
 export interface WordPressSite {
   id: string;
   name: string;
@@ -187,4 +189,16 @@ export interface SiteStats {
 export interface SiteStatsProps {
   stats: SiteStats | null | undefined;
   isLoading: boolean;
+}
+
+export interface OpenCodePlugin {
+  id: string;
+  name: string;
+  description: string;
+  models: string;
+  packageName: string;
+  /** Provider configuration to add when this plugin is enabled */
+  providerConfig?: {
+    [key: string]: ProviderConfig;
+  };
 }

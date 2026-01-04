@@ -3,6 +3,7 @@ mod opencode;
 mod sites;
 mod state;
 
+use opencode::GlobalConfig;
 use sites::{ConfigSyncStatus, SiteManager, WordPressSite};
 use state::AppState;
 use std::collections::HashSet;
@@ -143,6 +144,23 @@ async fn check_update_available(
 ) -> Result<bool, String> {
     let state = state.lock().await;
     state.check_update_available().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_global_config(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+) -> Result<GlobalConfig, String> {
+    let state = state.lock().await;
+    Ok(state.get_global_config().await)
+}
+
+#[tauri::command]
+async fn set_global_config(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+    config: serde_json::Value,
+) -> Result<(), String> {
+    let state = state.lock().await;
+    state.set_global_config(config).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -446,6 +464,8 @@ pub fn run() {
             get_opencode_port,
             open_opencode_view,
             check_update_available,
+            get_global_config,
+            set_global_config,
             is_mcp_sidecar_available,
             copy_mcp_to_project,
             list_sites,

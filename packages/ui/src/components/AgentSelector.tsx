@@ -46,8 +46,7 @@ export const AgentSelector = ({
   const filteredAgents = useMemo(() => {
     if (!Array.isArray(agents)) return [];
     return agents.filter(
-      // @ts-ignore Some version of opencode does include a `hidden` field, not always present though
-      (agent) => !(agent.hidden ?? false) && agent.mode !== 'subagent',
+      (agent) => !agent.hidden && agent.mode !== 'subagent',
     );
   }, [agents]);
 

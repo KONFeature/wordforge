@@ -55,3 +55,4 @@ export {
   type NavItem,
 } from './Sidebar';
 export { AppStatusBar, type AppStatusBarProps } from './AppStatusBar';
+export { RestartBanner } from './RestartBanner';

@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useState } from 'react';
+import { useRestartRequired } from '../context/RestartContext';
 import type { ConfigSyncStatus } from '../types';
+import { useOpenCodeStatus } from './useOpenCode';
 
 const CONFIG_CHECK_INTERVAL = 5 * 60 * 1000;
 
@@ -16,13 +18,10 @@ async function checkConfigUpdate(siteId?: string): Promise<ConfigSyncStatus> {
   return invoke<ConfigSyncStatus>('check_config_update', { siteId });
 }
 
-async function refreshConfig(
-  siteId?: string,
-  restartOpencode = true,
-): Promise<string> {
+async function refreshConfig(siteId?: string): Promise<string> {
   return invoke<string>('refresh_site_config', {
     siteId,
-    restartOpencode,
+    restartOpencode: false,
   });
 }
 
@@ -39,7 +38,7 @@ export interface UseConfigSyncReturn {
   updateAvailable: boolean;
   error: string | null;
   checkNow: () => Promise<void>;
-  applyUpdate: (restartOpencode?: boolean) => Promise<string>;
+  applyUpdate: () => Promise<string>;
   lastChecked: Date | null;
 }
 
@@ -54,6 +53,10 @@ export function useConfigSync(
 
   const queryClient = useQueryClient();
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const { status: openCodeStatus } = useOpenCodeStatus();
+  const { setRestartRequired } = useRestartRequired();
+
+  const isRunning = openCodeStatus === 'running';
 
   const statusQuery = useQuery({
     queryKey: configSyncKeys.status(siteId),
@@ -66,14 +69,15 @@ export function useConfigSync(
   });
 
   const refreshMutation = useMutation({
-    mutationFn: async ({
-      restartOpencode = true,
-    }: { restartOpencode?: boolean } = {}) => {
+    mutationFn: async () => {
       setMutationError(null);
-      return refreshConfig(siteId, restartOpencode);
+      return refreshConfig(siteId);
     },
-    onSuccess: (_data, _var, _res, { client: queryClient }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: configSyncKeys.all });
+      if (isRunning) {
+        setRestartRequired(true, 'Site configuration updated');
+      }
     },
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
@@ -90,12 +94,9 @@ export function useConfigSync(
     };
   }, [queryClient]);
 
-  const applyUpdate = useCallback(
-    async (restartOpencode = true) => {
-      return refreshMutation.mutateAsync({ restartOpencode });
-    },
-    [refreshMutation],
-  );
+  const applyUpdate = useCallback(async () => {
+    return refreshMutation.mutateAsync();
+  }, [refreshMutation]);
 
   const status = statusQuery.data ?? null;
   const lastChecked = status?.last_checked

@@ -1,5 +1,11 @@
 import { Outlet, createRootRoute, useNavigate } from '@tanstack/react-router';
-import { AppStatusBar, Sidebar, SidebarLayout } from '../components/ui';
+import {
+  AppStatusBar,
+  RestartBanner,
+  Sidebar,
+  SidebarLayout,
+} from '../components/ui';
+import { RestartProvider } from '../context/RestartContext';
 import { SidebarProvider, useSidebarNavItems } from '../context/SidebarContext';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { useOpenCodeStatus } from '../hooks/useOpenCode';
@@ -16,9 +22,11 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   return (
-    <SidebarProvider>
-      <RootLayoutInner />
-    </SidebarProvider>
+    <RestartProvider>
+      <SidebarProvider>
+        <RootLayoutInner />
+      </SidebarProvider>
+    </RestartProvider>
   );
 }
 
@@ -72,6 +80,7 @@ function RootLayoutInner() {
 
   return (
     <SidebarLayout sidebar={sidebar} statusBar={statusBar}>
+      <RestartBanner />
       <Outlet />
     </SidebarLayout>
   );

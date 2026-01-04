@@ -31,11 +31,11 @@ function SiteHomePage() {
   const sessions = useSessions();
 
   const handleConfigUpdate = async () => {
-    await configSync.applyUpdate(true);
+    await configSync.applyUpdate();
   };
 
   const handleForceRefresh = async () => {
-    await configSync.applyUpdate(true);
+    await configSync.applyUpdate();
   };
 
   const handleRemove = async () => {

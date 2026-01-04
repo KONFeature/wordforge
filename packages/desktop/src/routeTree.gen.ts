@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SiteSiteIdRouteImport } from './routes/site/$siteId'
@@ -17,6 +18,11 @@ import { Route as SiteSiteIdWoocommerceRouteImport } from './routes/site/$siteId
 import { Route as SiteSiteIdSystemRouteImport } from './routes/site/$siteId/system'
 import { Route as SiteSiteIdAnalyticsRouteImport } from './routes/site/$siteId/analytics'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -56,6 +62,7 @@ const SiteSiteIdAnalyticsRoute = SiteSiteIdAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/settings': typeof SettingsRoute
   '/site/$siteId': typeof SiteSiteIdRouteWithChildren
   '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
   '/site/$siteId/system': typeof SiteSiteIdSystemRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/settings': typeof SettingsRoute
   '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
   '/site/$siteId/system': typeof SiteSiteIdSystemRoute
   '/site/$siteId/woocommerce': typeof SiteSiteIdWoocommerceRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/settings': typeof SettingsRoute
   '/site/$siteId': typeof SiteSiteIdRouteWithChildren
   '/site/$siteId/analytics': typeof SiteSiteIdAnalyticsRoute
   '/site/$siteId/system': typeof SiteSiteIdSystemRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/settings'
     | '/site/$siteId'
     | '/site/$siteId/analytics'
     | '/site/$siteId/system'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/settings'
     | '/site/$siteId/analytics'
     | '/site/$siteId/system'
     | '/site/$siteId/woocommerce'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/onboarding'
+    | '/settings'
     | '/site/$siteId'
     | '/site/$siteId/analytics'
     | '/site/$siteId/system'
@@ -112,11 +124,19 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
+  SettingsRoute: typeof SettingsRoute
   SiteSiteIdRoute: typeof SiteSiteIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -190,6 +210,7 @@ const SiteSiteIdRouteWithChildren = SiteSiteIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
+  SettingsRoute: SettingsRoute,
   SiteSiteIdRoute: SiteSiteIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
