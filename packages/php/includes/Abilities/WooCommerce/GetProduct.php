@@ -69,7 +69,6 @@ class GetProduct extends AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 
@@ -222,7 +221,7 @@ class GetProduct extends AbstractAbility {
 				continue;
 			}
 
-			$variations[] = array(
+			$variation_data = array(
 				'id'             => $variation->get_id(),
 				'sku'            => $variation->get_sku(),
 				'price'          => $variation->get_price(),
@@ -231,8 +230,14 @@ class GetProduct extends AbstractAbility {
 				'stock_status'   => $variation->get_stock_status(),
 				'stock_quantity' => $variation->get_stock_quantity(),
 				'attributes'     => $variation->get_variation_attributes(),
-				'image'          => $variation->get_image_id() ? wp_get_attachment_url( $variation->get_image_id() ) : null,
 			);
+
+			$image_id = $variation->get_image_id();
+			if ( $image_id ) {
+				$variation_data['image'] = wp_get_attachment_url( $image_id );
+			}
+
+			$variations[] = $variation_data;
 		}
 
 		return $variations;

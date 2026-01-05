@@ -60,7 +60,6 @@ class UpdateMedia extends AbstractAbility {
 				),
 				'message' => array( 'type' => 'string' ),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

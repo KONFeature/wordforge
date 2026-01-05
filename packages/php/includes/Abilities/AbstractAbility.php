@@ -66,7 +66,6 @@ abstract class AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success' ),
 		);
 	}
 
@@ -234,24 +233,30 @@ abstract class AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	protected function format_post( \WP_Post $post ): array {
-		return array(
-			'id'             => $post->ID,
-			'title'          => $post->post_title,
-			'slug'           => $post->post_name,
-			'status'         => $post->post_status,
-			'type'           => $post->post_type,
-			'content'        => $post->post_content,
-			'excerpt'        => $post->post_excerpt,
-			'author'         => (int) $post->post_author,
-			'date'           => $post->post_date,
-			'date_gmt'       => $post->post_date_gmt,
-			'modified'       => $post->post_modified,
-			'modified_gmt'   => $post->post_modified_gmt,
-			'parent'         => $post->post_parent,
-			'menu_order'     => $post->menu_order,
-			'featured_image' => get_post_thumbnail_id( $post->ID ) ?: null,
-			'permalink'      => get_permalink( $post->ID ),
+		$data = array(
+			'id'           => $post->ID,
+			'title'        => $post->post_title,
+			'slug'         => $post->post_name,
+			'status'       => $post->post_status,
+			'type'         => $post->post_type,
+			'content'      => $post->post_content,
+			'excerpt'      => $post->post_excerpt,
+			'author'       => (int) $post->post_author,
+			'date'         => $post->post_date,
+			'date_gmt'     => $post->post_date_gmt,
+			'modified'     => $post->post_modified,
+			'modified_gmt' => $post->post_modified_gmt,
+			'parent'       => $post->post_parent,
+			'menu_order'   => $post->menu_order,
+			'permalink'    => get_permalink( $post->ID ),
 		);
+
+		$featured_image = get_post_thumbnail_id( $post->ID );
+		if ( $featured_image ) {
+			$data['featured_image'] = $featured_image;
+		}
+
+		return $data;
 	}
 
 	/**

@@ -131,7 +131,7 @@ class ListProducts extends AbstractAbility {
 	}
 
 	protected function format_product( \WC_Product $product ): array {
-		return array(
+		$data = array(
 			'id'                => $product->get_id(),
 			'name'              => $product->get_name(),
 			'slug'              => $product->get_slug(),
@@ -148,9 +148,15 @@ class ListProducts extends AbstractAbility {
 			'short_description' => $product->get_short_description(),
 			'categories'        => $this->get_term_names( $product, 'product_cat' ),
 			'tags'              => $this->get_term_names( $product, 'product_tag' ),
-			'image'             => $product->get_image_id() ? wp_get_attachment_url( $product->get_image_id() ) : null,
 			'permalink'         => $product->get_permalink(),
 		);
+
+		$image_id = $product->get_image_id();
+		if ( $image_id ) {
+			$data['image'] = wp_get_attachment_url( $image_id );
+		}
+
+		return $data;
 	}
 
 	private function get_term_names( \WC_Product $product, string $taxonomy ): array {

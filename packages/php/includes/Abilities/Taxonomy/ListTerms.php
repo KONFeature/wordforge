@@ -55,10 +55,8 @@ class ListTerms extends AbstractAbility {
 						),
 						'total'    => array( 'type' => 'integer' ),
 					),
-					'required'   => array( 'taxonomy', 'items', 'total' ),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

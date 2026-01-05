@@ -70,10 +70,8 @@ class ListTemplates extends AbstractAbility {
 						),
 						'total' => array( 'type' => 'integer' ),
 					),
-					'required'   => array( 'type', 'items', 'total' ),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

@@ -100,12 +100,10 @@ trait PaginationSchemaTrait {
                         'total'       => array( 'type' => 'integer', 'description' => 'Total count.' ),
                         'total_pages' => array( 'type' => 'integer', 'description' => 'Total pages.' ),
                         'page'        => array( 'type' => 'integer', 'description' => 'Current page.' ),
-                        'per_page'    => array( 'type' => 'integer', 'description' => 'Limit.' ),
-                    ),
-                    'required'   => array( 'items', 'total', 'total_pages', 'page', 'per_page' ),
-                ),
-            ),
-            'required'   => array( 'success', 'data' ),
+					'per_page'    => array( 'type' => 'integer', 'description' => 'Limit.' ),
+					),
+				),
+			),
 		);
 	}
 

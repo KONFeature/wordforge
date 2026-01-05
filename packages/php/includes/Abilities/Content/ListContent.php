@@ -187,19 +187,25 @@ class ListContent extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_post_summary( \WP_Post $post ): array {
-		return array(
-			'id'             => $post->ID,
-			'title'          => $post->post_title,
-			'slug'           => $post->post_name,
-			'status'         => $post->post_status,
-			'type'           => $post->post_type,
-			'excerpt'        => $post->post_excerpt,
-			'author'         => (int) $post->post_author,
-			'date'           => $post->post_date,
-			'modified'       => $post->post_modified,
-			'permalink'      => get_permalink( $post->ID ),
-			'featured_image' => get_post_thumbnail_id( $post->ID ) ?: null,
+		$data = array(
+			'id'        => $post->ID,
+			'title'     => $post->post_title,
+			'slug'      => $post->post_name,
+			'status'    => $post->post_status,
+			'type'      => $post->post_type,
+			'excerpt'   => $post->post_excerpt,
+			'author'    => (int) $post->post_author,
+			'date'      => $post->post_date,
+			'modified'  => $post->post_modified,
+			'permalink' => get_permalink( $post->ID ),
 		);
+
+		$featured_image = get_post_thumbnail_id( $post->ID );
+		if ( $featured_image ) {
+			$data['featured_image'] = $featured_image;
+		}
+
+		return $data;
 	}
 
 	private function get_content_item_schema(): array {

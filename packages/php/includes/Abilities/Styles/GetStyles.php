@@ -54,7 +54,6 @@ class GetStyles extends AbstractAbility {
 					'additionalProperties' => true,
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

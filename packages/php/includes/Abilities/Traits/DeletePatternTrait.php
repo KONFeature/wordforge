@@ -107,7 +107,6 @@ trait DeletePatternTrait {
 				),
 				'message' => array( 'type' => 'string' ),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

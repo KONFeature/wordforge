@@ -52,7 +52,6 @@ class SaveProduct extends AbstractAbility {
 				),
 				'message' => array( 'type' => 'string' ),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

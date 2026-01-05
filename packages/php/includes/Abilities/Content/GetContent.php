@@ -78,7 +78,6 @@ class GetContent extends AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

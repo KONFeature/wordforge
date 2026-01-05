@@ -54,7 +54,6 @@ class GetTemplate extends AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 

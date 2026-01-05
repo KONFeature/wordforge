@@ -144,7 +144,6 @@ trait UpsertPatternTrait {
 				),
 				'message' => array( 'type' => 'string' ),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 }

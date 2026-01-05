@@ -76,7 +76,6 @@ class GetMedia extends AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 
@@ -129,28 +128,35 @@ class GetMedia extends AbstractAbility {
 			}
 		}
 
-		return $this->success(
-			array(
-				'id'          => $attachment_id,
-				'title'       => $attachment->post_title,
-				'filename'    => basename( $file_path ),
-				'url'         => wp_get_attachment_url( $attachment_id ),
-				'alt'         => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-				'caption'     => $attachment->post_excerpt,
-				'description' => $attachment->post_content,
-				'mime_type'   => $attachment->post_mime_type,
-				'date'        => $attachment->post_date,
-				'modified'    => $attachment->post_modified,
-				'author'      => (int) $attachment->post_author,
-				'parent'      => $attachment->post_parent,
-				'width'       => $metadata['width'] ?? null,
-				'height'      => $metadata['height'] ?? null,
-				'filesize'    => file_exists( $file_path ) ? filesize( $file_path ) : null,
-				'sizes'       => $sizes,
-				'metadata'    => array(
-					'image_meta' => $metadata['image_meta'] ?? array(),
-				),
-			)
+		$data = array(
+			'id'          => $attachment_id,
+			'title'       => $attachment->post_title,
+			'filename'    => basename( $file_path ),
+			'url'         => wp_get_attachment_url( $attachment_id ),
+			'alt'         => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'caption'     => $attachment->post_excerpt,
+			'description' => $attachment->post_content,
+			'mime_type'   => $attachment->post_mime_type,
+			'date'        => $attachment->post_date,
+			'modified'    => $attachment->post_modified,
+			'author'      => (int) $attachment->post_author,
+			'parent'      => $attachment->post_parent,
+			'sizes'       => $sizes,
+			'metadata'    => array(
+				'image_meta' => $metadata['image_meta'] ?? array(),
+			),
 		);
+
+		if ( isset( $metadata['width'] ) ) {
+			$data['width'] = $metadata['width'];
+		}
+		if ( isset( $metadata['height'] ) ) {
+			$data['height'] = $metadata['height'];
+		}
+		if ( file_exists( $file_path ) ) {
+			$data['filesize'] = filesize( $file_path );
+		}
+
+		return $this->success( $data );
 	}
 }

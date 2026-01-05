@@ -43,7 +43,6 @@ class GetPageBlocks extends AbstractAbility {
 					),
 				),
 			),
-			'required'   => array( 'success', 'data' ),
 		);
 	}
 
