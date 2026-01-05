@@ -6,14 +6,13 @@ namespace WordForge\OpenCode;
 
 class LocalServerConfig {
 
-	public const RUNTIME_NODE    = 'node';
-	public const RUNTIME_BUN     = 'bun';
-	public const RUNTIME_NONE    = 'none';
-	public const RUNTIME_DESKTOP = 'desktop';
+	public const RUNTIME_NODE = 'node';
+	public const RUNTIME_BUN  = 'bun';
+	public const RUNTIME_NONE = 'none';
 
 	private const TEMPLATES_DIR = __DIR__ . '/templates';
 
-	public static function generate( string $runtime = self::RUNTIME_NODE, ?string $mcp_command = null ): array {
+	public static function generate( string $runtime = self::RUNTIME_NODE ): array {
 		$config = array(
 			'$schema'       => 'https://opencode.ai/config.json',
 			'default_agent' => 'wordpress-manager',
@@ -33,7 +32,7 @@ class LocalServerConfig {
 			$config['provider'] = $provider_config;
 		}
 
-		$mcp_config = self::get_mcp_config( $runtime, $mcp_command );
+		$mcp_config = self::get_mcp_config( $runtime );
 		if ( $mcp_config ) {
 			$config['mcp'] = array(
 				'wordforge' => $mcp_config,
@@ -142,7 +141,7 @@ class LocalServerConfig {
 		return self::render_site_context( $context, $is_local );
 	}
 
-	private static function get_mcp_config( string $runtime, ?string $mcp_command = null ): ?array {
+	private static function get_mcp_config( string $runtime ): ?array {
 		$app_password_data = AppPasswordManager::get_or_create();
 		if ( ! $app_password_data ) {
 			return null;
@@ -160,18 +159,6 @@ class LocalServerConfig {
 		}
 
 		$abilities_url = \rest_url( 'wp-abilities/v1' );
-
-		if ( self::RUNTIME_DESKTOP === $runtime && $mcp_command ) {
-			return array(
-				'type'        => 'local',
-				'command'     => array( $mcp_command ),
-				'environment' => array(
-					'WORDPRESS_URL'          => $abilities_url,
-					'WORDPRESS_USERNAME'     => $app_password_data['username'],
-					'WORDPRESS_APP_PASSWORD' => $app_password_data['password'],
-				),
-			);
-		}
 
 		return array(
 			'type'        => 'local',

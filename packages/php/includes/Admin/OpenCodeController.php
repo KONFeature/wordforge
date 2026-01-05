@@ -810,14 +810,12 @@ class OpenCodeController {
 			LocalServerConfig::RUNTIME_NODE,
 			LocalServerConfig::RUNTIME_BUN,
 			LocalServerConfig::RUNTIME_NONE,
-			LocalServerConfig::RUNTIME_DESKTOP,
 		);
 		if ( ! in_array( $runtime, $valid_runtimes, true ) ) {
 			$runtime = LocalServerConfig::RUNTIME_NODE;
 		}
 
-		$mcp_command = $request->get_param( 'mcp_command' );
-		$config      = LocalServerConfig::generate( $runtime, $mcp_command );
+		$config = LocalServerConfig::generate( $runtime );
 		$site_name   = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
@@ -867,11 +865,7 @@ class OpenCodeController {
 			}
 		}
 
-		$needs_mcp_binary = ! in_array(
-			$runtime,
-			array( LocalServerConfig::RUNTIME_NONE, LocalServerConfig::RUNTIME_DESKTOP ),
-			true
-		);
+		$needs_mcp_binary = LocalServerConfig::RUNTIME_NONE !== $runtime;
 		if ( $needs_mcp_binary ) {
 			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
 			if ( $mcp_binary_path ) {

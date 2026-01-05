@@ -1,4 +1,3 @@
-use crate::mcp::McpSidecar;
 use deunicode::deunicode;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -275,19 +274,12 @@ impl SiteManager {
         auth: &str,
         project_dir: &PathBuf,
     ) -> Result<(), SiteError> {
-        let config_url = if McpSidecar::is_available() {
-            let mcp_command = McpSidecar::get_command_for_config().join(" ");
-            format!(
-                "{}/wp-json/wordforge/v1/opencode/local-config?runtime=desktop&mcp_command={}",
-                base_url,
-                urlencoding::encode(&mcp_command)
-            )
-        } else {
-            format!(
-                "{}/wp-json/wordforge/v1/opencode/local-config?runtime=none",
-                base_url
-            )
-        };
+        // Use runtime=bun to get the MCP server as plain JavaScript
+        // OpenCode's bundled Bun runtime will execute it
+        let config_url = format!(
+            "{}/wp-json/wordforge/v1/opencode/local-config?runtime=bun",
+            base_url
+        );
         
         tracing::info!("Downloading config from: {}", config_url);
 
@@ -335,13 +327,6 @@ impl SiteManager {
         }
 
         tracing::info!("Extracted config to: {:?}", project_dir);
-        
-        if McpSidecar::is_available() {
-            match McpSidecar::copy_to_project_dir(project_dir) {
-                Ok(path) => tracing::info!("MCP sidecar copied to: {:?}", path),
-                Err(e) => tracing::warn!("Failed to copy MCP sidecar: {}", e),
-            }
-        }
         
         Ok(())
     }

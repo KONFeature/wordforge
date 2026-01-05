@@ -1,4 +1,3 @@
-mod mcp;
 mod opencode;
 mod sites;
 mod state;
@@ -161,19 +160,6 @@ async fn set_global_config(
 ) -> Result<(), String> {
     let state = state.lock().await;
     state.set_global_config(config).await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn is_mcp_sidecar_available() -> bool {
-    mcp::McpSidecar::is_available()
-}
-
-#[tauri::command]
-fn copy_mcp_to_project(project_dir: String) -> Result<String, String> {
-    let path = std::path::PathBuf::from(&project_dir);
-    mcp::McpSidecar::copy_to_project_dir(&path)
-        .map(|p| p.to_string_lossy().to_string())
-        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -467,8 +453,6 @@ pub fn run() {
             check_update_available,
             get_global_config,
             set_global_config,
-            is_mcp_sidecar_available,
-            copy_mcp_to_project,
             list_sites,
             get_active_site,
             set_active_site,
