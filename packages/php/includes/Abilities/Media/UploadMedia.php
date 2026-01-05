@@ -28,7 +28,8 @@ class UploadMedia extends AbstractAbility {
 		$max_upload_mb = wp_max_upload_size() / 1048576;
 		return __(
 			sprintf(
-				'Upload media (images, documents, videos, audio) by URL or base64. Auto-generates thumbnails and metadata. Max size: %.0fMB.',
+				'Upload media (images, documents, videos, audio) to the WordPress media library. Auto-generates thumbnails and metadata. Max size: %.0fMB. ' .
+				'STRICT: Provide EITHER "url" (publicly accessible URL to download from) OR "base64" (raw base64 data without data URI prefix). NEVER provide both.',
 				$max_upload_mb
 			),
 			'wordforge'

@@ -23,8 +23,8 @@ class GetPageBlocks extends AbstractAbility {
 	public function get_description(): string {
 		return __(
 			'Retrieve the Gutenberg block structure of a page or post. Returns blocks as structured data showing block names, attributes, ' .
-			'nesting, and content. Supports both "full" mode (complete block data including markup) and "simplified" mode (clean structure ' .
-			'without extra fields). Use this to analyze page layout, extract content from blocks, or understand block composition before making changes.',
+			'nesting, and content. Supports "full" mode (complete block data) and "simplified" mode (clean structure). ' .
+			'TIP: Call this BEFORE using wordforge/update-page-blocks to understand the current layout. Then modify only what you need and submit the complete structure back.',
 			'wordforge'
 		);
 	}

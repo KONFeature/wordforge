@@ -22,9 +22,9 @@ class GetTemplate extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a specific block template or template part with complete content and block structure. Can fetch by template ID or slug. Returns ' .
-			'block composition, metadata, and source (theme vs custom). Supports both "full" (complete block data) and "simplified" (clean structure) ' .
-			'parse modes. Use this to view template details before modifications or to extract template content. FSE-only.',
+			'Retrieve a specific block template or template part with complete content and block structure. Can fetch by template ID (as string) or slug. ' .
+			'Supports "full" (complete block data) and "simplified" (clean structure) parse modes. ' .
+			'TIP: Call this BEFORE using wordforge/update-template to understand the current layout. Then modify only what you need and submit the complete structure back. FSE-only.',
 			'wordforge'
 		);
 	}

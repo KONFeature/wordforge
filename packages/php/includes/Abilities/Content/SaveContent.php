@@ -18,9 +18,10 @@ class SaveContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Create or update WordPress content (posts, pages, custom post types). Omit "id" to create new; provide "id" to ' .
-			'update existing. Supports title, content (HTML/Gutenberg blocks), excerpt, status, featured image, categories, ' .
-			'tags, and custom meta fields. New content defaults to draft status.',
+			'Create or update WordPress content (posts, pages, custom post types). Omit "id" to create new; provide "id" to update existing. ' .
+			'IMPORTANT: Use this for simple Classic Editor posts, updating titles/excerpts/status, or basic HTML content. ' .
+			'DO NOT use this for complex Gutenberg layouts with multiple blocks - use wordforge/update-page-blocks instead to preserve block structure. ' .
+			'Passing raw HTML to "content" will overwrite any existing block layout. New content defaults to draft status.',
 			'wordforge'
 		);
 	}

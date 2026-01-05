@@ -23,108 +23,89 @@ trait PaginationSchemaTrait {
 	 * Get common pagination input schema properties.
 	 *
 	 * @param array<int|string, string> $orderby_options Available orderby values as simple or associative array.
-	 * @param int                       $max_per_page    Maximum items per page (default 100).
-	 * @param int                       $default_per_page Default items per page (default 20).
+	 * @param int                       $max_per_page    Maximum items per page (default 50).
+	 * @param int                       $default_per_page Default items per page (default 10).
 	 * @return array<string, array<string, mixed>>
 	 */
 	protected function get_pagination_input_schema(
-		array $orderby_options = array(),
-		int $max_per_page = 100,
-		int $default_per_page = 20
-	): array {
-		// Handle both simple arrays ['date', 'title'] and associative arrays ['date' => 'By date'].
-		// For simple arrays, use array_values to ensure sequential indices.
-		// For associative arrays, use array_keys to extract the keys as enum values.
-		if ( empty( $orderby_options ) ) {
-			$orderby_enum = array( 'date', 'title', 'modified', 'id' );
-		} elseif ( array_is_list( $orderby_options ) ) {
-			// Simple array like ['date', 'title'] - use values directly.
-			$orderby_enum = array_values( $orderby_options );
-		} else {
-			// Associative array like ['date' => 'Description'] - use keys.
-			$orderby_enum = array_keys( $orderby_options );
-		}
+        array $orderby_options = array(),
+        int $max_per_page = 50,
+        int $default_per_page = 10
+    ): array {
+        // Safe enum extraction (compatible with PHP 8.1+ array_is_list)
+        if ( empty( $orderby_options ) ) {
+            $orderby_enum = array( 'date', 'title', 'modified', 'id' );
+        } elseif ( function_exists( 'array_is_list' ) && array_is_list( $orderby_options ) ) {
+            $orderby_enum = array_values( $orderby_options );
+        } else {
+            $orderby_enum = array_keys( $orderby_options );
+        }
 
-		return array(
-			'per_page' => array(
-				'type'        => 'integer',
-				'description' => sprintf(
-					'Number of items to return per page. Use smaller values (10-20) for quick previews, larger values (50-%d) for comprehensive lists. Maximum %d items per request.',
-					$max_per_page,
-					$max_per_page
-				),
-				'default'     => $default_per_page,
-				'minimum'     => 1,
-				'maximum'     => $max_per_page,
-			),
-			'page'     => array(
-				'type'        => 'integer',
-				'description' => 'Page number for pagination (1-indexed). Use with "total_pages" in the response to navigate through large result sets.',
-				'default'     => 1,
-				'minimum'     => 1,
-			),
-			'orderby'  => array(
-				'type'        => 'string',
-				'description' => 'Sort results by field.',
-				'enum'        => $orderby_enum,
-				'default'     => $orderby_enum[0] ?? 'date',
-			),
-			'order'    => array(
-				'type'        => 'string',
-				'description' => 'Sort direction: "desc" (descending, newest/Z first), "asc" (ascending, oldest/A first).',
-				'enum'        => array( 'asc', 'desc' ),
-				'default'     => 'desc',
-			),
-		);
-	}
+        // Ensure all enum values are strings for Gemini compliance
+        $orderby_enum = array_map( 'strval', $orderby_enum );
 
-	/**
-	 * Get pagination output schema wrapper.
-	 *
-	 * @param array<string, mixed> $item_schema Schema for a single item in the list.
-	 * @param string               $items_description Description for the items array.
-	 * @return array<string, mixed>
-	 */
-	protected function get_pagination_output_schema(
-		array $item_schema,
-		string $items_description = 'Array of items matching the query filters.'
-	): array {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'success' => array(
-					'type'        => 'boolean',
-					'description' => 'Whether the query executed successfully.',
-				),
-				'data'    => array(
-					'type'       => 'object',
-					'properties' => array(
-						'items'       => array(
-							'type'        => 'array',
-							'description' => $items_description,
-							'items'       => $item_schema,
-						),
-						'total'       => array(
-							'type'        => 'integer',
-							'description' => 'Total number of items matching the query across all pages.',
-						),
-						'total_pages' => array(
-							'type'        => 'integer',
-							'description' => 'Total number of pages available. If greater than "page", more results are available.',
-						),
-						'page'        => array(
-							'type'        => 'integer',
-							'description' => 'Current page number (1-indexed).',
-						),
-						'per_page'    => array(
-							'type'        => 'integer',
-							'description' => 'Number of items per page.',
-						),
-					),
-					'required'   => array( 'items', 'total', 'total_pages', 'page', 'per_page' ),
-				),
-			),
-			'required'   => array( 'success', 'data' ),
+        return array(
+            'per_page' => array(
+                'type'        => 'integer',
+                // Optimized: Short & precise. 
+                'description' => "Limit items (1-$max_per_page). Default $default_per_page.",
+                'default'     => $default_per_page,
+                'minimum'     => 1,
+                'maximum'     => $max_per_page,
+            ),
+            'page'     => array(
+                'type'        => 'integer',
+                'description' => 'Page number.',
+                'default'     => 1,
+                'minimum'     => 1,
+            ),
+            'orderby'  => array(
+                'type'        => 'string',
+                'description' => 'Sort field.',
+                'enum'        => $orderby_enum,
+                'default'     => $orderby_enum[0] ?? 'date',
+            ),
+            'order'    => array(
+                'type'        => 'string',
+                'description' => 'Sort direction.',
+                'enum'        => array( 'asc', 'desc' ),
+                'default'     => 'desc',
+            ),
+        );
+    }
+
+    /**
+     * Get pagination output schema wrapper.
+     *
+     * @param array<string, mixed> $item_schema Schema for a single item in the list.
+     * @param string               $items_description Description for the items array.
+     * @return array<string, mixed>
+     */
+    protected function get_pagination_output_schema(
+        array $item_schema,
+        string $items_description = 'Result list.'
+    ): array {
+        return array(
+            'type'       => 'object',
+            'properties' => array(
+                'success' => array( 'type' => 'boolean' ),
+                'data'    => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'items'       => array(
+                            'type'        => 'array',
+                            'description' => $items_description,
+                            'items'       => $item_schema,
+                        ),
+                        'total'       => array( 'type' => 'integer', 'description' => 'Total count.' ),
+                        'total_pages' => array( 'type' => 'integer', 'description' => 'Total pages.' ),
+                        'page'        => array( 'type' => 'integer', 'description' => 'Current page.' ),
+                        'per_page'    => array( 'type' => 'integer', 'description' => 'Limit.' ),
+                    ),
+                    'required'   => array( 'items', 'total', 'total_pages', 'page', 'per_page' ),
+                ),
+            ),
+            'required'   => array( 'success', 'data' ),
 		);
 	}
 

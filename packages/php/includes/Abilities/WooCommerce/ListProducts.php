@@ -28,10 +28,9 @@ class ListProducts extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of WooCommerce products with powerful filtering options. Filter by product type (simple, variable, etc.), ' .
-			'publication status, category/tag, SKU, featured status, or sale status. Sort by date, title, price, popularity, or rating. ' .
-			'Supports pagination for large product catalogs. Use this to browse your store inventory, find specific products, or generate ' .
-			'product reports. Returns up to 100 products per page.',
+			'Search and browse WooCommerce products with filtering by type, status, category, tag, SKU, or sale status. ' .
+			'Returns summary data (ID, name, price, stock, short_description) to keep responses lightweight. ' .
+			'IMPORTANT: To get full product details including long description, use wordforge/get-product with the ID from this list.',
 			'wordforge'
 		);
 	}

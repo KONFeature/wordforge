@@ -32,10 +32,10 @@ class ListContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of WordPress content items (posts, pages, or custom post types) with powerful filtering, ' .
-			'searching, and sorting capabilities. Supports pagination for large result sets. Use this to browse content, ' .
-			'find specific items by search terms, filter by author/category/tag/status, or get recently modified content. ' .
-			'Returns up to 100 items per page with pagination metadata for navigating through larger collections.',
+			'Search and browse WordPress content (posts, pages, custom types) with filtering by author, category, tag, or status. ' .
+			'Returns ONLY metadata (ID, title, excerpt, status, date) to keep responses lightweight. ' .
+			'IMPORTANT: To read the full content body of a specific item, you MUST call wordforge/get-content with the ID from this list. ' .
+			'This two-step workflow (search → retrieve) ensures accurate results without overwhelming context.',
 			'wordforge'
 		);
 	}
@@ -149,7 +149,7 @@ class ListContent extends AbstractAbility {
 		$query = new \WP_Query( $query_args );
 
 		$items = array_map(
-			fn( \WP_Post $post ) => $this->format_post( $post ),
+			fn( \WP_Post $post ) => $this->format_post_summary( $post ),
 			$query->posts
 		);
 
@@ -180,13 +180,35 @@ class ListContent extends AbstractAbility {
 	/**
 	 * @return array<string, mixed>
 	 */
+	/**
+	 * Format a post for list responses (metadata only, no full content).
+	 *
+	 * @param \WP_Post $post The post object.
+	 * @return array<string, mixed>
+	 */
+	private function format_post_summary( \WP_Post $post ): array {
+		return array(
+			'id'             => $post->ID,
+			'title'          => $post->post_title,
+			'slug'           => $post->post_name,
+			'status'         => $post->post_status,
+			'type'           => $post->post_type,
+			'excerpt'        => $post->post_excerpt,
+			'author'         => (int) $post->post_author,
+			'date'           => $post->post_date,
+			'modified'       => $post->post_modified,
+			'permalink'      => get_permalink( $post->ID ),
+			'featured_image' => get_post_thumbnail_id( $post->ID ) ?: null,
+		);
+	}
+
 	private function get_content_item_schema(): array {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
 				'id'             => array(
 					'type'        => 'integer',
-					'description' => 'Unique post ID',
+					'description' => 'Unique post ID. Use this with wordforge/get-content to retrieve full content.',
 				),
 				'title'          => array(
 					'type'        => 'string',
@@ -204,13 +226,9 @@ class ListContent extends AbstractAbility {
 					'type'        => 'string',
 					'description' => 'Post type',
 				),
-				'content'        => array(
-					'type'        => 'string',
-					'description' => 'Full content body',
-				),
 				'excerpt'        => array(
 					'type'        => 'string',
-					'description' => 'Content excerpt',
+					'description' => 'Content excerpt (summary)',
 				),
 				'author'         => array(
 					'type'        => 'integer',
