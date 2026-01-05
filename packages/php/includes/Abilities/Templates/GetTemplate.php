@@ -63,19 +63,10 @@ class GetTemplate extends AbstractAbility {
 			'type'       => 'object',
 			'required'   => array( 'id' ),
 			'properties' => array(
-				'id'         => array(
-					'oneOf'       => array(
-						array(
-							'type'        => 'integer',
-							'description' => 'Template post ID.',
-						),
-						array(
-							'type'        => 'string',
-							'description' => 'Template slug.',
-						),
-					),
-					'description' => 'Template ID or slug.',
-				),
+			'id'         => array(
+				'type'        => 'string',
+				'description' => 'Template post ID (as string) or slug. Numeric strings are treated as IDs.',
+			),
 				'type'       => array(
 					'type'        => 'string',
 					'description' => 'Template type (required when using slug).',

@@ -180,7 +180,7 @@ class ListProducts extends AbstractAbility {
 				'sale_price'        => array( 'type' => 'string' ),
 				'on_sale'           => array( 'type' => 'boolean' ),
 				'stock_status'      => array( 'type' => 'string' ),
-				'stock_quantity'    => array( 'type' => array( 'integer', 'null' ) ),
+				'stock_quantity'    => array( 'type' => 'integer' ),
 				'featured'          => array( 'type' => 'boolean' ),
 				'short_description' => array( 'type' => 'string' ),
 				'categories'        => array(
@@ -191,7 +191,7 @@ class ListProducts extends AbstractAbility {
 					'type'  => 'array',
 					'items' => array( 'type' => 'string' ),
 				),
-				'image'             => array( 'type' => array( 'string', 'null' ) ),
+				'image'             => array( 'type' => 'string' ),
 				'permalink'         => array( 'type' => 'string' ),
 			),
 		);

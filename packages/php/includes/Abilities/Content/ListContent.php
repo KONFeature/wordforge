@@ -229,7 +229,7 @@ class ListContent extends AbstractAbility {
 					'description' => 'Full URL to view content',
 				),
 				'featured_image' => array(
-					'type'        => array( 'integer', 'null' ),
+					'type'        => 'integer',
 					'description' => 'Featured image attachment ID',
 				),
 			),

@@ -62,9 +62,9 @@ class GetMedia extends AbstractAbility {
 						'modified'    => array( 'type' => 'string' ),
 						'author'      => array( 'type' => 'integer' ),
 						'parent'      => array( 'type' => 'integer' ),
-						'width'       => array( 'type' => array( 'integer', 'null' ) ),
-						'height'      => array( 'type' => array( 'integer', 'null' ) ),
-						'filesize'    => array( 'type' => array( 'integer', 'null' ) ),
+					'width'       => array( 'type' => 'integer' ),
+					'height'      => array( 'type' => 'integer' ),
+					'filesize'    => array( 'type' => 'integer' ),
 						'sizes'       => array(
 							'type'                 => 'object',
 							'additionalProperties' => true,

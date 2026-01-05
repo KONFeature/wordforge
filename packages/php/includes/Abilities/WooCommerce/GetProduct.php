@@ -55,7 +55,7 @@ class GetProduct extends AbstractAbility {
 						'sale_price'        => array( 'type' => 'string' ),
 						'on_sale'           => array( 'type' => 'boolean' ),
 						'stock_status'      => array( 'type' => 'string' ),
-						'stock_quantity'    => array( 'type' => array( 'integer', 'null' ) ),
+						'stock_quantity'    => array( 'type' => 'integer' ),
 						'manage_stock'      => array( 'type' => 'boolean' ),
 						'featured'          => array( 'type' => 'boolean' ),
 						'virtual'           => array( 'type' => 'boolean' ),

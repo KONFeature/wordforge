@@ -105,19 +105,11 @@ class SaveContent extends AbstractAbility {
 					'description' => 'Attachment ID. Set 0 to remove.',
 					'minimum'     => 0,
 				),
-				'categories'     => array(
-					'type'        => 'array',
-					'description' => 'Category IDs or slugs. Replaces existing.',
-					'items'       => array(
-						'oneOf' => array(
-							array(
-								'type'    => 'integer',
-								'minimum' => 1,
-							),
-							array( 'type' => 'string' ),
-						),
-					),
-				),
+			'categories'     => array(
+				'type'        => 'array',
+				'description' => 'Category IDs (as strings) or slugs. Replaces existing. Numeric strings are treated as IDs.',
+				'items'       => array( 'type' => 'string' ),
+			),
 				'tags'           => array(
 					'type'        => 'array',
 					'description' => 'Tag names or slugs. Replaces existing.',

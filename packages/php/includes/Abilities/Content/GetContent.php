@@ -66,7 +66,7 @@ class GetContent extends AbstractAbility {
 						'date'           => array( 'type' => 'string' ),
 						'modified'       => array( 'type' => 'string' ),
 						'permalink'      => array( 'type' => 'string' ),
-						'featured_image' => array( 'type' => array( 'integer', 'null' ) ),
+						'featured_image' => array( 'type' => 'integer' ),
 						'meta'           => array(
 							'type'                 => 'object',
 							'additionalProperties' => true,

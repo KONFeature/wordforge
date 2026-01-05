@@ -123,19 +123,11 @@ class SaveProduct extends AbstractAbility {
 						'height' => array( 'type' => 'string' ),
 					),
 				),
-				'categories'        => array(
-					'type'        => 'array',
-					'description' => 'IDs or slugs. Replaces existing.',
-					'items'       => array(
-						'oneOf' => array(
-							array(
-								'type'    => 'integer',
-								'minimum' => 1,
-							),
-							array( 'type' => 'string' ),
-						),
-					),
-				),
+			'categories'        => array(
+				'type'        => 'array',
+				'description' => 'Category IDs (as strings) or slugs. Replaces existing. Numeric strings are treated as IDs.',
+				'items'       => array( 'type' => 'string' ),
+			),
 				'tags'              => array(
 					'type'        => 'array',
 					'description' => 'Names or slugs. Replaces existing.',
