@@ -94,10 +94,17 @@ async fn start_opencode(
 
 #[tauri::command]
 async fn stop_opencode(
+    app: tauri::AppHandle,
     state: tauri::State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<(), String> {
     let mut state = state.lock().await;
-    state.stop_opencode().await.map_err(|e| e.to_string())
+    state.stop_opencode().await.map_err(|e| e.to_string())?;
+    
+    if let Some(window) = app.get_webview_window("opencode") {
+        window.close().map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
 }
 
 #[tauri::command]
@@ -435,6 +442,13 @@ pub fn run() {
                     let mut state = state.lock().await;
                     if let Err(e) = state.stop_opencode().await {
                         tracing::warn!("Failed to stop OpenCode on idle shutdown: {}", e);
+                    }
+                    drop(state);
+                    
+                    if let Some(window) = app.get_webview_window("opencode") {
+                        if let Err(e) = window.close() {
+                            tracing::warn!("Failed to close OpenCode window: {}", e);
+                        }
                     }
                 });
             });
