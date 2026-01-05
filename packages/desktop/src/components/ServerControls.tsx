@@ -82,7 +82,7 @@ export function ServerControls() {
         >
           Stop
         </Button>
-        {isRunning && clientContext && (
+        {isRunning && clientContext?.projectDir && (
           <Button
             variant="primary"
             onClick={handleOpenCode}

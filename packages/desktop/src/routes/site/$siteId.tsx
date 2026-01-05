@@ -2,7 +2,7 @@ import { Outlet, createFileRoute, redirect } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect } from 'react';
 import { createSiteNavItems } from '../../components/ui';
-import { OpenCodeClientProvider } from '../../context/OpenCodeClientContext';
+import { OpenCodeProvider } from '../../context/OpenCodeClientContext';
 import { useSidebarNavItems } from '../../context/SidebarContext';
 import type { WordPressSite } from '../../types';
 import styles from './siteId.module.css';
@@ -39,10 +39,10 @@ function SiteLayout() {
   }, [site.id, setNavItems]);
 
   return (
-    <OpenCodeClientProvider site={site}>
+    <OpenCodeProvider site={site}>
       <div className={styles.content}>
         <Outlet />
       </div>
-    </OpenCodeClientProvider>
+    </OpenCodeProvider>
   );
 }

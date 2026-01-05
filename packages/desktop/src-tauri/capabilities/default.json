@@ -13,6 +13,7 @@
       "allow": [{ "url": "http://**" }, { "url": "https://**" }]
     },
     "deep-link:default",
-    "store:default"
+    "store:default",
+    "opener:default"
   ]
 }

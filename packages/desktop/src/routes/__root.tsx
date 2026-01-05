@@ -5,6 +5,7 @@ import {
   Sidebar,
   SidebarLayout,
 } from '../components/ui';
+import { OpenCodeProvider } from '../context/OpenCodeClientContext';
 import { RestartProvider } from '../context/RestartContext';
 import { SidebarProvider, useSidebarNavItems } from '../context/SidebarContext';
 import { useDeepLink } from '../hooks/useDeepLink';
@@ -23,9 +24,11 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <RestartProvider>
-      <SidebarProvider>
-        <RootLayoutInner />
-      </SidebarProvider>
+      <OpenCodeProvider>
+        <SidebarProvider>
+          <RootLayoutInner />
+        </SidebarProvider>
+      </OpenCodeProvider>
     </RestartProvider>
   );
 }

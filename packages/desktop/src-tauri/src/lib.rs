@@ -400,6 +400,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin({
             let processed = processed_tokens.clone();
             tauri_plugin_single_instance::init(move |app, argv, _cwd| {

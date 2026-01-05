@@ -1,0 +1,142 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast), box-shadow
+    var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--provider-color, var(--color-border-hover));
+}
+
+.experimental {
+  border-style: dashed;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.iconLetter {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: white;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.name {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+.experimentalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
+}
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.signInButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.signInButton:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.signInButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.successState {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: var(--radius-md);
+}
+
+.errorMessage {
+  font-size: var(--text-sm);
+  color: var(--color-error);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-sm);
+}

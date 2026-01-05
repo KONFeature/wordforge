@@ -162,3 +162,52 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.oauthGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.experimentalSection {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.experimentalHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.experimentalLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-warning);
+}
+
+.experimentalHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.advancedToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-4);
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.advancedToggle:hover {
+  color: var(--color-text);
+}

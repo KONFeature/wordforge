@@ -2,13 +2,21 @@ import { Link, useLocation } from '@tanstack/react-router';
 import {
   BarChart2,
   ChevronDown,
+  Download,
   Home,
+  Play,
   Plus,
   Settings as SettingsIcon,
   ShoppingCart,
+  Square,
 } from 'lucide-react';
-import logoWordforge from '../../assets/logo-wordforge.webp';
 import { type ReactNode, useState } from 'react';
+import logoWordforge from '../../assets/logo-wordforge.webp';
+import {
+  useOpenCodeActions,
+  useOpenCodeDownload,
+  useOpenCodeStatus,
+} from '../../hooks/useOpenCode';
 import {
   Dropdown,
   DropdownContent,
@@ -16,6 +24,7 @@ import {
   DropdownSeparator,
   DropdownTrigger,
 } from './Dropdown';
+import { Progress } from './Progress';
 import styles from './Sidebar.module.css';
 
 export interface SidebarProps {
@@ -156,6 +165,7 @@ export function Sidebar({
       {children && <div className={styles.content}>{children}</div>}
 
       <div className={styles.footer}>
+        <OpenCodeControls />
         <Link
           to="/settings"
           className={`${styles.footerLink} ${location.pathname === '/settings' ? styles.footerLinkActive : ''}`}
@@ -163,6 +173,88 @@ export function Sidebar({
           <SettingsIcon size={18} />
           <span>Settings</span>
         </Link>
+      </div>
+    </div>
+  );
+}
+
+function OpenCodeControls() {
+  const { status, port } = useOpenCodeStatus();
+  const { start, stop, isStarting } = useOpenCodeActions();
+  const { download, isDownloading, downloadProgress } = useOpenCodeDownload();
+
+  const isInstalled = status !== 'not_installed';
+  const isRunning = status === 'running';
+  const isStartingStatus = status === 'starting' || isStarting;
+
+  if (isDownloading) {
+    return (
+      <div className={styles.openCodeSection}>
+        <Progress
+          value={downloadProgress?.percent || 0}
+          label={downloadProgress?.message || 'Downloading...'}
+          showValue
+        />
+      </div>
+    );
+  }
+
+  if (!isInstalled) {
+    return (
+      <div className={styles.openCodeSection}>
+        <button
+          type="button"
+          className={styles.openCodeDownloadBtn}
+          onClick={() => download()}
+        >
+          <Download size={16} />
+          <span>Download OpenCode</span>
+        </button>
+      </div>
+    );
+  }
+
+  const statusClass = isRunning
+    ? styles.statusRunning
+    : isStartingStatus
+      ? styles.statusStarting
+      : styles.statusStopped;
+
+  const statusLabel = isRunning
+    ? `Running${port ? ` :${port}` : ''}`
+    : isStartingStatus
+      ? 'Starting...'
+      : 'Stopped';
+
+  return (
+    <div className={styles.openCodeSection}>
+      <div className={styles.openCodeRow}>
+        <div className={styles.openCodeStatus}>
+          <span className={`${styles.statusDot} ${statusClass}`} />
+          <span className={styles.statusLabel}>{statusLabel}</span>
+        </div>
+        <div className={styles.openCodeActions}>
+          {isRunning ? (
+            <button
+              type="button"
+              className={styles.openCodeBtn}
+              onClick={() => stop()}
+              title="Stop OpenCode"
+            >
+              <Square size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.openCodeBtn}
+              onClick={() => start()}
+              disabled={isStartingStatus}
+              title="Start OpenCode"
+            >
+              <Play size={14} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

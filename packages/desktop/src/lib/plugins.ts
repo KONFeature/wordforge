@@ -474,7 +474,7 @@ export const AVAILABLE_PLUGINS: OpenCodePlugin[] = [
     description: 'Use your ChatGPT Plus/Pro subscription',
     models: 'GPT-5.2 models via OAuth',
     packageName: 'opencode-openai-codex-auth@latest',
-    github: "https://github.com/numman-ali/opencode-openai-codex-auth",
+    github: 'https://github.com/numman-ali/opencode-openai-codex-auth',
     providerConfig: {
       openai: OPENAI_PROVIDER_CONFIG,
     },
@@ -485,7 +485,7 @@ export const AVAILABLE_PLUGINS: OpenCodePlugin[] = [
     description: 'Gemini via Google',
     models: 'Gemini 3 Pro via OAuth',
     packageName: 'opencode-gemini-auth@latest',
-    github: "https://github.com/jenslys/opencode-gemini-auth",
+    github: 'https://github.com/jenslys/opencode-gemini-auth',
     providerConfig: {
       google: ANTIGRAVITY_PROVIDER_CONFIG,
     },
@@ -496,7 +496,7 @@ export const AVAILABLE_PLUGINS: OpenCodePlugin[] = [
     description: 'Free Claude & Gemini via Google',
     models: 'Sonnet 4.5, Opus, Gemini 3 Pro',
     packageName: 'opencode-antigravity-auth@latest',
-    github: "https://github.com/NoeFabris/opencode-antigravity-auth",
+    github: 'https://github.com/NoeFabris/opencode-antigravity-auth',
     providerConfig: {
       google: ANTIGRAVITY_PROVIDER_CONFIG,
     },
