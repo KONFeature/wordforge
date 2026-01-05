@@ -1,6 +1,6 @@
 [package]
 name = "wordforge-desktop"
-version = "1.4.0"
+version = "1.4.4"
 description = "WordForge Desktop - Manage your WordPress with AI"
 authors = ["KONFeature"]
 edition = "2021"

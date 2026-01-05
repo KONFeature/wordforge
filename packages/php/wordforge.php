@@ -3,7 +3,7 @@
  * Plugin Name: WordForge
  * Plugin URI: https://github.com/konfeature/wordforge
  * Description: Forge your WordPress site through conversation - MCP-powered content, commerce, and design management
- * Version: 1.4.0
+ * Version: 1.4.4
  * Author: KONFeature
  * Author URI: https://nivelais.com
  * License: MIT
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WORDFORGE_VERSION', '1.4.0' );
+define( 'WORDFORGE_VERSION', '1.4.4' );
 define( 'WORDFORGE_PLUGIN_FILE', __FILE__ );
 define( 'WORDFORGE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WORDFORGE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
