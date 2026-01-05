@@ -3,18 +3,14 @@ import apiFetch from '@wordpress/api-fetch';
 
 export const LOCAL_SETTINGS_KEY = ['local-settings'] as const;
 
-export type RuntimePreference = 'node' | 'bun' | 'none';
-
 interface LocalSettings {
   port: number;
   enabled: boolean;
-  runtime: RuntimePreference;
 }
 
 interface SaveLocalSettingsParams {
   port?: number;
   enabled?: boolean;
-  runtime?: RuntimePreference;
 }
 
 export const useLocalSettings = () => {
@@ -48,9 +44,9 @@ export const useSaveLocalSettings = () => {
 
 export const useDownloadLocalConfig = () => {
   return useMutation({
-    mutationFn: async (runtime: RuntimePreference): Promise<void> => {
+    mutationFn: async (): Promise<void> => {
       const response = await apiFetch<Response>({
-        path: `/wordforge/v1/opencode/local-config?runtime=${runtime}`,
+        path: '/wordforge/v1/opencode/local-config',
         // @ts-ignore wordpress api fetch enforce parse, we need it to false for file fetching
         parse: false,
       });

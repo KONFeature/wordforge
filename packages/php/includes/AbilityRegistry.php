@@ -106,7 +106,10 @@ class AbilityRegistry {
 	);
 
 	private const ANALYTICS_ABILITIES = array(
-		'wordforge/get-site-stats'    => GetSiteStats::class,
+		'wordforge/get-site-stats' => GetSiteStats::class,
+	);
+
+	private const JETPACK_ABILITIES = array(
 		'wordforge/get-jetpack-stats' => GetJetpackStats::class,
 	);
 
@@ -129,6 +132,10 @@ class AbilityRegistry {
 		$this->register_abilities( self::SETTINGS_ABILITIES );
 		$this->register_abilities( self::ANALYTICS_ABILITIES );
 
+		if ( is_jetpack_active() ) {
+			$this->register_abilities( self::JETPACK_ABILITIES );
+		}
+
 		if ( is_woocommerce_active() ) {
 			$this->register_abilities( self::WOOCOMMERCE_ABILITIES );
 			$this->register_abilities( self::ORDER_ABILITIES );
@@ -147,6 +154,13 @@ class AbilityRegistry {
 			array_keys( self::SETTINGS_ABILITIES ),
 			array_keys( self::ANALYTICS_ABILITIES )
 		);
+
+		if ( is_jetpack_active() ) {
+			$names = array_merge(
+				$names,
+				array_keys( self::JETPACK_ABILITIES )
+			);
+		}
 
 		if ( is_woocommerce_active() ) {
 			$names = array_merge(

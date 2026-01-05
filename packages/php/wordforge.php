@@ -239,6 +239,10 @@ function is_woocommerce_active(): bool {
 	return class_exists( 'WooCommerce' );
 }
 
+function is_jetpack_active(): bool {
+	return class_exists( 'Jetpack' ) || class_exists( 'Automattic\Jetpack\Stats\WPCOM_Stats' );
+}
+
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
 
 add_filter(

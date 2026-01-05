@@ -274,10 +274,8 @@ impl SiteManager {
         auth: &str,
         project_dir: &PathBuf,
     ) -> Result<(), SiteError> {
-        // Use runtime=bun to get the MCP server as plain JavaScript
-        // OpenCode's bundled Bun runtime will execute it
         let config_url = format!(
-            "{}/wp-json/wordforge/v1/opencode/local-config?runtime=bun",
+            "{}/wp-json/wordforge/v1/opencode/local-config",
             base_url
         );
         

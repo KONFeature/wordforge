@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Icon,
   Notice,
-  SelectControl,
   Spinner,
   TextControl,
 } from '@wordpress/components';
@@ -17,7 +16,6 @@ import { __ } from '@wordpress/i18n';
 import { checkLocalServerHealth } from '../../lib/openCodeClient';
 import { useGenerateConnectToken } from '../hooks/useDesktopConnection';
 import {
-  type RuntimePreference,
   useDownloadLocalConfig,
   useLocalSettings,
   useSaveLocalSettings,
@@ -74,10 +72,8 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
 
   const [os, setOs] = useState<OS>(getInitialOS());
   const [port, setPort] = useState(String(initialPort));
-  const [runtime, setRuntime] = useState<RuntimePreference>('node');
   const [activeStep, setActiveStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [showRuntimeOptions, setShowRuntimeOptions] = useState(false);
   const [showPortOptions, setShowPortOptions] = useState(false);
   const [localServerOnline, setLocalServerOnline] = useState<boolean | null>(
     null,
@@ -94,7 +90,6 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
   // Sync settings
   useEffect(() => {
     if (settings?.port) setPort(String(settings.port));
-    if (settings?.runtime) setRuntime(settings.runtime);
   }, [settings]);
 
   // Server health check
@@ -130,7 +125,7 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
   };
 
   const handleDownload = () => {
-    downloadConfig(runtime);
+    downloadConfig();
     handleStepComplete(2);
   };
 
@@ -503,46 +498,6 @@ export const OpenCodeLocalTab = ({ initialPort }: OpenCodeLocalTabProps) => {
                         __('Download Config ZIP', 'wordforge')
                       )}
                     </Button>
-                  </div>
-
-                  <div className={styles.advancedSection}>
-                    <button
-                      className={styles.advancedToggle}
-                      onClick={() => setShowRuntimeOptions(!showRuntimeOptions)}
-                      type="button"
-                    >
-                      <Icon
-                        icon={showRuntimeOptions ? 'arrow-up' : 'arrow-down'}
-                      />
-                      {__('Advanced Options', 'wordforge')}
-                    </button>
-
-                    {showRuntimeOptions && (
-                      <div className={styles.advancedOptions}>
-                        <SelectControl
-                          label={__('JavaScript Runtime', 'wordforge')}
-                          value={runtime}
-                          options={[
-                            { value: 'node', label: 'Node.js' },
-                            { value: 'bun', label: 'Bun' },
-                            {
-                              value: 'none',
-                              label: __('None (Remote only)', 'wordforge'),
-                            },
-                          ]}
-                          onChange={(val) => {
-                            const newRuntime = val as RuntimePreference;
-                            setRuntime(newRuntime);
-                            saveSettings({ runtime: newRuntime });
-                          }}
-                          help={__(
-                            'The runtime used to run the local MCP server.',
-                            'wordforge',
-                          )}
-                          disabled={isSaving}
-                        />
-                      </div>
-                    )}
                   </div>
 
                   <div className={styles.stepActions}>

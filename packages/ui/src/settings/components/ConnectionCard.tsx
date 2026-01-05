@@ -18,7 +18,7 @@ interface ConnectionCardProps {
   };
 }
 
-type TabName = 'claude' | 'opencode-local' | 'opencode-remote';
+type TabName = 'claude' | 'opencode';
 
 export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
@@ -65,29 +65,7 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
     2,
   );
 
-  const openCodeLocalConfig = JSON.stringify(
-    {
-      mcp: {
-        wordpress: {
-          enabled: true,
-          type: 'local',
-          command: ['node', './path/to/wordforge-server.js'],
-          environment: {
-            WORDPRESS_URL: settings.mcpEndpoint.replace(
-              '/wordforge/mcp',
-              '/wp-abilities/v1',
-            ),
-            WORDPRESS_USERNAME: 'your-username',
-            WORDPRESS_APP_PASSWORD: 'xxxx xxxx xxxx xxxx xxxx xxxx',
-          },
-        },
-      },
-    },
-    null,
-    2,
-  );
-
-  const openCodeRemoteConfig = JSON.stringify(
+  const openCodeConfig = JSON.stringify(
     {
       mcp: {
         wordpress: {
@@ -110,12 +88,8 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
       title: __('Claude Desktop', 'wordforge'),
     },
     {
-      name: 'opencode-local' as const,
-      title: __('OpenCode (Local)', 'wordforge'),
-    },
-    {
-      name: 'opencode-remote' as const,
-      title: __('OpenCode (Remote)', 'wordforge'),
+      name: 'opencode' as const,
+      title: __('OpenCode', 'wordforge'),
     },
   ];
 
@@ -174,53 +148,6 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
       );
     }
 
-    if (tabName === 'opencode-local') {
-      return (
-        <div className={styles.tabContent}>
-          <div className={styles.recommended}>
-            {__(
-              'Recommended for better performance and error handling.',
-              'wordforge',
-            )}
-          </div>
-
-          <ol className={styles.steps}>
-            <li>
-              {__('Download', 'wordforge')} <code>wordforge-server.js</code>{' '}
-              {__('from the', 'wordforge')}{' '}
-              <ExternalLink href="https://github.com/KONFeature/wordforge/releases">
-                {__('latest release', 'wordforge')}
-              </ExternalLink>
-            </li>
-            <li>
-              {__('Add this to your', 'wordforge')} <code>.opencode.json</code>{' '}
-              {__('or global config:', 'wordforge')}
-            </li>
-          </ol>
-
-          <div className={styles.codeWrapper}>
-            <pre className={styles.codeBlock}>{openCodeLocalConfig}</pre>
-            <ClipboardButton
-              text={openCodeLocalConfig}
-              className={styles.copyButton}
-              onCopy={() => handleCopy('opencode-local')}
-            >
-              {copiedTab === 'opencode-local'
-                ? __('Copied!', 'wordforge')
-                : __('Copy', 'wordforge')}
-            </ClipboardButton>
-          </div>
-
-          <p className={styles.hint}>
-            {__(
-              'Update the path to wordforge-server.js and add your credentials.',
-              'wordforge',
-            )}
-          </p>
-        </div>
-      );
-    }
-
     return (
       <div className={styles.tabContent}>
         <p className={styles.hint}>
@@ -229,13 +156,13 @@ export const ConnectionCard = ({ settings }: ConnectionCardProps) => {
         </p>
 
         <div className={styles.codeWrapper}>
-          <pre className={styles.codeBlock}>{openCodeRemoteConfig}</pre>
+          <pre className={styles.codeBlock}>{openCodeConfig}</pre>
           <ClipboardButton
-            text={openCodeRemoteConfig}
+            text={openCodeConfig}
             className={styles.copyButton}
-            onCopy={() => handleCopy('opencode-remote')}
+            onCopy={() => handleCopy('opencode')}
           >
-            {copiedTab === 'opencode-remote'
+            {copiedTab === 'opencode'
               ? __('Copied!', 'wordforge')
               : __('Copy', 'wordforge')}
           </ClipboardButton>
