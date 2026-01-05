@@ -48,19 +48,19 @@ class ServerConfig {
 			}
 		}
 
-		$is_remote_mcp = ! self::has_local_mcp_server();
-		$context       = ContextProvider::get_global_context();
+		$context  = ContextProvider::get_global_context();
+		$is_local = false;
 
 		$files = array(
-			'AGENTS.md'                            => self::render_agents_md( $is_remote_mcp ),
-			'context/site.md'                      => self::render_site_context( $context, false ),
-			'agent/wordpress-manager.md'           => self::render_agent_template( 'wordpress-manager', $context, false, $is_remote_mcp ),
-			'agent/wordpress-content-creator.md'   => self::render_agent_template( 'wordpress-content-creator', $context, false, $is_remote_mcp ),
-			'agent/wordpress-auditor.md'           => self::render_agent_template( 'wordpress-auditor', $context, false, $is_remote_mcp ),
+			'AGENTS.md'                          => self::render_template( self::TEMPLATES_DIR . '/agents-md.php', compact( 'context', 'is_local' ) ),
+			'context/site.md'                    => self::render_template( self::TEMPLATES_DIR . '/context/site.md.php', compact( 'context', 'is_local' ) ),
+			'agent/wordpress-manager.md'         => self::render_agent_template( 'wordpress-manager', $context, $is_local ),
+			'agent/wordpress-content-creator.md' => self::render_agent_template( 'wordpress-content-creator', $context, $is_local ),
+			'agent/wordpress-auditor.md'         => self::render_agent_template( 'wordpress-auditor', $context, $is_local ),
 		);
 
 		if ( class_exists( 'WooCommerce' ) ) {
-			$files['agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, false, $is_remote_mcp );
+			$files['agent/wordpress-commerce-manager.md'] = self::render_agent_template( 'wordpress-commerce-manager', $context, $is_local );
 		}
 
 		foreach ( $files as $filename => $content ) {
@@ -77,36 +77,10 @@ class ServerConfig {
 		extract( $vars, EXTR_SKIP );
 		ob_start();
 		include $template_path;
-		$content = ob_get_clean();
-
-		$is_local = $vars['is_local'] ?? false;
-		return self::transform_ability_names( $content, $is_local );
+		return ob_get_clean();
 	}
 
-	private static function transform_ability_names( string $content, bool $is_local ): string {
-		if ( ! $is_local ) {
-			return $content;
-		}
-
-		return str_replace( '`wordforge/', '`wordpress_', $content );
-	}
-
-	private static function render_agents_md( bool $is_remote_mcp ): string {
-		$is_local = false;
-		return self::render_template(
-			self::TEMPLATES_DIR . '/agents-md.php',
-			compact( 'is_local', 'is_remote_mcp' )
-		);
-	}
-
-	private static function render_site_context( array $context, bool $is_local ): string {
-		return self::render_template(
-			self::TEMPLATES_DIR . '/context/site.md.php',
-			compact( 'context', 'is_local' )
-		);
-	}
-
-	private static function render_agent_template( string $agent_id, array $context, bool $is_local, bool $is_remote_mcp ): string {
+	private static function render_agent_template( string $agent_id, array $context, bool $is_local ): string {
 		$model    = AgentConfig::get_model_for_agent( $agent_id );
 		$template = self::TEMPLATES_DIR . '/agent/' . $agent_id . '.md.php';
 
@@ -114,38 +88,13 @@ class ServerConfig {
 			return '';
 		}
 
-		return self::render_template(
-			$template,
-			compact( 'context', 'is_local', 'is_remote_mcp', 'model' )
-		);
-	}
-
-	private static function has_local_mcp_server(): bool {
-		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
-		$runtime         = self::get_js_runtime();
-		return file_exists( $mcp_server_path ) && $runtime;
+		return self::render_template( $template, compact( 'context', 'is_local', 'model' ) );
 	}
 
 	public static function get_mcp_config(): ?array {
 		$app_password_data = AppPasswordManager::get_or_create();
 		if ( ! $app_password_data ) {
 			return null;
-		}
-
-		$mcp_server_path = WORDFORGE_PLUGIN_DIR . 'assets/bin/wordforge-mcp.cjs';
-		$abilities_url   = \rest_url( 'wp-abilities/v1' );
-		$runtime         = self::get_js_runtime();
-
-		if ( file_exists( $mcp_server_path ) && $runtime ) {
-			return array(
-				'type'        => 'local',
-				'command'     => array( $runtime, $mcp_server_path ),
-				'environment' => array(
-					'WORDPRESS_URL'          => $abilities_url,
-					'WORDPRESS_USERNAME'     => $app_password_data['username'],
-					'WORDPRESS_APP_PASSWORD' => $app_password_data['password'],
-				),
-			);
 		}
 
 		$mcp_url = \WordForge\get_endpoint_url();
@@ -158,60 +107,46 @@ class ServerConfig {
 		);
 	}
 
-	private static function get_js_runtime(): ?string {
-		exec( 'which node 2>/dev/null', $node_output, $node_code );
-		if ( 0 === $node_code ) {
-			return 'node';
-		}
-
-		exec( 'which bun 2>/dev/null', $bun_output, $bun_code );
-		if ( 0 === $bun_code ) {
-			return 'bun';
-		}
-
-		return null;
-	}
-
 	private static function get_bash_permissions(): array {
 		return array(
-			'cat *'          => 'allow',
-			'head *'         => 'allow',
-			'tail *'         => 'allow',
-			'less *'         => 'allow',
-			'more *'         => 'allow',
-			'grep *'         => 'allow',
-			'rg *'           => 'allow',
-			'find *'         => 'allow',
-			'ls *'           => 'allow',
-			'tree *'         => 'allow',
-			'pwd'            => 'allow',
-			'wc *'           => 'allow',
-			'diff *'         => 'allow',
-			'file *'         => 'allow',
-			'stat *'         => 'allow',
-			'du *'           => 'allow',
-			'git status*'    => 'allow',
-			'git log*'       => 'allow',
-			'git diff*'      => 'allow',
-			'git show*'      => 'allow',
-			'git branch'     => 'allow',
-			'git branch*'    => 'allow',
-			'wp *'           => 'allow',
-			'composer show*' => 'allow',
-			'composer info*' => 'allow',
-			'npm list*'      => 'allow',
-			'npm ls*'        => 'allow',
-			'bun pm ls*'     => 'allow',
-			'curl'     => 'allow',
-			'wget'     => 'allow',
-			'ping'     => 'allow',
-			'echo'     => 'allow',
-			'php -r'     => 'allow',
-			'php -l'     => 'allow',
-			'date'     => 'allow',
-			'ps aux'     => 'allow',
-			'systemctl status'     => 'allow',
-			'*'              => 'deny',
+			'cat *'            => 'allow',
+			'head *'           => 'allow',
+			'tail *'           => 'allow',
+			'less *'           => 'allow',
+			'more *'           => 'allow',
+			'grep *'           => 'allow',
+			'rg *'             => 'allow',
+			'find *'           => 'allow',
+			'ls *'             => 'allow',
+			'tree *'           => 'allow',
+			'pwd'              => 'allow',
+			'wc *'             => 'allow',
+			'diff *'           => 'allow',
+			'file *'           => 'allow',
+			'stat *'           => 'allow',
+			'du *'             => 'allow',
+			'git status*'      => 'allow',
+			'git log*'         => 'allow',
+			'git diff*'        => 'allow',
+			'git show*'        => 'allow',
+			'git branch'       => 'allow',
+			'git branch*'      => 'allow',
+			'wp *'             => 'allow',
+			'composer show*'   => 'allow',
+			'composer info*'   => 'allow',
+			'npm list*'        => 'allow',
+			'npm ls*'          => 'allow',
+			'bun pm ls*'       => 'allow',
+			'curl'             => 'allow',
+			'wget'             => 'allow',
+			'ping'             => 'allow',
+			'echo'             => 'allow',
+			'php -r'           => 'allow',
+			'php -l'           => 'allow',
+			'date'             => 'allow',
+			'ps aux'           => 'allow',
+			'systemctl status' => 'allow',
+			'*'                => 'deny',
 		);
 	}
 }

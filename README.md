@@ -26,8 +26,7 @@ WordForge consists of three packages:
 | Package | Description |
 |---------|-------------|
 | **WordForge Desktop** | **(Recommended)** Desktop app to manage sites, run the MCP server, and view rapid stats (Jetpack/WooCommerce). |
-| **WordPress Plugin** | Exposes WordPress abilities (content, media, blocks, styles, WooCommerce) via the MCP protocol |
-| **MCP Server** | Node.js server for Claude Desktop and other MCP clients |
+| **WordPress Plugin** | Exposes WordPress abilities (content, media, blocks, styles, WooCommerce) via the MCP protocol. Includes built-in MCP server via the WordPress MCP Adapter. |
 | **Admin UI** | React-based chat interface built into WordPress admin |
 
 ### Capabilities
@@ -204,21 +203,18 @@ Use WordForge from your local machine with any MCP-compatible AI client. The AI 
 2. Install and launch the application.
 3. Use the "Connect Site" button to easily link your WordPress installation.
 
-### 3. MCP Tool (Optional - for Manual Setup)
+### 3. MCP Client (Optional - for Manual Setup)
 
 If you prefer to use WordForge from an external MCP client manually (without the Desktop App):
 
-#### Claude Desktop
+#### Prerequisites
 
-1. Download `wordforge.mcpb` from the [latest release](https://github.com/KONFeature/wordforge/releases)
-2. Double-click the file or drag it into Claude Desktop
-3. Configure your WordPress credentials when prompted
+WordForge exposes MCP tools via the [WordPress MCP Adapter](https://github.com/developer-jeongyu/mcp-adapter) plugin. Install and activate both plugins.
 
 #### OpenCode CLI
 
 Add to your `.opencode.json` (project) or `~/.config/opencode/config.json` (global):
 
-**Remote MCP (direct connection to WordPress):**
 ```json
 {
   "mcp": {
@@ -239,36 +235,22 @@ Generate base64 credentials:
 echo -n "username:application-password" | base64
 ```
 
-**Local MCP Server (recommended):**
+#### Claude Desktop
 
-Download `wordforge-server.js` from the [latest release](https://github.com/KONFeature/wordforge/releases):
+Configure in Claude Desktop settings:
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "wordpress": {
-      "enabled": true,
-      "type": "local",
-      "command": ["node", "./path/to/wordforge-server.js"],
-      "environment": {
-        "WORDPRESS_URL": "https://yoursite.com/wp-json/wp-abilities/v1",
-        "WORDPRESS_USERNAME": "your-username",
-        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx"
+      "url": "https://yoursite.com/wp-json/wordforge/mcp",
+      "transport": "http",
+      "headers": {
+        "Authorization": "Basic <base64-encoded-credentials>"
       }
     }
   }
 }
-```
-
-#### Other MCP Clients
-
-Run the server directly:
-
-```bash
-WORDPRESS_URL="https://yoursite.com/wp-json/wp-abilities/v1" \
-WORDPRESS_USERNAME="your-username" \
-WORDPRESS_APP_PASSWORD="xxxx xxxx xxxx xxxx xxxx xxxx" \
-node wordforge-server.js
 ```
 
 ---
@@ -294,15 +276,13 @@ https://yoursite.com/wp-json/wordforge/mcp
 3. Enter a name (e.g., "WordForge") and click **Add New Application Password**
 4. Copy the generated password (spaces are fine)
 
-### Environment Variables
+### Environment Variables (Desktop App / OpenCode Server)
 
 | Variable | Description |
 |----------|-------------|
-| `WORDPRESS_URL` | Your site's Abilities API endpoint |
+| `WORDPRESS_URL` | Your site's MCP endpoint |
 | `WORDPRESS_USERNAME` | WordPress admin username |
 | `WORDPRESS_APP_PASSWORD` | Application password (with or without spaces) |
-| `WORDFORGE_EXCLUDE_CATEGORIES` | Comma-separated categories to exclude: `content`, `blocks`, `styles`, `media`, `taxonomy`, `templates`, `woocommerce`, `prompts` |
-| `WORDFORGE_DEBUG` | Set to `true` for verbose logging |
 
 ### WordPress Admin Settings
 
@@ -551,14 +531,12 @@ wordforge/
 │   │   ├── includes/
 │   │   │   ├── Abilities/    # MCP abilities (Content, Media, Blocks, etc.)
 │   │   │   ├── Admin/        # WordPress admin UI (Chat, Widget, Settings)
-│   │   │   ├── Mcp/          # MCP server integration
+│   │   │   ├── Mcp/          # MCP server integration (via WordPress MCP Adapter)
 │   │   │   └── OpenCode/     # Binary manager, server process, activity monitor
 │   │   └── wordforge.php     # Plugin entry point
-│   ├── mcp/                  # Node.js MCP server (for external clients)
-│   │   └── src/
-│   │       ├── index.ts      # Server bootstrap
-│   │       ├── abilities-client.ts  # WordPress API client
-│   │       └── ability-loader.ts    # Ability → MCP tool transformer
+│   ├── desktop/              # Tauri desktop app
+│   │   ├── src/              # React frontend (TanStack Router/Query)
+│   │   └── src-tauri/        # Rust backend (OpenCode sidecar manager)
 │   └── ui/                   # React admin interface
 │       └── src/
 │           ├── chat/         # Full chat interface

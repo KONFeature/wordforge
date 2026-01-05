@@ -135,7 +135,7 @@ class AbilityRegistry {
 		}
 	}
 
-	public function get_ability_names(): array {
+	public static function get_ability_names(): array {
 		$names = array_merge(
 			array_keys( self::CORE_ABILITIES ),
 			array_keys( self::MEDIA_ABILITIES ),

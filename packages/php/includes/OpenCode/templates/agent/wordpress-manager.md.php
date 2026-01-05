@@ -5,11 +5,12 @@
  * @package WordForge
  * @var array<string, mixed> $context WordPress context from ContextProvider.
  * @var bool $is_local Whether this is for local OpenCode mode.
- * @var bool $is_remote_mcp Whether using remote MCP adapter.
  * @var string $model The model to use for this agent.
  */
 
 defined( 'ABSPATH' ) || exit;
+
+$is_local = $is_local ?? false;
 ?>
 ---
 description: WordPress site orchestrator - delegates to specialized subagents
@@ -18,7 +19,7 @@ temperature: 0.2
 tools:
   write: false
   edit: false
-<?php if ( $is_local ?? false ) : ?>
+<?php if ( $is_local ) : ?>
   bash: false
 <?php endif; ?>
 
@@ -57,46 +58,42 @@ Simple tasks (single lookup, quick update): handle directly.
 
 ## Tools
 
-<?php if ( $is_remote_mcp ?? false ) : ?>
-**Remote MCP**: Use `mcp-adapter/execute-ability` with ability names below.
-
-<?php endif; ?>
 ### Content
-- `wordforge/list-content` - List posts/pages
-- `wordforge/get-content` - Get by ID/slug
-- `wordforge/save-content` - Create/update
-- `wordforge/delete-content` - Delete/trash
+- `wordpress_wordforge-list-content` - List posts/pages
+- `wordpress_wordforge-get-content` - Get by ID/slug
+- `wordpress_wordforge-save-content` - Create/update
+- `wordpress_wordforge-delete-content` - Delete/trash
 
 ### Media
-- `wordforge/list-media`, `wordforge/get-media`, `wordforge/upload-media`, `wordforge/update-media`, `wordforge/delete-media`
+- `wordpress_wordforge-list-media`, `wordpress_wordforge-get-media`, `wordpress_wordforge-upload-media`, `wordpress_wordforge-update-media`, `wordpress_wordforge-delete-media`
 
 ### Taxonomy
-- `wordforge/list-terms`, `wordforge/save-term`, `wordforge/delete-term`
+- `wordpress_wordforge-list-terms`, `wordpress_wordforge-save-term`, `wordpress_wordforge-delete-term`
 
 ### Blocks & Templates
-- `wordforge/get-page-blocks`, `wordforge/update-page-blocks`
-- `wordforge/list-templates`, `wordforge/get-template`, `wordforge/update-template`
+- `wordpress_wordforge-get-page-blocks`, `wordpress_wordforge-update-page-blocks`
+- `wordpress_wordforge-list-templates`, `wordpress_wordforge-get-template`, `wordpress_wordforge-update-template`
 
 ### Styling
-- `wordforge/get-styles`, `wordforge/update-global-styles`
+- `wordpress_wordforge-get-styles`, `wordpress_wordforge-update-global-styles`
 
 ### Users & Comments
-- `wordforge/list-users`, `wordforge/get-user`
-- `wordforge/list-comments`, `wordforge/get-comment`, `wordforge/moderate-comment`
+- `wordpress_wordforge-list-users`, `wordpress_wordforge-get-user`
+- `wordpress_wordforge-list-comments`, `wordpress_wordforge-get-comment`, `wordpress_wordforge-moderate-comment`
 
 ### Settings
-- `wordforge/get-settings`, `wordforge/update-settings`, `wordforge/get-site-stats`
+- `wordpress_wordforge-get-settings`, `wordpress_wordforge-update-settings`, `wordpress_wordforge-get-site-stats`
 
 <?php if ( $context['plugins']['woocommerce_active'] ?? false ) : ?>
 ### WooCommerce
-- `wordforge/list-products`, `wordforge/get-product`, `wordforge/save-product`, `wordforge/delete-product`
-- `wordforge/list-orders`, `wordforge/get-order`, `wordforge/update-order-status`
+- `wordpress_wordforge-list-products`, `wordpress_wordforge-get-product`, `wordpress_wordforge-save-product`, `wordpress_wordforge-delete-product`
+- `wordpress_wordforge-list-orders`, `wordpress_wordforge-get-order`, `wordpress_wordforge-update-order-status`
 
 <?php endif; ?>
 ### AI Prompts
-- `wordforge/generate-content`, `wordforge/review-content`, `wordforge/seo-optimization`
+- `wordpress_wordforge-generate-content`, `wordpress_wordforge-review-content`, `wordpress_wordforge-seo-optimization`
 
-<?php if ( ! ( $is_local ?? false ) ) : ?>
+<?php if ( ! $is_local ) : ?>
 ### CLI (Server Mode)
 <?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>
 WP-CLI available. Use `wp` commands for read-heavy operations.

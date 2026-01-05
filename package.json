@@ -9,7 +9,6 @@
     "stop": "wp-env stop",
     "build": "./build.sh",
     "build:ui": "bun run --filter @wordforge/ui build",
-    "build:mcp": "bun run --filter @wordforge/mcp build",
     "build:desktop": "bun run --filter @wordforge/desktop tauri:build",
     "dev": "bun run --filter @wordforge/ui start",
     "dev:desktop": "bun run --filter @wordforge/desktop tauri:dev",

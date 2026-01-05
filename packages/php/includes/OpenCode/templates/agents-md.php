@@ -2,39 +2,20 @@
 /**
  * AGENTS.md template - Shared LLM instructions for all WordPress agents.
  *
- * Keep this minimal - agent-specific details go in individual agent templates.
- *
  * @package WordForge
- * @var bool $is_local Whether this is for local OpenCode mode (no wp-cli, no bash).
- * @var bool $is_remote_mcp Whether using remote MCP (mcp-adapter/*) vs local MCP (wordpress_*).
+ * @var array<string, mixed> $context WordPress context from ContextProvider.
  */
 
 defined( 'ABSPATH' ) || exit;
-
-$is_local      = $is_local ?? false;
-$is_remote_mcp = $is_remote_mcp ?? false;
 ?>
 # WordForge - WordPress AI Management
 
 You manage WordPress sites via WordForge MCP tools.
 
-<?php if ( $is_remote_mcp ) : ?>
-## Remote MCP
-
-WordPress abilities are accessed through the MCP Adapter:
-
-- `mcp-adapter/discover-abilities` - List all available abilities
-- `mcp-adapter/get-ability-info({ "ability_name": "wordforge/list-content" })` - Get ability details/schema
-- `mcp-adapter/execute-ability({ "ability_name": "wordforge/list-content", "parameters": {...} })` - Execute ability
-
-When unsure about parameters, call `get-ability-info` first.
-
-<?php else : ?>
 ## MCP Tools
 
 Tools use `wordpress_*` naming: `wordpress_list_content`, `wordpress_save_product`, etc.
 
-<?php endif; ?>
 ---
 
 ## Gutenberg Blocks

@@ -804,19 +804,8 @@ class OpenCodeController {
 	}
 
 	public function download_local_config( WP_REST_Request $request ): void {
-		$runtime = $request->get_param( 'runtime' ) ?? LocalServerConfig::RUNTIME_NODE;
-
-		$valid_runtimes = array(
-			LocalServerConfig::RUNTIME_NODE,
-			LocalServerConfig::RUNTIME_BUN,
-			LocalServerConfig::RUNTIME_NONE,
-		);
-		if ( ! in_array( $runtime, $valid_runtimes, true ) ) {
-			$runtime = LocalServerConfig::RUNTIME_NODE;
-		}
-
-		$config = LocalServerConfig::generate( $runtime );
-		$site_name   = \sanitize_title( \get_bloginfo( 'name' ) );
+		$config    = LocalServerConfig::generate();
+		$site_name = \sanitize_title( \get_bloginfo( 'name' ) );
 
 		if ( empty( $site_name ) ) {
 			$site_name = 'wordpress-site';
@@ -833,7 +822,7 @@ class OpenCodeController {
 			exit;
 		}
 
-		LocalServerConfig::write_config_files( $temp_dir, $runtime );
+		LocalServerConfig::write_config_files( $temp_dir );
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $temp_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
@@ -862,14 +851,6 @@ class OpenCodeController {
 			$filepath = $temp_dir . '/' . $file;
 			if ( file_exists( $filepath ) ) {
 				$zip->addFile( $filepath, $file );
-			}
-		}
-
-		$needs_mcp_binary = LocalServerConfig::RUNTIME_NONE !== $runtime;
-		if ( $needs_mcp_binary ) {
-			$mcp_binary_path = LocalServerConfig::get_mcp_server_binary_path();
-			if ( $mcp_binary_path ) {
-				$zip->addFile( $mcp_binary_path, '.opencode/wordforge-mcp.cjs' );
 			}
 		}
 

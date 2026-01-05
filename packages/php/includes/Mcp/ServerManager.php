@@ -6,6 +6,8 @@ namespace WordForge\Mcp;
 
 use WP\MCP\Core\McpAdapter;
 use WP\MCP\Transport\HttpTransport;
+use WP\MCP\Infrastructure\ErrorHandling\ErrorLogMcpErrorHandler;
+use WordForge\AbilityRegistry;
 
 class ServerManager {
 
@@ -18,12 +20,13 @@ class ServerManager {
 
 		$settings = \WordForge\get_settings();
 
+		add_filter( 'mcp_adapter_create_default_server', '__return_false' );
+
 		if ( ! $this->is_enabled( $settings ) ) {
-			add_filter( 'mcp_adapter_create_default_server', '__return_false' );
 			return;
 		}
 
-		add_filter( 'mcp_adapter_default_server_config', array( $this, 'configure_server' ) );
+		add_action( 'mcp_adapter_init', array( $this, 'register_server' ) );
 	}
 
 	private function is_mcp_adapter_available(): bool {
@@ -34,17 +37,57 @@ class ServerManager {
 		return (bool) ( $settings['mcp_enabled'] ?? true );
 	}
 
-	public function configure_server( array $config ): array {
+	public function register_server( McpAdapter $adapter ): void {
 		$settings = \WordForge\get_settings();
 
-		$config['server_id']              = self::SERVER_ID;
-		$config['server_route_namespace'] = $settings['mcp_namespace'] ?? 'wordforge';
-		$config['server_route']           = $settings['mcp_route'] ?? 'mcp';
-		$config['server_name']            = __( 'WordForge MCP Server', 'wordforge' );
-		$config['server_description']     = __( 'WordPress content management, styling, and commerce via MCP', 'wordforge' );
-		$config['server_version']         = WORDFORGE_VERSION;
+		$namespace = $settings['mcp_namespace'] ?? 'wordforge';
+		$route     = $settings['mcp_route'] ?? 'mcp';
 
-		return $config;
+		$abilities = $this->get_registered_abilities();
+
+		$adapter->create_server(
+			self::SERVER_ID,
+			$namespace,
+			$route,
+			__( 'WordForge MCP Server', 'wordforge' ),
+			__( 'AI-powered WordPress content management, styling, and commerce via MCP', 'wordforge' ),
+			WORDFORGE_VERSION,
+			array( HttpTransport::class ),
+			ErrorLogMcpErrorHandler::class,
+			null,
+			$abilities['tools'],
+			array(),
+			$abilities['prompts']
+		);
+	}
+
+	private function get_registered_abilities(): array {
+		$all_names = AbilityRegistry::get_ability_names();
+
+		$tools   = array();
+		$prompts = array();
+
+		foreach ( $all_names as $name ) {
+			$ability = wp_get_ability( $name );
+
+			if ( ! $ability ) {
+				continue;
+			}
+
+			$mcp_meta = $ability->get_meta_item( 'mcp', array() );
+			$mcp_type = $mcp_meta['type'] ?? 'tool';
+
+			if ( 'prompt' === $mcp_type ) {
+				$prompts[] = $name;
+			} else {
+				$tools[] = $name;
+			}
+		}
+
+		return array(
+			'tools'   => $tools,
+			'prompts' => $prompts,
+		);
 	}
 
 	public static function get_endpoint_url( ?array $settings = null ): string {

@@ -4,14 +4,10 @@
  *
  * @package WordForge
  * @var array<string, mixed> $context WordPress context from ContextProvider.
- * @var bool $is_local Whether this is for local OpenCode mode.
- * @var bool $is_remote_mcp Whether using remote MCP adapter.
  * @var string $model The model to use for this agent.
  */
 
 defined( 'ABSPATH' ) || exit;
-
-$is_local = $is_local ?? false;
 ?>
 ---
 description: Content creation specialist - blog posts, landing pages, legal pages with SEO optimization
@@ -169,9 +165,9 @@ Content creation subagent. Creates SEO-optimized WordPress content in Gutenberg 
 
 ## Available Tools
 
-- `wordforge/get-content` - Get existing content for reference
-- `wordforge/list-media` - Find media to reference
-- `wordforge/generate-content` - AI content generation prompt
+- `wordpress_wordforge-get-content` - Get existing content for reference
+- `wordpress_wordforge-list-media` - Find media to reference
+- `wordpress_wordforge-generate-content` - AI content generation prompt
 
 ---
 

@@ -126,8 +126,8 @@ Available WooCommerce operations:
 
 | Tool | Status |
 |------|--------|
-| **WP-CLI** | <?php echo $context['cli_tools']['wp_cli'] ? 'Available ✓' : 'Not available'; ?> |
-| **Composer** | <?php echo $context['cli_tools']['composer'] ? 'Available ✓' : 'Not available'; ?> |
+| **WP-CLI** | <?php echo $context['cli_tools']['wp_cli'] ? 'Available' : 'Not available'; ?> |
+| **Composer** | <?php echo $context['cli_tools']['composer'] ? 'Available' : 'Not available'; ?> |
 
 <?php if ( $context['cli_tools']['wp_cli'] ) : ?>
 **WP-CLI is available**. You can use `wp` commands for:

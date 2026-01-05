@@ -4,8 +4,6 @@
  *
  * @package WordForge
  * @var array<string, mixed> $context WordPress context from ContextProvider.
- * @var bool $is_local Whether this is for local OpenCode mode.
- * @var bool $is_remote_mcp Whether using remote MCP adapter.
  * @var string $model The model to use for this agent.
  */
 
@@ -33,25 +31,21 @@ WooCommerce subagent. Manages products, inventory, pricing.
 
 ## Tools
 
-<?php if ( $is_remote_mcp ?? false ) : ?>
-**Remote MCP**: Use `mcp-adapter/execute-ability` with ability names below.
-
-<?php endif; ?>
 ### Products
-- `wordforge/list-products` - List with filtering
-- `wordforge/get-product` - Get details
-- `wordforge/save-product` - Create/update
-- `wordforge/delete-product` - Delete
+- `wordpress_wordforge-list-products` - List with filtering
+- `wordpress_wordforge-get-product` - Get details
+- `wordpress_wordforge-save-product` - Create/update
+- `wordpress_wordforge-delete-product` - Delete
 
 ### Orders
-- `wordforge/list-orders` - List orders
-- `wordforge/get-order` - Order details
-- `wordforge/update-order-status` - Update status
+- `wordpress_wordforge-list-orders` - List orders
+- `wordpress_wordforge-get-order` - Order details
+- `wordpress_wordforge-update-order-status` - Update status
 
 ### Supporting
-- `wordforge/list-terms` - Product categories/tags
-- `wordforge/save-term` - Create categories
-- `wordforge/upload-media` - Product images
+- `wordpress_wordforge-list-terms` - Product categories/tags
+- `wordpress_wordforge-save-term` - Create categories
+- `wordpress_wordforge-upload-media` - Product images
 
 ---
 
