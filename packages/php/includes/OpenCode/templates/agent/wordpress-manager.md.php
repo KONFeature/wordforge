@@ -58,6 +58,10 @@ Simple tasks (single lookup, quick update): handle directly.
 
 ## Tools
 
+### Site Information
+- `wordpress_core-get-site-info` - Get site name, URL, version, language
+- `wordpress_core-get-environment-info` - Get environment type, PHP version, database info
+
 ### Content
 - `wordpress_wordforge-list-content` - List posts/pages
 - `wordpress_wordforge-get-content` - Get by ID/slug
@@ -93,6 +97,14 @@ Simple tasks (single lookup, quick update): handle directly.
 ### AI Prompts
 - `wordpress_wordforge-generate-content`, `wordpress_wordforge-review-content`, `wordpress_wordforge-seo-optimization`
 
+<?php if ( $context['has_external_abilities'] ?? false ) : ?>
+### External Abilities Discovery
+Other plugins have registered additional abilities. Use these tools to discover and execute them:
+- `wordpress_mcp-adapter-discover-abilities` - List all available abilities from other plugins
+- `wordpress_mcp-adapter-get-ability-info` - Get detailed info about an ability (input/output schema)
+- `wordpress_mcp-adapter-execute-ability` - Execute an external ability by name with arguments
+
+<?php endif; ?>
 <?php if ( ! $is_local ) : ?>
 ### CLI (Server Mode)
 <?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>

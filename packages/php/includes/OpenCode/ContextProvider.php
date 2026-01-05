@@ -15,6 +15,24 @@ namespace WordForge\OpenCode;
 class ContextProvider {
 
 	/**
+	 * Core abilities from the Abilities API that are always present.
+	 */
+	private const CORE_ABILITIES = array(
+		'core/get-site-info',
+		'core/get-user-info',
+		'core/get-environment-info',
+	);
+
+	/**
+	 * MCP Adapter abilities for dynamic ability discovery/execution.
+	 */
+	private const MCP_ADAPTER_ABILITIES = array(
+		'mcp-adapter/discover-abilities',
+		'mcp-adapter/execute-ability',
+		'mcp-adapter/get-ability-info',
+	);
+
+	/**
 	 * Get global WordPress context for OpenCode agents.
 	 *
 	 * This context is injected into agent prompts to give them awareness
@@ -24,11 +42,12 @@ class ContextProvider {
 	 */
 	public static function get_global_context(): array {
 		return array(
-			'site'          => self::get_site_info(),
-			'theme'         => self::get_theme_info(),
-			'plugins'       => self::get_plugins_info(),
-			'content_types' => self::get_content_types(),
-			'cli_tools'     => self::get_cli_tools(),
+			'site'                   => self::get_site_info(),
+			'theme'                  => self::get_theme_info(),
+			'plugins'                => self::get_plugins_info(),
+			'content_types'          => self::get_content_types(),
+			'cli_tools'              => self::get_cli_tools(),
+			'has_external_abilities' => self::has_external_abilities(),
 		);
 	}
 
@@ -168,5 +187,37 @@ class ContextProvider {
 		$check_cmd = PHP_OS_FAMILY === 'Windows' ? 'where' : 'which';
 		exec( "{$check_cmd} {$command} 2>/dev/null", $output, $code );
 		return 0 === $code;
+	}
+
+	/**
+	 * Check if there are external abilities registered beyond core and MCP adapter abilities.
+	 *
+	 * External abilities are those registered by other plugins that provide
+	 * functionality beyond the base WordPress abilities.
+	 *
+	 * @return bool True if external abilities exist.
+	 */
+	private static function has_external_abilities(): bool {
+		if ( ! function_exists( 'wp_get_abilities' ) ) {
+			return false;
+		}
+
+		$all_abilities = wp_get_abilities();
+		$excluded      = array_merge( self::CORE_ABILITIES, self::MCP_ADAPTER_ABILITIES );
+
+		foreach ( $all_abilities as $ability ) {
+			$name = $ability->get_name();
+
+			// Skip WordForge abilities - we're looking for OTHER plugins' abilities.
+			if ( str_starts_with( $name, 'wordforge/' ) ) {
+				continue;
+			}
+
+			if ( ! in_array( $name, $excluded, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

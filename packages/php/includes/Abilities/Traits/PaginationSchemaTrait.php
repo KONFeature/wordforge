@@ -22,9 +22,9 @@ trait PaginationSchemaTrait {
 	/**
 	 * Get common pagination input schema properties.
 	 *
-	 * @param array<string, string> $orderby_options Available orderby values with descriptions.
-	 * @param int                   $max_per_page    Maximum items per page (default 100).
-	 * @param int                   $default_per_page Default items per page (default 20).
+	 * @param array<int|string, string> $orderby_options Available orderby values as simple or associative array.
+	 * @param int                       $max_per_page    Maximum items per page (default 100).
+	 * @param int                       $default_per_page Default items per page (default 20).
 	 * @return array<string, array<string, mixed>>
 	 */
 	protected function get_pagination_input_schema(
@@ -32,9 +32,18 @@ trait PaginationSchemaTrait {
 		int $max_per_page = 100,
 		int $default_per_page = 20
 	): array {
-		$orderby_enum = empty( $orderby_options )
-			? array( 'date', 'title', 'modified', 'id' )
-			: array_keys( $orderby_options );
+		// Handle both simple arrays ['date', 'title'] and associative arrays ['date' => 'By date'].
+		// For simple arrays, use array_values to ensure sequential indices.
+		// For associative arrays, use array_keys to extract the keys as enum values.
+		if ( empty( $orderby_options ) ) {
+			$orderby_enum = array( 'date', 'title', 'modified', 'id' );
+		} elseif ( array_is_list( $orderby_options ) ) {
+			// Simple array like ['date', 'title'] - use values directly.
+			$orderby_enum = array_values( $orderby_options );
+		} else {
+			// Associative array like ['date' => 'Description'] - use keys.
+			$orderby_enum = array_keys( $orderby_options );
+		}
 
 		return array(
 			'per_page' => array(
