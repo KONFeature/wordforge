@@ -143,12 +143,6 @@ jobs:
         shell: bash
         run: chmod +x ./update-version.sh && ./update-version.sh ${{ needs.create-release.outputs.version }}
 
-      - name: Build MCP sidecar
-        env:
-          RUST_TARGET: ${{ matrix.target }}
-        working-directory: packages/desktop
-        run: bun run build:mcp-sidecar
-
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -157,4 +151,4 @@ jobs:
           projectPath: packages/desktop
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --target ${{ matrix.target }} --verbose
-          releaseAssetNamePattern: wordforge-desktop-[platform]-[arch][ext]
+          assetNamePattern: wordforge-desktop-[platform]-[arch][ext]
