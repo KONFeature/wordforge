@@ -239,15 +239,11 @@ abstract class AbstractAbility {
 			'slug'         => $post->post_name,
 			'status'       => $post->post_status,
 			'type'         => $post->post_type,
-			'content'      => $post->post_content,
 			'excerpt'      => $post->post_excerpt,
 			'author'       => (int) $post->post_author,
 			'date'         => $post->post_date,
-			'date_gmt'     => $post->post_date_gmt,
 			'modified'     => $post->post_modified,
-			'modified_gmt' => $post->post_modified_gmt,
 			'parent'       => $post->post_parent,
-			'menu_order'   => $post->menu_order,
 			'permalink'    => get_permalink( $post->ID ),
 		);
 

@@ -32,7 +32,7 @@ class ListTemplates extends AbstractAbility {
 	public function get_description(): string {
 		return __(
 			'List FSE block templates or template parts. Templates=page layouts, parts=reusable sections (header/footer). ' .
-			'USE: Discover available templates before editing with get-template/update-template. ' .
+			'USE: Discover template IDs/slugs, then use get-blocks/update-blocks to read/edit. ' .
 			'NOT FOR: Classic themes (requires FSE/block theme support).',
 			'wordforge'
 		);

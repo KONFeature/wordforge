@@ -32,9 +32,9 @@ class ListContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'List WordPress content metadata (posts, pages, CPTs). Returns ID, title, excerpt, status, date - no full content body. ' .
-			'WORKFLOW: Use this to find content IDs, then call get-content for full details. ' .
-			'NOT FOR: Reading full content (use get-content), creating/editing (use save-content).',
+			'List WordPress content (posts, pages, CPTs). Returns metadata, optionally with taxonomies and custom fields. ' .
+			'USE: Find content, check metadata, get IDs for block editing. ' .
+			'NOT FOR: Block editing (use get-blocks/update-blocks), creating/updating (use save-content).',
 			'wordforge'
 		);
 	}
@@ -53,18 +53,18 @@ class ListContent extends AbstractAbility {
 				array(
 					'post_type' => array(
 						'type'        => 'string',
-						'description' => 'Content type to list: "post" for blog posts, "page" for pages, or any registered custom post type slug.',
+						'description' => 'Content type: "post", "page", or custom post type slug.',
 						'default'     => 'post',
 					),
 					'status'    => array(
 						'type'        => 'string',
-						'description' => 'Filter by publication status.',
+						'description' => 'publish=live, draft=hidden, pending=review, private=admin-only.',
 						'enum'        => array( 'publish', 'draft', 'pending', 'private', 'trash', 'any' ),
 						'default'     => 'any',
 					),
 					'search'    => array(
 						'type'        => 'string',
-						'description' => 'Search term to filter content by title, content, or excerpt.',
+						'description' => 'Search in title, content, excerpt.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
 					),
@@ -82,6 +82,12 @@ class ListContent extends AbstractAbility {
 						'type'        => 'string',
 						'description' => 'Filter posts by tag slug.',
 						'pattern'     => '^[a-z0-9-]+$',
+					),
+					'mode'      => array(
+						'type'        => 'string',
+						'description' => 'simplified=basic metadata, full=includes taxonomies and custom fields.',
+						'enum'        => array( 'simplified', 'full' ),
+						'default'     => 'simplified',
 					),
 				),
 				$this->get_pagination_input_schema(
@@ -119,6 +125,7 @@ class ListContent extends AbstractAbility {
 	 */
 	private function fetch_content( array $args, array $pagination ): array {
 		$post_type = $args['post_type'] ?? 'post';
+		$mode      = $args['mode'] ?? 'simplified';
 
 		$query_args = array(
 			'post_type'      => $post_type,
@@ -148,7 +155,7 @@ class ListContent extends AbstractAbility {
 		$query = new \WP_Query( $query_args );
 
 		$items = array_map(
-			fn( \WP_Post $post ) => $this->format_post_summary( $post ),
+			fn( \WP_Post $post ) => $this->format_post_item( $post, $mode ),
 			$query->posts
 		);
 
@@ -176,16 +183,7 @@ class ListContent extends AbstractAbility {
 		return parent::success( $data, $message );
 	}
 
-	/**
-	 * @return array<string, mixed>
-	 */
-	/**
-	 * Format a post for list responses (metadata only, no full content).
-	 *
-	 * @param \WP_Post $post The post object.
-	 * @return array<string, mixed>
-	 */
-	private function format_post_summary( \WP_Post $post ): array {
+	private function format_post_item( \WP_Post $post, string $mode ): array {
 		$data = array(
 			'id'        => $post->ID,
 			'title'     => $post->post_title,
@@ -204,57 +202,66 @@ class ListContent extends AbstractAbility {
 			$data['featured_image'] = $featured_image;
 		}
 
+		if ( 'full' === $mode ) {
+			$data['taxonomies'] = $this->get_post_taxonomies( $post );
+			$data['meta']       = $this->get_post_meta( $post->ID );
+		}
+
 		return $data;
+	}
+
+	private function get_post_taxonomies( \WP_Post $post ): array {
+		$taxonomies = get_object_taxonomies( $post->post_type, 'names' );
+		$result     = array();
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$terms = get_the_terms( $post->ID, $taxonomy );
+			if ( $terms && ! is_wp_error( $terms ) ) {
+				$result[ $taxonomy ] = array_map(
+					fn( \WP_Term $term ) => array(
+						'id'   => $term->term_id,
+						'name' => $term->name,
+						'slug' => $term->slug,
+					),
+					$terms
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	private function get_post_meta( int $post_id ): array {
+		$meta   = get_post_meta( $post_id );
+		$result = array();
+
+		foreach ( $meta as $key => $values ) {
+			if ( str_starts_with( $key, '_' ) ) {
+				continue;
+			}
+			$result[ $key ] = count( $values ) === 1 ? $values[0] : $values;
+		}
+
+		return $result;
 	}
 
 	private function get_content_item_schema(): array {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'id'             => array(
-					'type'        => 'integer',
-					'description' => 'Unique post ID. Use this with wordforge/get-content to retrieve full content.',
-				),
-				'title'          => array(
-					'type'        => 'string',
-					'description' => 'Content title',
-				),
-				'slug'           => array(
-					'type'        => 'string',
-					'description' => 'URL slug',
-				),
-				'status'         => array(
-					'type'        => 'string',
-					'description' => 'Publication status',
-				),
-				'type'           => array(
-					'type'        => 'string',
-					'description' => 'Post type',
-				),
-				'excerpt'        => array(
-					'type'        => 'string',
-					'description' => 'Content excerpt (summary)',
-				),
-				'author'         => array(
-					'type'        => 'integer',
-					'description' => 'Author user ID',
-				),
-				'date'           => array(
-					'type'        => 'string',
-					'description' => 'Publication date',
-				),
-				'modified'       => array(
-					'type'        => 'string',
-					'description' => 'Last modified date',
-				),
-				'permalink'      => array(
-					'type'        => 'string',
-					'description' => 'Full URL to view content',
-				),
-				'featured_image' => array(
-					'type'        => 'integer',
-					'description' => 'Featured image attachment ID',
-				),
+				'id'             => array( 'type' => 'integer' ),
+				'title'          => array( 'type' => 'string' ),
+				'slug'           => array( 'type' => 'string' ),
+				'status'         => array( 'type' => 'string' ),
+				'type'           => array( 'type' => 'string' ),
+				'excerpt'        => array( 'type' => 'string' ),
+				'author'         => array( 'type' => 'integer' ),
+				'date'           => array( 'type' => 'string' ),
+				'modified'       => array( 'type' => 'string' ),
+				'permalink'      => array( 'type' => 'string' ),
+				'featured_image' => array( 'type' => 'integer' ),
+				'taxonomies'     => array( 'type' => 'object' ),
+				'meta'           => array( 'type' => 'object' ),
 			),
 		);
 	}

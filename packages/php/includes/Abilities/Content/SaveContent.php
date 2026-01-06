@@ -18,9 +18,9 @@ class SaveContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Create or update content. Omit "id" to create new; provide "id" to update existing. Defaults to draft status. ' .
-			'USE: Simple posts, updating titles/excerpts/status, basic HTML content. ' .
-			'NOT FOR: Complex Gutenberg layouts (use update-page-blocks to preserve block structure).',
+			'Create or update content metadata. Omit "id" to create new; provide "id" to update existing. Defaults to draft. ' .
+			'USE: Create content, update title/excerpt/status, manage taxonomies and custom fields. ' .
+			'NOT FOR: Block editing (use update-blocks).',
 			'wordforge'
 		);
 	}
@@ -68,10 +68,6 @@ class SaveContent extends AbstractAbility {
 				'type'        => 'string',
 				'description' => 'Content title. Required for new content.',
 			),
-				'content'        => array(
-					'type'        => 'string',
-					'description' => 'HTML or Gutenberg blocks.',
-				),
 				'excerpt'        => array(
 					'type'        => 'string',
 					'description' => 'Short summary for archives.',
@@ -163,10 +159,6 @@ class SaveContent extends AbstractAbility {
 
 		if ( isset( $args['title'] ) ) {
 			$post_data['post_title'] = sanitize_text_field( $args['title'] );
-		}
-
-		if ( isset( $args['content'] ) ) {
-			$post_data['post_content'] = wp_kses_post( $args['content'] );
 		}
 
 		if ( isset( $args['excerpt'] ) ) {

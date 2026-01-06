@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace WordForge;
 
 use WordForge\Abilities\Content\ListContent;
-use WordForge\Abilities\Content\GetContent;
 use WordForge\Abilities\Content\SaveContent;
 use WordForge\Abilities\Content\DeleteContent;
-use WordForge\Abilities\Blocks\GetPageBlocks;
-use WordForge\Abilities\Blocks\UpdatePageBlocks;
+use WordForge\Abilities\Blocks\GetBlocks;
+use WordForge\Abilities\Blocks\UpdateBlocks;
 use WordForge\Abilities\Styles\GetStyles;
 use WordForge\Abilities\Styles\UpdateGlobalStyles;
 use WordForge\Abilities\Media\ListMedia;
@@ -21,8 +20,6 @@ use WordForge\Abilities\Taxonomy\ListTerms;
 use WordForge\Abilities\Taxonomy\SaveTerm;
 use WordForge\Abilities\Taxonomy\DeleteTerm;
 use WordForge\Abilities\Templates\ListTemplates;
-use WordForge\Abilities\Templates\GetTemplate;
-use WordForge\Abilities\Templates\UpdateTemplate;
 use WordForge\Abilities\Prompts\ContentGeneratorPrompt;
 use WordForge\Abilities\Prompts\ContentReviewPrompt;
 use WordForge\Abilities\Prompts\SEOOptimizationPrompt;
@@ -47,11 +44,10 @@ class AbilityRegistry {
 
 	private const CORE_ABILITIES = array(
 		'wordforge/list-content'         => ListContent::class,
-		'wordforge/get-content'          => GetContent::class,
 		'wordforge/save-content'         => SaveContent::class,
 		'wordforge/delete-content'       => DeleteContent::class,
-		'wordforge/get-page-blocks'      => GetPageBlocks::class,
-		'wordforge/update-page-blocks'   => UpdatePageBlocks::class,
+		'wordforge/get-blocks'           => GetBlocks::class,
+		'wordforge/update-blocks'        => UpdateBlocks::class,
 		'wordforge/get-styles'           => GetStyles::class,
 		'wordforge/update-global-styles' => UpdateGlobalStyles::class,
 	);
@@ -71,9 +67,7 @@ class AbilityRegistry {
 	);
 
 	private const TEMPLATE_ABILITIES = array(
-		'wordforge/list-templates'  => ListTemplates::class,
-		'wordforge/get-template'    => GetTemplate::class,
-		'wordforge/update-template' => UpdateTemplate::class,
+		'wordforge/list-templates' => ListTemplates::class,
 	);
 
 	private const CORE_PROMPTS = array(
