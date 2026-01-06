@@ -165,9 +165,11 @@ Content creation subagent. Creates SEO-optimized WordPress content in Gutenberg 
 
 ## Available Tools
 
-- `wordpress_wordforge-get-content` - Get existing content for reference
-- `wordpress_wordforge-list-media` - Find media to reference
-- `wordpress_wordforge-generate-content` - AI content generation prompt
+- `wordpress_wordforge-content` - Get existing content for reference (pass `id` param for single item)
+- `wordpress_wordforge-media` - Find media to reference (pass `id` param for single item)
+- `wordpress_wordforge-save-content` - Create/update content
+- `wordpress_wordforge-get-blocks` - Get block structure of existing content
+- `wordpress_wordforge-update-blocks` - Update blocks on content
 
 ---
 

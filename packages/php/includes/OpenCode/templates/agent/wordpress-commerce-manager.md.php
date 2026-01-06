@@ -32,20 +32,19 @@ WooCommerce subagent. Manages products, inventory, pricing.
 ## Tools
 
 ### Products
-- `wordpress_wordforge-list-products` - List with filtering
-- `wordpress_wordforge-get-product` - Get details
-- `wordpress_wordforge-save-product` - Create/update
-- `wordpress_wordforge-delete-product` - Delete
+- `wordpress_wordforge-products` - List products, or get single product by ID (pass `id` param for single)
+- `wordpress_wordforge-save-product` - Create/update product
+- `wordpress_wordforge-delete-product` - Delete product
 
 ### Orders
-- `wordpress_wordforge-list-orders` - List orders
-- `wordpress_wordforge-get-order` - Order details
-- `wordpress_wordforge-update-order-status` - Update status
+- `wordpress_wordforge-orders` - List orders, or get single order by ID (pass `id` param for single)
+- `wordpress_wordforge-update-order-status` - Update order status
 
 ### Supporting
-- `wordpress_wordforge-list-terms` - Product categories/tags
-- `wordpress_wordforge-save-term` - Create categories
-- `wordpress_wordforge-upload-media` - Product images
+- `wordpress_wordforge-list-terms` - Product categories/tags (taxonomy: `product_cat`, `product_tag`)
+- `wordpress_wordforge-save-term` - Create/update categories and tags
+- `wordpress_wordforge-media` - Find existing media
+- `wordpress_wordforge-upload-media` - Upload product images
 
 ---
 

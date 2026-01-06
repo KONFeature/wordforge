@@ -39,28 +39,27 @@ Site analysis subagent. Audits SEO, content quality, performance. **READ-ONLY** 
 ## Tools
 
 ### Content Analysis
-- `wordpress_wordforge-list-content` - Content inventory
-- `wordpress_wordforge-get-content` - Quality review
-- `wordpress_wordforge-get-page-blocks` - Structure analysis
-
-### SEO
-- `wordpress_wordforge-seo-optimization` - SEO analysis
-- `wordpress_wordforge-review-content` - Content quality
+- `wordpress_wordforge-content` - Content inventory (list) or single item review (pass `id` param)
+- `wordpress_wordforge-get-blocks` - Block structure analysis for any entity
 
 ### Theme & Config
-- `wordpress_wordforge-get-styles` - Theme styling
-- `wordpress_wordforge-list-templates` - Template structure
+- `wordpress_wordforge-get-styles` - Theme styling review
+- `wordpress_wordforge-list-templates` - Template structure overview
 
-### Other
-- `wordpress_wordforge-list-terms` - Category/tag usage
+### Taxonomy & Comments
+- `wordpress_wordforge-list-terms` - Category/tag usage analysis
+- `wordpress_wordforge-comments` - Comment moderation status (list or single by ID)
+
+### Analytics
 - `wordpress_wordforge-get-site-stats` - Site statistics
-- `wordpress_wordforge-list-comments` - Comment moderation status
+<?php if ( $context['plugins']['jetpack_active'] ?? false ) : ?>
+- `wordpress_wordforge-get-jetpack-stats` - Jetpack analytics (traffic, insights, top posts)
+<?php endif; ?>
 
 <?php if ( $context['plugins']['woocommerce_active'] ?? false ) : ?>
 ### WooCommerce
-- `wordpress_wordforge-list-products` - Product catalog audit
-- `wordpress_wordforge-get-product` - Individual product review
-- `wordpress_wordforge-list-orders` - Order status review
+- `wordpress_wordforge-products` - Product catalog audit (list or single by ID)
+- `wordpress_wordforge-orders` - Order status review (list or single by ID)
 <?php endif; ?>
 
 <?php if ( ! $is_local ) : ?>

@@ -63,39 +63,52 @@ Simple tasks (single lookup, quick update): handle directly.
 - `wordpress_core-get-environment-info` - Get environment type, PHP version, database info
 
 ### Content
-- `wordpress_wordforge-list-content` - List posts/pages
-- `wordpress_wordforge-get-content` - Get by ID/slug
-- `wordpress_wordforge-save-content` - Create/update
-- `wordpress_wordforge-delete-content` - Delete/trash
+- `wordpress_wordforge-content` - List posts/pages, or get single item by ID (pass `id` param for single)
+- `wordpress_wordforge-save-content` - Create/update content
+- `wordpress_wordforge-delete-content` - Delete/trash content
 
 ### Media
-- `wordpress_wordforge-list-media`, `wordpress_wordforge-get-media`, `wordpress_wordforge-upload-media`, `wordpress_wordforge-update-media`, `wordpress_wordforge-delete-media`
+- `wordpress_wordforge-media` - List media, or get single item by ID
+- `wordpress_wordforge-upload-media` - Upload from URL or base64
+- `wordpress_wordforge-update-media` - Update alt text, title, caption
+- `wordpress_wordforge-delete-media` - Delete media item
 
 ### Taxonomy
-- `wordpress_wordforge-list-terms`, `wordpress_wordforge-save-term`, `wordpress_wordforge-delete-term`
+- `wordpress_wordforge-list-terms` - List terms for any taxonomy
+- `wordpress_wordforge-save-term` - Create/update term
+- `wordpress_wordforge-delete-term` - Delete term
 
 ### Blocks & Templates
-- `wordpress_wordforge-get-page-blocks`, `wordpress_wordforge-update-page-blocks`
-- `wordpress_wordforge-list-templates`, `wordpress_wordforge-get-template`, `wordpress_wordforge-update-template`
+- `wordpress_wordforge-get-blocks` - Get blocks from any entity (post, page, template, template part)
+- `wordpress_wordforge-update-blocks` - Update blocks on any entity (auto-detects type)
+- `wordpress_wordforge-list-templates` - List FSE templates and template parts
 
 ### Styling
-- `wordpress_wordforge-get-styles`, `wordpress_wordforge-update-global-styles`
+- `wordpress_wordforge-get-styles` - Get theme global styles
+- `wordpress_wordforge-update-global-styles` - Update global styles
 
 ### Users & Comments
-- `wordpress_wordforge-list-users`, `wordpress_wordforge-get-user`
-- `wordpress_wordforge-list-comments`, `wordpress_wordforge-get-comment`, `wordpress_wordforge-moderate-comment`
+- `wordpress_wordforge-users` - List users, or get single user by ID
+- `wordpress_wordforge-comments` - List comments, or get single comment by ID
+- `wordpress_wordforge-moderate-comment` - Approve/spam/trash comments
 
-### Settings
-- `wordpress_wordforge-get-settings`, `wordpress_wordforge-update-settings`, `wordpress_wordforge-get-site-stats`
+### Settings & Analytics
+- `wordpress_wordforge-get-settings` - Get site settings
+- `wordpress_wordforge-update-settings` - Update settings
+- `wordpress_wordforge-get-site-stats` - Get site statistics
+<?php if ( $context['plugins']['jetpack_active'] ?? false ) : ?>
+- `wordpress_wordforge-get-jetpack-stats` - Get Jetpack analytics
+<?php endif; ?>
 
 <?php if ( $context['plugins']['woocommerce_active'] ?? false ) : ?>
 ### WooCommerce
-- `wordpress_wordforge-list-products`, `wordpress_wordforge-get-product`, `wordpress_wordforge-save-product`, `wordpress_wordforge-delete-product`
-- `wordpress_wordforge-list-orders`, `wordpress_wordforge-get-order`, `wordpress_wordforge-update-order-status`
+- `wordpress_wordforge-products` - List products, or get single product by ID
+- `wordpress_wordforge-save-product` - Create/update product
+- `wordpress_wordforge-delete-product` - Delete product
+- `wordpress_wordforge-orders` - List orders, or get single order by ID
+- `wordpress_wordforge-update-order-status` - Update order status
 
 <?php endif; ?>
-### AI Prompts
-- `wordpress_wordforge-generate-content`, `wordpress_wordforge-review-content`, `wordpress_wordforge-seo-optimization`
 
 <?php if ( $context['has_external_abilities'] ?? false ) : ?>
 ### External Abilities Discovery

@@ -37,9 +37,9 @@ WordForge consists of three packages:
 - **Templates (FSE)** — Manage Full Site Editing templates and template parts
 - **Theme Styling** — Update global styles (theme.json) for colors, typography, spacing
 - **Taxonomy** — Manage categories, tags, and custom taxonomies
-- **WooCommerce** — Full product CRUD (auto-detected when WooCommerce is active)
+- **WooCommerce** — Full product and order management (auto-detected when WooCommerce is active)
 - **Analytics (Jetpack)** — Retrieve traffic stats, insights, top posts, search terms, and more (requires Jetpack)
-- **AI Prompts** — Built-in prompt templates for content generation and SEO optimization
+- **Users & Comments** — User listing and comment moderation
 
 ---
 
@@ -300,8 +300,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/list-content` | List posts, pages, or custom post types with filtering |
-| `wordforge/get-content` | Get a single content item by ID or slug |
+| `wordforge/content` | List posts/pages, or get single item by ID (pass `id` param for single) |
 | `wordforge/save-content` | Create or update content |
 | `wordforge/delete-content` | Delete or trash content |
 
@@ -309,8 +308,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/list-media` | List media library items with filtering |
-| `wordforge/get-media` | Get media details including all sizes |
+| `wordforge/media` | List media items, or get single item by ID |
 | `wordforge/upload-media` | Upload media from URL or base64 |
 | `wordforge/update-media` | Update alt text, title, caption, description |
 | `wordforge/delete-media` | Delete a media item |
@@ -327,24 +325,39 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/get-page-blocks` | Get block structure of a page (full or simplified) |
-| `wordforge/update-page-blocks` | Update page blocks (auto-creates revision) |
+| `wordforge/get-blocks` | Get block structure from any entity (post, page, template, template part) |
+| `wordforge/update-blocks` | Update blocks on any entity (auto-detects type, auto-creates revision) |
 
 ### Templates (FSE)
 
 | Tool | Description |
 |------|-------------|
 | `wordforge/list-templates` | List block templates and template parts |
-| `wordforge/get-template` | Get template with block content |
-| `wordforge/update-template` | Update template content |
+
+*Note: Use `wordforge/get-blocks` and `wordforge/update-blocks` to read/edit template content.*
 
 ### Theme Styling
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/get-global-styles` | Get theme.json global styles |
+| `wordforge/get-styles` | Get theme.json global styles |
 | `wordforge/update-global-styles` | Update global styles (colors, typography, spacing) |
-| `wordforge/get-block-styles` | Get registered block style variations |
+
+### Users & Comments
+
+| Tool | Description |
+|------|-------------|
+| `wordforge/users` | List users, or get single user by ID |
+| `wordforge/comments` | List comments, or get single comment by ID |
+| `wordforge/moderate-comment` | Approve, spam, or trash comments |
+
+### Settings & Analytics
+
+| Tool | Description |
+|------|-------------|
+| `wordforge/get-settings` | Get site settings |
+| `wordforge/update-settings` | Update site settings |
+| `wordforge/get-site-stats` | Get site statistics |
 
 ### WooCommerce
 
@@ -352,10 +365,11 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/list-products` | List products with filtering |
-| `wordforge/get-product` | Get product details |
+| `wordforge/products` | List products, or get single product by ID |
 | `wordforge/save-product` | Create or update a product |
 | `wordforge/delete-product` | Delete a product |
+| `wordforge/orders` | List orders, or get single order by ID |
+| `wordforge/update-order-status` | Update order status |
 
 ### Analytics (Jetpack)
 
@@ -364,14 +378,6 @@ Visit **WordForge → Settings** in WordPress admin to:
 | Tool | Description |
 |------|-------------|
 | `wordforge/get-jetpack-stats` | Retrieve site stats, insights, top posts, search terms, and more |
-
-### AI Prompts
-
-| Prompt | Description |
-|--------|-------------|
-| `wordforge/generate-content` | Generate blog posts, pages with SEO optimization |
-| `wordforge/review-content` | Review and improve existing content |
-| `wordforge/seo-optimization` | Analyze content for SEO improvements |
 
 ---
 
