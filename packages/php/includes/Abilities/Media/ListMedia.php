@@ -28,9 +28,9 @@ class ListMedia extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of media library items (images, documents, videos, audio files) with powerful filtering options. ' .
-			'Filter by MIME type, search by filename/title, filter by author or attached post. Supports pagination for large media libraries. ' .
-			'Use this to browse the media library, find specific files, or get media uploaded by a specific user. Returns up to 100 items per page.',
+			'List media library items with filtering by MIME type, author, or parent post. Returns metadata only. ' .
+			'USE: Browse media, find attachment IDs for content. ' .
+			'NOT FOR: Full media details (use get-media), uploading (use upload-media).',
 			'wordforge'
 		);
 	}

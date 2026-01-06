@@ -53,10 +53,9 @@ class ListUsers extends AbstractAbility {
 	 */
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of WordPress users with powerful filtering options. Filter by role (administrator, editor, author, ' .
-			'contributor, subscriber, or custom roles), search by name/email, and sort by various fields. Supports pagination for ' .
-			'sites with many users. Use this to browse user accounts, find specific users, or audit role assignments. Returns up ' .
-			'to 100 users per page with user details excluding sensitive information like passwords.',
+			'List WordPress users with filtering by role and search. Returns user details (no passwords). ' .
+			'USE: Browse users, find user IDs for content filtering, audit roles. ' .
+			'NOT FOR: Creating/editing users (not supported in WordForge).',
 			'wordforge'
 		);
 	}

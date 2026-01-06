@@ -30,10 +30,9 @@ class GetMedia extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve complete details about a specific media item (image, document, video, etc.) including all available ' .
-			'image sizes, dimensions, file information, and EXIF metadata. For images, returns URLs for all registered sizes ' .
-			'(thumbnail, medium, large, full, etc.). Use this to get media URLs for inserting into content, check file details, ' .
-			'or retrieve metadata before updates.',
+			'Get full details of a media item: all image sizes, dimensions, EXIF metadata. ' .
+			'USE: Get URLs for inserting into content, check details before update-media. ' .
+			'NOT FOR: Browsing media (use list-media), uploading (use upload-media).',
 			'wordforge'
 		);
 	}

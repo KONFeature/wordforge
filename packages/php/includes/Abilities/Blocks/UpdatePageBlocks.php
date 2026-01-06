@@ -21,10 +21,9 @@ class UpdatePageBlocks extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Update the Gutenberg block structure of a page or post. Replaces entire block content with new block array. ' .
-			'CRITICAL WORKFLOW: You MUST call wordforge/get-page-blocks FIRST to retrieve the current structure. Analyze the existing blocks, ' .
-			'modify only the necessary nodes, then submit the complete flat block list here. Blocks use clientId/parentClientId for nesting. ' .
-			'Auto-creates revisions for safety. Use this instead of wordforge/save-content for complex layouts to preserve block reactivity.',
+			'Update Gutenberg blocks of a page/post. Replaces entire block content. Auto-creates revision for safety. ' .
+			'WORKFLOW: Call get-page-blocks first, modify needed blocks, submit complete structure. ' .
+			'NOT FOR: Simple text updates (use save-content), reading blocks (use get-page-blocks).',
 			'wordforge'
 		);
 	}

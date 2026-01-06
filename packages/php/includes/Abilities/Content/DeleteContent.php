@@ -26,10 +26,8 @@ class DeleteContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Delete WordPress content (post, page, or custom post type). By default, content is moved to trash (soft delete) ' .
-			'where it can be restored later. Use force=true for permanent deletion (cannot be undone). Permanently deleting ' .
-			'content also removes all associated metadata, comments, and revisions. Use with caution, especially with force=true. ' .
-			'This is a destructive operation that requires delete_posts capability.',
+			'Delete content by ID. Default: moves to trash (recoverable). Use force=true for permanent deletion. ' .
+			'WARNING: Permanent deletion removes all metadata, comments, and revisions.',
 			'wordforge'
 		);
 	}

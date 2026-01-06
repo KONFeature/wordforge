@@ -30,10 +30,9 @@ class ListComments extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of WordPress comments with filtering by status, post, author, and search. Filter by moderation ' .
-			'status (approved, pending, spam, trash), specific post, or search content. Supports pagination for large ' .
-			'comment collections. Use this to review pending comments, find comments on specific posts, or audit comment ' .
-			'activity. Returns up to 100 comments per page.',
+			'List comments with filtering by status, post, or author. ' .
+			'USE: Review pending comments, find comments on posts, moderation queue. ' .
+			'NOT FOR: Replying/moderating (use moderate-comment), full details (use get-comment).',
 			'wordforge'
 		);
 	}
@@ -54,12 +53,12 @@ class ListComments extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
-					'status'       => array(
-						'type'        => 'string',
-						'description' => 'Filter by comment status.',
-						'enum'        => array( 'approve', 'hold', 'spam', 'trash', 'all' ),
-						'default'     => 'all',
-					),
+				'status'       => array(
+					'type'        => 'string',
+					'description' => 'approve=published, hold=pending moderation, spam/trash=filtered.',
+					'enum'        => array( 'approve', 'hold', 'spam', 'trash', 'all' ),
+					'default'     => 'all',
+				),
 					'post_id'      => array(
 						'type'        => 'integer',
 						'description' => 'Filter by post ID.',

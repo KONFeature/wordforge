@@ -32,10 +32,9 @@ class ListContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Search and browse WordPress content (posts, pages, custom types) with filtering by author, category, tag, or status. ' .
-			'Returns ONLY metadata (ID, title, excerpt, status, date) to keep responses lightweight. ' .
-			'IMPORTANT: To read the full content body of a specific item, you MUST call wordforge/get-content with the ID from this list. ' .
-			'This two-step workflow (search → retrieve) ensures accurate results without overwhelming context.',
+			'List WordPress content metadata (posts, pages, CPTs). Returns ID, title, excerpt, status, date - no full content body. ' .
+			'WORKFLOW: Use this to find content IDs, then call get-content for full details. ' .
+			'NOT FOR: Reading full content (use get-content), creating/editing (use save-content).',
 			'wordforge'
 		);
 	}

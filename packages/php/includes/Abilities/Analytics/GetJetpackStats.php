@@ -27,10 +27,9 @@ class GetJetpackStats extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve Jetpack/WordPress.com traffic analytics including visitors, views, top posts, referrers, ' .
-			'country views, clicks, search terms, and insights. Requires Jetpack to be connected to WordPress.com. ' .
-			'Use resource parameter to fetch specific stats: stats (general), visits, insights, highlights, ' .
-			'clicks, country-views, referrers, top-posts, search-terms.',
+			'Get Jetpack traffic analytics: visitors, views, top posts, referrers, search terms. ' .
+			'Requires Jetpack connected to WordPress.com. Use "resource" to select stat type. ' .
+			'NOT FOR: Sites without Jetpack (will error).',
 			'wordforge'
 		);
 	}

@@ -36,10 +36,9 @@ class GetContent extends AbstractAbility {
 	 */
 	public function get_description(): string {
 		return __(
-			'Retrieve detailed information about a single WordPress content item (post, page, or custom post type). ' .
-			'Can fetch by either post ID or slug. Optionally includes post metadata (custom fields) and taxonomy terms ' .
-			'(categories, tags). Use this to view full content details, check current values before updates, or retrieve ' .
-			'content for editing. Returns complete content including all fields from the WordPress post object.',
+			'Get full details of a single content item by ID or slug. Returns complete content body, metadata, and taxonomies. ' .
+			'USE: After list-content to get full body, before save-content to check current values. ' .
+			'NOT FOR: Browsing multiple items (use list-content), block editing (use get-page-blocks).',
 			'wordforge'
 		);
 	}

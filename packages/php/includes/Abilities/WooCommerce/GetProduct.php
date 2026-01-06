@@ -22,10 +22,9 @@ class GetProduct extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve complete details about a specific WooCommerce product. Can fetch by product ID or SKU. Returns full product data ' .
-			'including pricing, inventory, dimensions, images, categories, attributes, and metadata. For variable products, optionally ' .
-			'includes all variations with their specific attributes and pricing. Use this to view product details before updates or to ' .
-			'extract product information for external systems.',
+			'Get full product details by ID or SKU. Returns pricing, inventory, images, attributes, metadata. ' .
+			'For variable products, set include_variations=true to get all variations. ' .
+			'NOT FOR: Browsing products (use list-products), editing (use save-product).',
 			'wordforge'
 		);
 	}

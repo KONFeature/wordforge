@@ -31,9 +31,9 @@ class ListTemplates extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'List block templates and template parts for Full Site Editing (FSE) themes. Templates define page layouts (index, single, archive, etc.). ' .
-			'Template parts are reusable sections (header, footer, sidebar). Shows both theme-provided and custom user templates. Filter template ' .
-			'parts by area (header/footer/sidebar). Use this to discover available templates or template parts before editing. Requires FSE theme support.',
+			'List FSE block templates or template parts. Templates=page layouts, parts=reusable sections (header/footer). ' .
+			'USE: Discover available templates before editing with get-template/update-template. ' .
+			'NOT FOR: Classic themes (requires FSE/block theme support).',
 			'wordforge'
 		);
 	}
@@ -79,11 +79,12 @@ class ListTemplates extends AbstractAbility {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'type' => array(
-					'type'    => 'string',
-					'enum'    => array( 'wp_template', 'wp_template_part' ),
-					'default' => 'wp_template',
-				),
+			'type' => array(
+				'type'        => 'string',
+				'description' => 'wp_template=page layouts, wp_template_part=reusable sections (header/footer).',
+				'enum'        => array( 'wp_template', 'wp_template_part' ),
+				'default'     => 'wp_template',
+			),
 				'area' => array(
 					'type'        => 'string',
 					'description' => 'Filter template parts by area (header, footer, sidebar, etc.).',

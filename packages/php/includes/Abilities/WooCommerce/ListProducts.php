@@ -51,16 +51,18 @@ class ListProducts extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
-					'status'   => array(
-						'type'    => 'string',
-						'enum'    => array( 'publish', 'draft', 'pending', 'private', 'trash', 'any' ),
-						'default' => 'any',
-					),
-					'type'     => array(
-						'type'    => 'string',
-						'enum'    => array( 'simple', 'variable', 'grouped', 'external', 'any' ),
-						'default' => 'any',
-					),
+				'status'   => array(
+					'type'        => 'string',
+					'description' => 'publish=live, draft=hidden, pending=review, private=admin-only.',
+					'enum'        => array( 'publish', 'draft', 'pending', 'private', 'trash', 'any' ),
+					'default'     => 'any',
+				),
+				'type'     => array(
+					'type'        => 'string',
+					'description' => 'simple=standard, variable=has variations, grouped=bundle, external=affiliate.',
+					'enum'        => array( 'simple', 'variable', 'grouped', 'external', 'any' ),
+					'default'     => 'any',
+				),
 					'category' => array(
 						'type'        => 'string',
 						'description' => 'Product category slug.',

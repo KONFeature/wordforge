@@ -28,10 +28,9 @@ class ListTerms extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Retrieve a list of taxonomy terms (categories, tags, product categories, or custom taxonomies) with powerful filtering. ' .
-			'Filter by parent term, search by name, hide/show empty terms, and control sorting. Returns up to 500 terms. ' .
-			'Use this to browse available terms, find specific categories/tags, or build navigation menus from taxonomy hierarchies. ' .
-			'Each term includes post count, parent info, and full details.',
+			'List taxonomy terms (categories, tags, product_cat, or custom). Filter by parent, search, hide empty. ' .
+			'USE: Browse terms, find term IDs/slugs for content filtering. ' .
+			'NOT FOR: Creating terms (use save-term), assigning to content (use save-content).',
 			'wordforge'
 		);
 	}

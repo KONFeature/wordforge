@@ -18,10 +18,9 @@ class SaveContent extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Create or update WordPress content (posts, pages, custom post types). Omit "id" to create new; provide "id" to update existing. ' .
-			'IMPORTANT: Use this for simple Classic Editor posts, updating titles/excerpts/status, or basic HTML content. ' .
-			'DO NOT use this for complex Gutenberg layouts with multiple blocks - use wordforge/update-page-blocks instead to preserve block structure. ' .
-			'Passing raw HTML to "content" will overwrite any existing block layout. New content defaults to draft status.',
+			'Create or update content. Omit "id" to create new; provide "id" to update existing. Defaults to draft status. ' .
+			'USE: Simple posts, updating titles/excerpts/status, basic HTML content. ' .
+			'NOT FOR: Complex Gutenberg layouts (use update-page-blocks to preserve block structure).',
 			'wordforge'
 		);
 	}
@@ -65,9 +64,10 @@ class SaveContent extends AbstractAbility {
 					'description' => 'Post ID to update. Omit to create new.',
 					'minimum'     => 1,
 				),
-				'title'          => array(
-					'type' => 'string',
-				),
+			'title'          => array(
+				'type'        => 'string',
+				'description' => 'Content title. Required for new content.',
+			),
 				'content'        => array(
 					'type'        => 'string',
 					'description' => 'HTML or Gutenberg blocks.',

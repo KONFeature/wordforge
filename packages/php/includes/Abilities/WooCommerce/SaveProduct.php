@@ -65,9 +65,10 @@ class SaveProduct extends AbstractAbility {
 					'description' => 'Product ID to update. Omit to create new.',
 					'minimum'     => 1,
 				),
-				'name'              => array(
-					'type' => 'string',
-				),
+			'name'              => array(
+				'type'        => 'string',
+				'description' => 'Product name. Required for new products.',
+			),
 				'type'              => array(
 					'type'        => 'string',
 					'description' => 'Product type. Only applies to new products.',

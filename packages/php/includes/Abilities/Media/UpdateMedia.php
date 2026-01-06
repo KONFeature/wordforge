@@ -26,10 +26,9 @@ class UpdateMedia extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'Update media metadata including alt text, title, caption, description, and parent attachment. Supports partial updates - ' .
-			'only provide fields you want to change. Alt text is CRITICAL for SEO and accessibility (screen readers). Captions appear ' .
-			'below images in content. Use this to improve SEO, add accessibility information, or reorganize media by changing attachments. ' .
-			'Cannot modify the actual file - only metadata.',
+			'Update media metadata: alt text, title, caption, description. Partial updates supported. ' .
+			'Alt text is critical for SEO/accessibility. Cannot modify the file itself. ' .
+			'NOT FOR: Uploading new files (use upload-media), replacing files.',
 			'wordforge'
 		);
 	}
