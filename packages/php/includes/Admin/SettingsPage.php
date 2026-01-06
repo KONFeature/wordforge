@@ -109,8 +109,8 @@ class SettingsPage {
 		$server_status = ServerProcess::get_status();
 		$abilities     = $this->get_registered_abilities();
 
-		$exec_capabilities  = ExecCapability::get_capabilities();
-		$local_settings     = LocalServerConfig::get_settings();
+		$exec_capabilities = ExecCapability::get_capabilities();
+		$local_settings    = LocalServerConfig::get_settings();
 
 		$config = array(
 			'restUrl'             => \rest_url( 'wordforge/v1' ),

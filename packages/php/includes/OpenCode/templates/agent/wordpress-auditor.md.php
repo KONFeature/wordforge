@@ -17,10 +17,10 @@ description: Site analysis specialist - SEO audits, content reviews, performance
 mode: subagent
 temperature: 0.1
 tools:
-  write: false
-  edit: false
+	write: false
+	edit: false
 <?php if ( $is_local ) : ?>
-  bash: false
+	bash: false
 <?php endif; ?>
 <?php if ( ! empty( $model ) ) : ?>
 model: <?php echo $model; ?>
@@ -65,7 +65,7 @@ Site analysis subagent. Audits SEO, content quality, performance. **READ-ONLY** 
 
 <?php if ( ! $is_local ) : ?>
 ### CLI (Read-Only)
-<?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>
+	<?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>
 - `wp option list`, `wp post list`, `wp plugin list`, `wp theme list`
 <?php endif; ?>
 - File reading: `cat`, `grep`, `find`, `ls`

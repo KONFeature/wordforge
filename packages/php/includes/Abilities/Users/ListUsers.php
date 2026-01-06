@@ -1,7 +1,5 @@
 <?php
 /**
- * List Users Ability - List WordPress users with filtering.
- *
  * @package WordForge
  */
 
@@ -12,68 +10,35 @@ namespace WordForge\Abilities\Users;
 use WordForge\Abilities\AbstractAbility;
 use WordForge\Abilities\Traits\PaginationSchemaTrait;
 
-/**
- * List WordPress users with role filtering, search, and pagination.
- */
 class ListUsers extends AbstractAbility {
 
 	use PaginationSchemaTrait;
 
-	/**
-	 * Get the category slug.
-	 *
-	 * @return string
-	 */
 	public function get_category(): string {
 		return 'wordforge-users';
 	}
 
-	/**
-	 * This ability only reads data.
-	 *
-	 * @return bool
-	 */
 	protected function is_read_only(): bool {
 		return true;
 	}
 
-	/**
-	 * Get the ability title.
-	 *
-	 * @return string
-	 */
 	public function get_title(): string {
-		return __( 'List Users', 'wordforge' );
+		return __( 'Users', 'wordforge' );
 	}
 
-	/**
-	 * Get the ability description.
-	 *
-	 * @return string
-	 */
 	public function get_description(): string {
 		return __(
-			'List WordPress users with filtering by role and search. Returns user details (no passwords). ' .
-			'USE: Browse users, find user IDs for content filtering, audit roles. ' .
-			'NOT FOR: Creating/editing users (not supported in WordForge).',
+			'Get a single user by ID, login, or email (with optional metadata/capabilities) or list users with filtering. ' .
+			'USE: View user details, browse users, check roles. ' .
+			'NOT FOR: Creating/editing users (not supported).',
 			'wordforge'
 		);
 	}
 
-	/**
-	 * Get the required capability.
-	 *
-	 * @return string
-	 */
 	public function get_capability(): string {
 		return 'list_users';
 	}
 
-	/**
-	 * Get the output schema.
-	 *
-	 * @return array<string, mixed>
-	 */
 	public function get_output_schema(): array {
 		return $this->get_pagination_output_schema(
 			$this->get_user_item_schema(),
@@ -81,32 +46,52 @@ class ListUsers extends AbstractAbility {
 		);
 	}
 
-	/**
-	 * Get the input schema.
-	 *
-	 * @return array<string, mixed>
-	 */
 	public function get_input_schema(): array {
 		return array(
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
-					'role'    => array(
-						'type'        => 'string',
-						'description' => 'Filter by user role slug (e.g., "administrator", "editor", "author", "subscriber").',
+					'id'           => array(
+						'type'        => 'integer',
+						'description' => 'User ID. When provided, returns full details for that single user. Omit to list users.',
+						'minimum'     => 1,
 					),
-					'search'  => array(
+					'login'        => array(
 						'type'        => 'string',
-						'description' => 'Search users by name, email, or username. Searches across display name, user login, email, and nicename.',
+						'description' => 'Username to look up (alternative to id for single user).',
+						'minLength'   => 1,
+					),
+					'email'        => array(
+						'type'        => 'string',
+						'description' => 'Email to look up (alternative to id for single user).',
+						'format'      => 'email',
+					),
+					'include_meta' => array(
+						'type'        => 'boolean',
+						'description' => 'When fetching single user, include user metadata.',
+						'default'     => false,
+					),
+					'include_caps' => array(
+						'type'        => 'boolean',
+						'description' => 'When fetching single user, include capabilities list.',
+						'default'     => false,
+					),
+					'role'         => array(
+						'type'        => 'string',
+						'description' => 'Filter by user role slug (e.g., "administrator", "editor").',
+					),
+					'search'       => array(
+						'type'        => 'string',
+						'description' => 'Search users by name, email, or username.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
 					),
-					'include' => array(
+					'include'      => array(
 						'type'        => 'array',
 						'items'       => array( 'type' => 'integer' ),
 						'description' => 'Array of specific user IDs to include.',
 					),
-					'exclude' => array(
+					'exclude'      => array(
 						'type'        => 'array',
 						'items'       => array( 'type' => 'integer' ),
 						'description' => 'Array of user IDs to exclude from results.',
@@ -119,13 +104,123 @@ class ListUsers extends AbstractAbility {
 		);
 	}
 
-	/**
-	 * Execute the ability.
-	 *
-	 * @param array<string, mixed> $args The input arguments.
-	 * @return array<string, mixed>
-	 */
 	public function execute( array $args ): array {
+		if ( ! empty( $args['id'] ) || ! empty( $args['login'] ) || ! empty( $args['email'] ) ) {
+			return $this->get_single_user( $args );
+		}
+
+		return $this->list_users( $args );
+	}
+
+	protected function get_single_user( array $args ): array {
+		$user = $this->find_user( $args );
+
+		if ( ! $user ) {
+			return $this->error( 'User not found.', 'not_found' );
+		}
+
+		$data = $this->format_user_detailed( $user );
+
+		if ( ! empty( $args['include_meta'] ) ) {
+			$data['meta'] = $this->get_user_meta( $user->ID );
+		}
+
+		if ( ! empty( $args['include_caps'] ) ) {
+			$data['capabilities'] = array_keys( array_filter( $user->allcaps ) );
+		}
+
+		return $this->paginated_success(
+			array( $data ),
+			1,
+			1,
+			array(
+				'page'     => 1,
+				'per_page' => 1,
+			)
+		);
+	}
+
+	protected function find_user( array $args ): ?\WP_User {
+		if ( ! empty( $args['id'] ) ) {
+			$user = get_user_by( 'id', (int) $args['id'] );
+			return $user instanceof \WP_User ? $user : null;
+		}
+
+		if ( ! empty( $args['login'] ) ) {
+			$user = get_user_by( 'login', sanitize_user( $args['login'] ) );
+			return $user instanceof \WP_User ? $user : null;
+		}
+
+		if ( ! empty( $args['email'] ) ) {
+			$user = get_user_by( 'email', sanitize_email( $args['email'] ) );
+			return $user instanceof \WP_User ? $user : null;
+		}
+
+		return null;
+	}
+
+	protected function format_user_detailed( \WP_User $user ): array {
+		return array(
+			'id'           => $user->ID,
+			'login'        => $user->user_login,
+			'email'        => $user->user_email,
+			'display_name' => $user->display_name,
+			'first_name'   => $user->first_name,
+			'last_name'    => $user->last_name,
+			'nickname'     => $user->nickname,
+			'description'  => $user->description,
+			'roles'        => $user->roles,
+			'registered'   => $user->user_registered,
+			'url'          => $user->user_url,
+			'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
+			'post_count'   => (int) count_user_posts( $user->ID ),
+			'locale'       => get_user_locale( $user->ID ),
+		);
+	}
+
+	protected function get_user_meta( int $user_id ): array {
+		$all_meta = get_user_meta( $user_id );
+		$filtered = array();
+
+		$excluded_keys = array(
+			'wp_capabilities',
+			'wp_user_level',
+			'session_tokens',
+			'rich_editing',
+			'syntax_highlighting',
+			'comment_shortcuts',
+			'admin_color',
+			'use_ssl',
+			'show_admin_bar_front',
+			'locale',
+			'dismissed_wp_pointers',
+			'show_welcome_panel',
+			'meta-box-order_dashboard',
+			'metaboxhidden_dashboard',
+			'closedpostboxes_dashboard',
+			'managenav-menuscolumnshidden',
+		);
+
+		foreach ( $all_meta as $key => $value ) {
+			if ( str_starts_with( $key, '_' ) ) {
+				continue;
+			}
+
+			if ( in_array( $key, $excluded_keys, true ) ) {
+				continue;
+			}
+
+			if ( preg_match( '/^[a-z0-9_]+_capabilities$/', $key ) || preg_match( '/^[a-z0-9_]+_user_level$/', $key ) ) {
+				continue;
+			}
+
+			$filtered[ $key ] = maybe_unserialize( $value[0] ?? '' );
+		}
+
+		return $filtered;
+	}
+
+	protected function list_users( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args );
 
 		$query_args = array(
@@ -165,12 +260,6 @@ class ListUsers extends AbstractAbility {
 		return $this->paginated_success( $items, $total, $total_pages, $pagination );
 	}
 
-	/**
-	 * Map orderby field to WP_User_Query format.
-	 *
-	 * @param string $orderby The orderby field.
-	 * @return string
-	 */
 	private function map_orderby( string $orderby ): string {
 		$map = array(
 			'registered'   => 'registered',
@@ -183,12 +272,6 @@ class ListUsers extends AbstractAbility {
 		return $map[ $orderby ] ?? 'registered';
 	}
 
-	/**
-	 * Format a user for response.
-	 *
-	 * @param \WP_User $user The user object.
-	 * @return array<string, mixed>
-	 */
 	private function format_user( \WP_User $user ): array {
 		return array(
 			'id'           => $user->ID,
@@ -206,11 +289,6 @@ class ListUsers extends AbstractAbility {
 		);
 	}
 
-	/**
-	 * Get the user item schema.
-	 *
-	 * @return array<string, mixed>
-	 */
 	private function get_user_item_schema(): array {
 		return array(
 			'type'       => 'object',

@@ -23,14 +23,14 @@ class ListMedia extends AbstractAbility {
 	}
 
 	public function get_title(): string {
-		return __( 'List Media', 'wordforge' );
+		return __( 'Media', 'wordforge' );
 	}
 
 	public function get_description(): string {
 		return __(
-			'List media library items with filtering by MIME type, author, or parent post. Returns metadata only. ' .
-			'USE: Browse media, find attachment IDs for content. ' .
-			'NOT FOR: Full media details (use get-media), uploading (use upload-media).',
+			'Get a single media item by ID (full details with all sizes, EXIF metadata) or list media library items with filtering. ' .
+			'USE: Get media details, browse library, find attachment IDs for content. ' .
+			'NOT FOR: Uploading (use upload-media), updating (use update-media).',
 			'wordforge'
 		);
 	}
@@ -51,6 +51,10 @@ class ListMedia extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
+					'id'         => array(
+						'type'        => 'integer',
+						'description' => 'Media/attachment ID. When provided, returns full details for that single item (all sizes, EXIF metadata). Omit to list media.',
+					),
 					'mime_type'  => array(
 						'type'        => 'string',
 						'description' => 'Filter by MIME type (image, video, audio, application, or specific like image/jpeg).',
@@ -81,6 +85,87 @@ class ListMedia extends AbstractAbility {
 	}
 
 	public function execute( array $args ): array {
+		if ( ! empty( $args['id'] ) ) {
+			return $this->get_single_media( (int) $args['id'] );
+		}
+
+		return $this->list_media( $args );
+	}
+
+	protected function get_single_media( int $attachment_id ): array {
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return $this->error( 'Media not found.', 'not_found' );
+		}
+
+		$metadata  = wp_get_attachment_metadata( $attachment_id );
+		$file_path = get_attached_file( $attachment_id );
+
+		$sizes = array();
+		if ( wp_attachment_is_image( $attachment_id ) ) {
+			$registered_sizes = get_intermediate_image_sizes();
+			foreach ( $registered_sizes as $size ) {
+				$image_data = wp_get_attachment_image_src( $attachment_id, $size );
+				if ( $image_data ) {
+					$sizes[ $size ] = array(
+						'url'    => $image_data[0],
+						'width'  => $image_data[1],
+						'height' => $image_data[2],
+					);
+				}
+			}
+			$full_data = wp_get_attachment_image_src( $attachment_id, 'full' );
+			if ( $full_data ) {
+				$sizes['full'] = array(
+					'url'    => $full_data[0],
+					'width'  => $full_data[1],
+					'height' => $full_data[2],
+				);
+			}
+		}
+
+		$data = array(
+			'id'          => $attachment_id,
+			'title'       => $attachment->post_title,
+			'filename'    => basename( $file_path ),
+			'url'         => wp_get_attachment_url( $attachment_id ),
+			'alt'         => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'caption'     => $attachment->post_excerpt,
+			'description' => $attachment->post_content,
+			'mime_type'   => $attachment->post_mime_type,
+			'date'        => $attachment->post_date,
+			'modified'    => $attachment->post_modified,
+			'author'      => (int) $attachment->post_author,
+			'parent'      => $attachment->post_parent,
+			'sizes'       => $sizes,
+			'metadata'    => array(
+				'image_meta' => $metadata['image_meta'] ?? array(),
+			),
+		);
+
+		if ( isset( $metadata['width'] ) ) {
+			$data['width'] = $metadata['width'];
+		}
+		if ( isset( $metadata['height'] ) ) {
+			$data['height'] = $metadata['height'];
+		}
+		if ( file_exists( $file_path ) ) {
+			$data['filesize'] = filesize( $file_path );
+		}
+
+		return $this->paginated_success(
+			array( $data ),
+			1,
+			1,
+			array(
+				'page'     => 1,
+				'per_page' => 1,
+			)
+		);
+	}
+
+	protected function list_media( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args );
 
 		$query_args = array(

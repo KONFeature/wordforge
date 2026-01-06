@@ -1,6 +1,6 @@
 <?php
 /**
- * List Content Ability - List posts, pages, or custom post types.
+ * Content Ability - List or get WordPress content (posts, pages, CPTs).
  *
  * @package WordForge
  */
@@ -27,13 +27,13 @@ class ListContent extends AbstractAbility {
 	}
 
 	public function get_title(): string {
-		return __( 'List Content', 'wordforge' );
+		return __( 'Content', 'wordforge' );
 	}
 
 	public function get_description(): string {
 		return __(
-			'List WordPress content (posts, pages, CPTs). Returns metadata, optionally with taxonomies and custom fields. ' .
-			'USE: Find content, check metadata, get IDs for block editing. ' .
+			'List or get WordPress content (posts, pages, CPTs). Provide "id" or "slug" to get a single item with full details; ' .
+			'omit both to list/search content. Returns metadata, taxonomies, custom fields. ' .
 			'NOT FOR: Block editing (use get-blocks/update-blocks), creating/updating (use save-content).',
 			'wordforge'
 		);
@@ -41,8 +41,24 @@ class ListContent extends AbstractAbility {
 
 	public function get_output_schema(): array {
 		return $this->get_pagination_output_schema(
-			$this->get_content_item_schema(),
-			'Array of content items matching the query filters. Empty array if no matches found.'
+			array(
+				'type'       => 'object',
+				'properties' => array(
+					'id'         => array( 'type' => 'integer' ),
+					'title'      => array( 'type' => 'string' ),
+					'slug'       => array( 'type' => 'string' ),
+					'status'     => array( 'type' => 'string' ),
+					'type'       => array( 'type' => 'string' ),
+					'excerpt'    => array( 'type' => 'string' ),
+					'author'     => array( 'type' => 'integer' ),
+					'date'       => array( 'type' => 'string' ),
+					'modified'   => array( 'type' => 'string' ),
+					'permalink'  => array( 'type' => 'string' ),
+					'taxonomies' => array( 'type' => 'object' ),
+					'meta'       => array( 'type' => 'object' ),
+				),
+			),
+			'Content items.'
 		);
 	}
 
@@ -51,6 +67,16 @@ class ListContent extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
+					'id'        => array(
+						'type'        => 'integer',
+						'description' => 'Content ID. If provided, returns single item with full details.',
+						'minimum'     => 1,
+					),
+					'slug'      => array(
+						'type'        => 'string',
+						'description' => 'Content slug. If provided (and no id), returns single item with full details.',
+						'pattern'     => '^[a-z0-9-]+$',
+					),
 					'post_type' => array(
 						'type'        => 'string',
 						'description' => 'Content type: "post", "page", or custom post type slug.',
@@ -83,12 +109,6 @@ class ListContent extends AbstractAbility {
 						'description' => 'Filter posts by tag slug.',
 						'pattern'     => '^[a-z0-9-]+$',
 					),
-					'mode'      => array(
-						'type'        => 'string',
-						'description' => 'simplified=basic metadata, full=includes taxonomies and custom fields.',
-						'enum'        => array( 'simplified', 'full' ),
-						'default'     => 'simplified',
-					),
 				),
 				$this->get_pagination_input_schema(
 					array( 'date', 'title', 'modified', 'menu_order', 'id' )
@@ -98,6 +118,53 @@ class ListContent extends AbstractAbility {
 	}
 
 	public function execute( array $args ): array {
+		if ( ! empty( $args['id'] ) || ! empty( $args['slug'] ) ) {
+			return $this->get_single_content( $args );
+		}
+
+		return $this->list_content( $args );
+	}
+
+	private function get_single_content( array $args ): array {
+		$post_type = $args['post_type'] ?? 'post';
+
+		if ( ! empty( $args['id'] ) ) {
+			$post = get_post( (int) $args['id'] );
+		} else {
+			$posts = get_posts(
+				array(
+					'name'           => $args['slug'],
+					'post_type'      => $post_type,
+					'post_status'    => 'any',
+					'posts_per_page' => 1,
+				)
+			);
+			$post  = $posts[0] ?? null;
+		}
+
+		if ( ! $post ) {
+			return $this->error( 'Content not found.', 'not_found' );
+		}
+
+		if ( ! empty( $args['id'] ) && 'post' !== $post_type && $post->post_type !== $post_type ) {
+			return $this->error(
+				sprintf( 'Content #%d is type "%s", not "%s".', $args['id'], $post->post_type, $post_type ),
+				'type_mismatch'
+			);
+		}
+
+		return $this->paginated_success(
+			array( $this->format_single_content( $post ) ),
+			1,
+			1,
+			array(
+				'page'     => 1,
+				'per_page' => 1,
+			)
+		);
+	}
+
+	private function list_content( array $args ): array {
 		$post_type = $args['post_type'] ?? 'post';
 
 		if ( ! post_type_exists( $post_type ) ) {
@@ -118,14 +185,8 @@ class ListContent extends AbstractAbility {
 		);
 	}
 
-	/**
-	 * @param array<string, mixed> $args       Input arguments.
-	 * @param array<string, mixed> $pagination Normalized pagination args.
-	 * @return array<string, mixed>
-	 */
 	private function fetch_content( array $args, array $pagination ): array {
 		$post_type = $args['post_type'] ?? 'post';
-		$mode      = $args['mode'] ?? 'simplified';
 
 		$query_args = array(
 			'post_type'      => $post_type,
@@ -155,7 +216,7 @@ class ListContent extends AbstractAbility {
 		$query = new \WP_Query( $query_args );
 
 		$items = array_map(
-			fn( \WP_Post $post ) => $this->format_post_item( $post, $mode ),
+			fn( \WP_Post $post ) => $this->format_list_item( $post ),
 			$query->posts
 		);
 
@@ -167,10 +228,6 @@ class ListContent extends AbstractAbility {
 		);
 	}
 
-	/**
-	 * @param mixed $data Cached data.
-	 * @return array<string, mixed>
-	 */
 	protected function success( mixed $data, string $message = '' ): array {
 		if ( is_array( $data ) && isset( $data['items'], $data['pagination'] ) ) {
 			return $this->paginated_success(
@@ -183,7 +240,7 @@ class ListContent extends AbstractAbility {
 		return parent::success( $data, $message );
 	}
 
-	private function format_post_item( \WP_Post $post, string $mode ): array {
+	private function format_list_item( \WP_Post $post ): array {
 		$data = array(
 			'id'        => $post->ID,
 			'title'     => $post->post_title,
@@ -202,9 +259,29 @@ class ListContent extends AbstractAbility {
 			$data['featured_image'] = $featured_image;
 		}
 
-		if ( 'full' === $mode ) {
-			$data['taxonomies'] = $this->get_post_taxonomies( $post );
-			$data['meta']       = $this->get_post_meta( $post->ID );
+		return $data;
+	}
+
+	private function format_single_content( \WP_Post $post ): array {
+		$data = array(
+			'id'         => $post->ID,
+			'title'      => $post->post_title,
+			'slug'       => $post->post_name,
+			'status'     => $post->post_status,
+			'type'       => $post->post_type,
+			'excerpt'    => $post->post_excerpt,
+			'author'     => (int) $post->post_author,
+			'date'       => $post->post_date,
+			'modified'   => $post->post_modified,
+			'parent'     => $post->post_parent,
+			'permalink'  => get_permalink( $post->ID ),
+			'taxonomies' => $this->get_post_taxonomies( $post ),
+			'meta'       => $this->get_post_meta( $post->ID ),
+		);
+
+		$featured_image = get_post_thumbnail_id( $post->ID );
+		if ( $featured_image ) {
+			$data['featured_image'] = $featured_image;
 		}
 
 		return $data;
@@ -243,26 +320,5 @@ class ListContent extends AbstractAbility {
 		}
 
 		return $result;
-	}
-
-	private function get_content_item_schema(): array {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'id'             => array( 'type' => 'integer' ),
-				'title'          => array( 'type' => 'string' ),
-				'slug'           => array( 'type' => 'string' ),
-				'status'         => array( 'type' => 'string' ),
-				'type'           => array( 'type' => 'string' ),
-				'excerpt'        => array( 'type' => 'string' ),
-				'author'         => array( 'type' => 'integer' ),
-				'date'           => array( 'type' => 'string' ),
-				'modified'       => array( 'type' => 'string' ),
-				'permalink'      => array( 'type' => 'string' ),
-				'featured_image' => array( 'type' => 'integer' ),
-				'taxonomies'     => array( 'type' => 'object' ),
-				'meta'           => array( 'type' => 'object' ),
-			),
-		);
 	}
 }

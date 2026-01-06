@@ -79,12 +79,12 @@ class ListTemplates extends AbstractAbility {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-			'type' => array(
-				'type'        => 'string',
-				'description' => 'wp_template=page layouts, wp_template_part=reusable sections (header/footer).',
-				'enum'        => array( 'wp_template', 'wp_template_part' ),
-				'default'     => 'wp_template',
-			),
+				'type' => array(
+					'type'        => 'string',
+					'description' => 'wp_template=page layouts, wp_template_part=reusable sections (header/footer).',
+					'enum'        => array( 'wp_template', 'wp_template_part' ),
+					'default'     => 'wp_template',
+				),
 				'area' => array(
 					'type'        => 'string',
 					'description' => 'Filter template parts by area (header, footer, sidebar, etc.).',

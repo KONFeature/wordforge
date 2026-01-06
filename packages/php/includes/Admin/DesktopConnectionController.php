@@ -255,5 +255,4 @@ class DesktopConnectionController {
 
 		return new WP_REST_Response( $hash_data );
 	}
-
 }

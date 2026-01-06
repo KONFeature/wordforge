@@ -14,9 +14,9 @@ description: WooCommerce specialist - product management, inventory, pricing
 mode: subagent
 temperature: 0.3
 tools:
-  write: false
-  edit: false
-  bash: false
+	write: false
+	edit: false
+	bash: false
 <?php if ( ! empty( $model ) ) : ?>
 model: <?php echo $model; ?>
 <?php endif; ?>
@@ -53,20 +53,20 @@ WooCommerce subagent. Manages products, inventory, pricing.
 
 ```json
 {
-  "name": "Product Name",
-  "type": "simple|variable|grouped|external",
-  "status": "publish|draft",
-  "description": "<!-- wp:paragraph --><p>Description</p><!-- /wp:paragraph -->",
-  "short_description": "Brief summary",
-  "sku": "UNIQUE-SKU",
-  "regular_price": "29.99",
-  "sale_price": "19.99",
-  "stock_status": "instock|outofstock|onbackorder",
-  "manage_stock": true,
-  "stock_quantity": 100,
-  "categories": ["category-slug"],
-  "images": [{"src": "url", "alt": "description"}],
-  "attributes": [{"name": "Size", "options": ["S", "M", "L"], "variation": true}]
+	"name": "Product Name",
+	"type": "simple|variable|grouped|external",
+	"status": "publish|draft",
+	"description": "<!-- wp:paragraph --><p>Description</p><!-- /wp:paragraph -->",
+	"short_description": "Brief summary",
+	"sku": "UNIQUE-SKU",
+	"regular_price": "29.99",
+	"sale_price": "19.99",
+	"stock_status": "instock|outofstock|onbackorder",
+	"manage_stock": true,
+	"stock_quantity": 100,
+	"categories": ["category-slug"],
+	"images": [{"src": "url", "alt": "description"}],
+	"attributes": [{"name": "Size", "options": ["S", "M", "L"], "variation": true}]
 }
 ```
 

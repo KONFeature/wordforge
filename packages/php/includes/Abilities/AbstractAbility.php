@@ -234,17 +234,17 @@ abstract class AbstractAbility {
 	 */
 	protected function format_post( \WP_Post $post ): array {
 		$data = array(
-			'id'           => $post->ID,
-			'title'        => $post->post_title,
-			'slug'         => $post->post_name,
-			'status'       => $post->post_status,
-			'type'         => $post->post_type,
-			'excerpt'      => $post->post_excerpt,
-			'author'       => (int) $post->post_author,
-			'date'         => $post->post_date,
-			'modified'     => $post->post_modified,
-			'parent'       => $post->post_parent,
-			'permalink'    => get_permalink( $post->ID ),
+			'id'        => $post->ID,
+			'title'     => $post->post_title,
+			'slug'      => $post->post_name,
+			'status'    => $post->post_status,
+			'type'      => $post->post_type,
+			'excerpt'   => $post->post_excerpt,
+			'author'    => (int) $post->post_author,
+			'date'      => $post->post_date,
+			'modified'  => $post->post_modified,
+			'parent'    => $post->post_parent,
+			'permalink' => get_permalink( $post->ID ),
 		);
 
 		$featured_image = get_post_thumbnail_id( $post->ID );

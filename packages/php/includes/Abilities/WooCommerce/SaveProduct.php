@@ -65,10 +65,10 @@ class SaveProduct extends AbstractAbility {
 					'description' => 'Product ID to update. Omit to create new.',
 					'minimum'     => 1,
 				),
-			'name'              => array(
-				'type'        => 'string',
-				'description' => 'Product name. Required for new products.',
-			),
+				'name'              => array(
+					'type'        => 'string',
+					'description' => 'Product name. Required for new products.',
+				),
 				'type'              => array(
 					'type'        => 'string',
 					'description' => 'Product type. Only applies to new products.',
@@ -105,7 +105,7 @@ class SaveProduct extends AbstractAbility {
 				),
 				'stock_quantity'    => array(
 					'type'        => 'integer',
-					'description' => 'Requires manage_stock=true.',
+					'description' => 'Stock quantity. Requires manage_stock=true.',
 					'minimum'     => 0,
 				),
 				'manage_stock'      => array(
@@ -123,11 +123,11 @@ class SaveProduct extends AbstractAbility {
 						'height' => array( 'type' => 'string' ),
 					),
 				),
-			'categories'        => array(
-				'type'        => 'array',
-				'description' => 'Category IDs (as strings) or slugs. Replaces existing. Numeric strings are treated as IDs.',
-				'items'       => array( 'type' => 'string' ),
-			),
+				'categories'        => array(
+					'type'        => 'array',
+					'description' => 'Category IDs (as strings) or slugs. Replaces existing. Numeric strings are treated as IDs.',
+					'items'       => array( 'type' => 'string' ),
+				),
 				'tags'              => array(
 					'type'        => 'array',
 					'description' => 'Names or slugs. Replaces existing.',
@@ -154,10 +154,7 @@ class SaveProduct extends AbstractAbility {
 				'gallery_image_ids' => array(
 					'type'        => 'array',
 					'description' => 'Attachment IDs.',
-					'items'       => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
+					'items'       => array( 'type' => 'integer' ),
 				),
 			),
 		);

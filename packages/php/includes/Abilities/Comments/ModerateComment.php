@@ -50,10 +50,7 @@ class ModerateComment extends AbstractAbility {
 				),
 				'ids'     => array(
 					'type'        => 'array',
-					'items'       => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
+					'items'       => array( 'type' => 'integer' ),
 					'description' => 'Comment IDs for bulk moderation (not for replies).',
 					'minItems'    => 1,
 					'maxItems'    => 100,

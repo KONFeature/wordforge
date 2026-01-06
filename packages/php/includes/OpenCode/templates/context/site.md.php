@@ -44,7 +44,7 @@ $is_local = $is_local ?? false;
 <?php endif; ?>
 <?php if ( ! $is_local ) : ?>
 | **Path** | `<?php echo esc_html( $context['theme']['path'] ); ?>` |
-<?php if ( $context['theme']['is_child_theme'] ) : ?>
+	<?php if ( $context['theme']['is_child_theme'] ) : ?>
 | **Parent Path** | `<?php echo esc_html( $context['theme']['template_path'] ); ?>` |
 <?php endif; ?>
 <?php endif; ?>
@@ -129,7 +129,7 @@ Available WooCommerce operations:
 | **WP-CLI** | <?php echo $context['cli_tools']['wp_cli'] ? 'Available' : 'Not available'; ?> |
 | **Composer** | <?php echo $context['cli_tools']['composer'] ? 'Available' : 'Not available'; ?> |
 
-<?php if ( $context['cli_tools']['wp_cli'] ) : ?>
+	<?php if ( $context['cli_tools']['wp_cli'] ) : ?>
 **WP-CLI is available**. You can use `wp` commands for:
 - `wp post list` - Quick content inventory
 - `wp option get <option>` - Read WordPress options

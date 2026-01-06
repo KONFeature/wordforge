@@ -146,7 +146,7 @@ class ServerManager {
 
 			// todo: This fck up gemini integration, some required fields not present. Should PR a fix on their repo.
 			// if ( $this->has_external_abilities() ) {
-			// 	$filtered = array_merge( self::MCP_ADAPTER_ABILITIES, $filtered );
+			// $filtered = array_merge( self::MCP_ADAPTER_ABILITIES, $filtered );
 			// }
 		}
 

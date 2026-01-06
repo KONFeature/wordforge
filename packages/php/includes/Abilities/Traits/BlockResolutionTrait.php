@@ -14,7 +14,7 @@ namespace WordForge\Abilities\Traits;
  */
 trait BlockResolutionTrait {
 
-	private const TEMPLATE_TYPES = array( 'wp_template', 'wp_template_part' );
+	private const TEMPLATE_TYPES      = array( 'wp_template', 'wp_template_part' );
 	private const SPECIAL_BLOCK_TYPES = array( 'wp_block', 'wp_navigation' );
 
 	/**

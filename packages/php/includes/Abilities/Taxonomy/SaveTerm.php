@@ -64,10 +64,10 @@ class SaveTerm extends AbstractAbility {
 					'type'        => 'string',
 					'description' => '"category", "post_tag", "product_cat", or custom.',
 				),
-			'name'        => array(
-				'type'        => 'string',
-				'description' => 'Term display name. Required for new terms.',
-			),
+				'name'        => array(
+					'type'        => 'string',
+					'description' => 'Term display name. Required for new terms.',
+				),
 				'slug'        => array(
 					'type'        => 'string',
 					'description' => 'URL slug. Auto-generated if omitted.',

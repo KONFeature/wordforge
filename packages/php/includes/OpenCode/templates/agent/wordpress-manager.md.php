@@ -17,10 +17,10 @@ description: WordPress site orchestrator - delegates to specialized subagents
 mode: primary
 temperature: 0.2
 tools:
-  write: false
-  edit: false
+	write: false
+	edit: false
 <?php if ( $is_local ) : ?>
-  bash: false
+	bash: false
 <?php endif; ?>
 
 <?php if ( ! empty( $model ) ) : ?>
@@ -107,7 +107,7 @@ Other plugins have registered additional abilities. Use these tools to discover 
 <?php endif; ?>
 <?php if ( ! $is_local ) : ?>
 ### CLI (Server Mode)
-<?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>
+	<?php if ( $context['cli_tools']['wp_cli'] ?? false ) : ?>
 WP-CLI available. Use `wp` commands for read-heavy operations.
 <?php endif; ?>
 

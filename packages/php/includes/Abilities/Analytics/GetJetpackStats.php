@@ -42,7 +42,7 @@ class GetJetpackStats extends AbstractAbility {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'resource'   => array(
+				'resource'  => array(
 					'type'        => 'string',
 					'description' => 'Type of stats to retrieve.',
 					'enum'        => array(
@@ -62,44 +62,44 @@ class GetJetpackStats extends AbstractAbility {
 					),
 					'default'     => 'stats',
 				),
-				'period'     => array(
+				'period'    => array(
 					'type'        => 'string',
 					'description' => 'Time period granularity for stats.',
 					'enum'        => array( 'day', 'week', 'month', 'year' ),
 					'default'     => 'day',
 				),
-				'num'        => array(
+				'num'       => array(
 					'type'        => 'integer',
 					'description' => 'Number of periods to return.',
 					'minimum'     => 1,
 					'maximum'     => 365,
 					'default'     => 7,
 				),
-				'date'       => array(
+				'date'      => array(
 					'type'        => 'string',
 					'description' => 'End date for stats in YYYY-MM-DD format. Defaults to today.',
 				),
-				'max'        => array(
+				'max'       => array(
 					'type'        => 'integer',
 					'description' => 'Maximum number of results for list-type stats (top-posts, referrers, etc.).',
 					'minimum'     => 1,
 					'maximum'     => 100,
 					'default'     => 10,
 				),
-				'unit'       => array(
+				'unit'      => array(
 					'type'        => 'string',
 					'description' => 'Time unit for visits endpoint.',
 					'enum'        => array( 'day', 'week', 'month', 'year' ),
 					'default'     => 'day',
 				),
-				'quantity'   => array(
+				'quantity'  => array(
 					'type'        => 'integer',
 					'description' => 'Number of data points for visits endpoint.',
 					'minimum'     => 1,
 					'maximum'     => 365,
 					'default'     => 30,
 				),
-				'summarize'  => array(
+				'summarize' => array(
 					'type'        => 'boolean',
 					'description' => 'Return summarized stats instead of day-by-day breakdown.',
 					'default'     => false,

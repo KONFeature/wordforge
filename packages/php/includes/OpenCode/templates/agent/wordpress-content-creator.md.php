@@ -14,9 +14,9 @@ description: Content creation specialist - blog posts, landing pages, legal page
 mode: subagent
 temperature: 0.7
 tools:
-  write: false
-  edit: false
-  bash: false
+	write: false
+	edit: false
+	bash: false
 <?php if ( ! empty( $model ) ) : ?>
 model: <?php echo $model; ?>
 <?php endif; ?>

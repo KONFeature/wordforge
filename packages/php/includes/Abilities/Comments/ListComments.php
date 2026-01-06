@@ -25,14 +25,14 @@ class ListComments extends AbstractAbility {
 	}
 
 	public function get_title(): string {
-		return __( 'List Comments', 'wordforge' );
+		return __( 'Comments', 'wordforge' );
 	}
 
 	public function get_description(): string {
 		return __(
-			'List comments with filtering by status, post, or author. ' .
-			'USE: Review pending comments, find comments on posts, moderation queue. ' .
-			'NOT FOR: Replying/moderating (use moderate-comment), full details (use get-comment).',
+			'Get a single comment by ID (with optional replies) or list comments with filtering. ' .
+			'USE: Review pending comments, view comment threads, moderation queue. ' .
+			'NOT FOR: Replying/moderating (use moderate-comment).',
 			'wordforge'
 		);
 	}
@@ -53,29 +53,38 @@ class ListComments extends AbstractAbility {
 			'type'       => 'object',
 			'properties' => array_merge(
 				array(
-				'status'       => array(
-					'type'        => 'string',
-					'description' => 'approve=published, hold=pending moderation, spam/trash=filtered.',
-					'enum'        => array( 'approve', 'hold', 'spam', 'trash', 'all' ),
-					'default'     => 'all',
-				),
-					'post_id'      => array(
+					'id'              => array(
 						'type'        => 'integer',
-						'description' => 'Filter by post ID.',
+						'description' => 'Comment ID. When provided, returns full details for that single comment. Omit to list comments.',
 						'minimum'     => 1,
 					),
-					'author_email' => array(
+					'include_replies' => array(
+						'type'        => 'boolean',
+						'description' => 'When fetching single comment by ID, include child replies.',
+						'default'     => false,
+					),
+					'status'          => array(
+						'type'        => 'string',
+						'description' => 'approve=published, hold=pending moderation, spam/trash=filtered.',
+						'enum'        => array( 'approve', 'hold', 'spam', 'trash', 'all' ),
+						'default'     => 'all',
+					),
+					'post_id'         => array(
+						'type'        => 'integer',
+						'description' => 'Filter by post ID.',
+					),
+					'author_email'    => array(
 						'type'        => 'string',
 						'description' => 'Filter by commenter email.',
 						'format'      => 'email',
 					),
-					'search'       => array(
+					'search'          => array(
 						'type'        => 'string',
 						'description' => 'Search term to filter comments by content, author name, or email.',
 						'minLength'   => 1,
 						'maxLength'   => 200,
 					),
-					'type'         => array(
+					'type'            => array(
 						'type'        => 'string',
 						'description' => 'Filter by comment type (comment, pingback, trackback).',
 						'enum'        => array( 'comment', 'pingback', 'trackback', 'all' ),
@@ -90,6 +99,45 @@ class ListComments extends AbstractAbility {
 	}
 
 	public function execute( array $args ): array {
+		if ( ! empty( $args['id'] ) ) {
+			return $this->get_single_comment( absint( $args['id'] ), ! empty( $args['include_replies'] ) );
+		}
+
+		return $this->list_comments( $args );
+	}
+
+	protected function get_single_comment( int $comment_id, bool $include_replies ): array {
+		$comment = get_comment( $comment_id );
+
+		if ( ! $comment ) {
+			return $this->error( 'Comment not found.', 'not_found' );
+		}
+
+		$data = $this->format_comment( $comment );
+
+		if ( $include_replies ) {
+			$replies         = get_comments(
+				array(
+					'parent'  => $comment->comment_ID,
+					'orderby' => 'comment_date',
+					'order'   => 'ASC',
+				)
+			);
+			$data['replies'] = array_map( array( $this, 'format_comment' ), $replies );
+		}
+
+		return $this->paginated_success(
+			array( $data ),
+			1,
+			1,
+			array(
+				'page'     => 1,
+				'per_page' => 1,
+			)
+		);
+	}
+
+	protected function list_comments( array $args ): array {
 		$pagination = $this->normalize_pagination_args( $args, 100, 20, 'date', 'desc' );
 
 		$query_args = array(
@@ -158,7 +206,7 @@ class ListComments extends AbstractAbility {
 			'date_gmt'     => $comment->comment_date_gmt,
 			'content'      => $comment->comment_content,
 			'status'       => wp_get_comment_status( $comment ),
-			'type'         => $comment->comment_type ?: 'comment',
+			'type'         => ! empty( $comment->comment_type ) ? $comment->comment_type : 'comment',
 			'parent'       => (int) $comment->comment_parent,
 			'user_id'      => (int) $comment->user_id,
 			'avatar_url'   => get_avatar_url( $comment->comment_author_email, array( 'size' => 48 ) ),
