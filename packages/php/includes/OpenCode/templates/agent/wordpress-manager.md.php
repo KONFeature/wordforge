@@ -66,6 +66,7 @@ Simple tasks (single lookup, quick update): handle directly.
 - `wordpress_wordforge-content` - List posts/pages, or get single item by ID (pass `id` param for single)
 - `wordpress_wordforge-save-content` - Create/update content
 - `wordpress_wordforge-delete-content` - Delete/trash content
+- `wordpress_wordforge-revisions` - List/get/restore/compare post revisions
 
 ### Media
 - `wordpress_wordforge-media` - List media, or get single item by ID
@@ -79,9 +80,9 @@ Simple tasks (single lookup, quick update): handle directly.
 - `wordpress_wordforge-delete-term` - Delete term
 
 ### Blocks & Templates
-- `wordpress_wordforge-get-blocks` - Get blocks from any entity (post, page, template, template part)
+- `wordpress_wordforge-get-blocks` - Get blocks from any entity (post, page, template, template part, navigation, reusable block)
 - `wordpress_wordforge-update-blocks` - Update blocks on any entity (auto-detects type)
-- `wordpress_wordforge-list-templates` - List FSE templates and template parts
+- `wordpress_wordforge-list-templates` - List templates, template parts, navigation menus, reusable blocks (use `type` param)
 
 ### Styling
 - `wordpress_wordforge-get-styles` - Get theme global styles

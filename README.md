@@ -303,6 +303,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 | `wordforge/content` | List posts/pages, or get single item by ID (pass `id` param for single) |
 | `wordforge/save-content` | Create or update content |
 | `wordforge/delete-content` | Delete or trash content |
+| `wordforge/revisions` | List, view, restore, or compare post revisions |
 
 ### Media Library
 
@@ -325,16 +326,16 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/get-blocks` | Get block structure from any entity (post, page, template, template part) |
+| `wordforge/get-blocks` | Get block structure from any entity (post, page, template, navigation, reusable block) |
 | `wordforge/update-blocks` | Update blocks on any entity (auto-detects type, auto-creates revision) |
 
-### Templates (FSE)
+### Templates & Site Elements
 
 | Tool | Description |
 |------|-------------|
-| `wordforge/list-templates` | List block templates and template parts |
+| `wordforge/list-templates` | List templates, template parts, navigation menus, reusable blocks |
 
-*Note: Use `wordforge/get-blocks` and `wordforge/update-blocks` to read/edit template content.*
+*Use `type` param: `wp_template`, `wp_template_part`, `wp_navigation`, `wp_block`. Use `wordforge/get-blocks` and `wordforge/update-blocks` to read/edit their block content.*
 
 ### Theme Styling
 

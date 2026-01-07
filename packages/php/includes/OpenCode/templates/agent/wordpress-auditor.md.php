@@ -41,6 +41,7 @@ Site analysis subagent. Audits SEO, content quality, performance. **READ-ONLY** 
 ### Content Analysis
 - `wordpress_wordforge-content` - Content inventory (list) or single item review (pass `id` param)
 - `wordpress_wordforge-get-blocks` - Block structure analysis for any entity
+- `wordpress_wordforge-revisions` - Revision history analysis and comparison
 
 ### Theme & Config
 - `wordpress_wordforge-get-styles` - Theme styling review

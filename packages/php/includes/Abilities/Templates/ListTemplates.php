@@ -31,9 +31,10 @@ class ListTemplates extends AbstractAbility {
 
 	public function get_description(): string {
 		return __(
-			'List FSE block templates or template parts. Templates=page layouts, parts=reusable sections (header/footer). ' .
-			'USE: Discover template IDs/slugs, then use get-blocks/update-blocks to read/edit. ' .
-			'NOT FOR: Classic themes (requires FSE/block theme support).',
+			'List site-level block structures: templates, template parts, navigation menus, reusable blocks. ' .
+			'These are infrastructure elements (not content). ' .
+			'USE: Discover IDs/slugs, then use get-blocks/update-blocks to read/edit block content. ' .
+			'TYPES: wp_template=page layouts, wp_template_part=sections (header/footer), wp_navigation=nav menus, wp_block=reusable blocks.',
 			'wordforge'
 		);
 	}
@@ -59,12 +60,25 @@ class ListTemplates extends AbstractAbility {
 									'id'          => array( 'type' => 'integer' ),
 									'slug'        => array( 'type' => 'string' ),
 									'title'       => array( 'type' => 'string' ),
-									'description' => array( 'type' => 'string' ),
+									'description' => array(
+										'type'        => 'string',
+										'description' => 'Only for templates.',
+									),
 									'status'      => array( 'type' => 'string' ),
 									'type'        => array( 'type' => 'string' ),
 									'modified'    => array( 'type' => 'string' ),
-									'source'      => array( 'type' => 'string' ),
-									'area'        => array( 'type' => 'string' ),
+									'source'      => array(
+										'type'        => 'string',
+										'description' => 'theme or custom. Only for templates.',
+									),
+									'area'        => array(
+										'type'        => 'string',
+										'description' => 'Only for wp_template_part.',
+									),
+									'sync_status' => array(
+										'type'        => 'string',
+										'description' => 'synced or unsynced. Only for wp_block.',
+									),
 								),
 							),
 						),
@@ -81,13 +95,13 @@ class ListTemplates extends AbstractAbility {
 			'properties' => array(
 				'type' => array(
 					'type'        => 'string',
-					'description' => 'wp_template=page layouts, wp_template_part=reusable sections (header/footer).',
-					'enum'        => array( 'wp_template', 'wp_template_part' ),
+					'description' => 'wp_template=page layouts, wp_template_part=sections, wp_navigation=nav menus, wp_block=reusable blocks.',
+					'enum'        => array( 'wp_template', 'wp_template_part', 'wp_navigation', 'wp_block' ),
 					'default'     => 'wp_template',
 				),
 				'area' => array(
 					'type'        => 'string',
-					'description' => 'Filter template parts by area (header, footer, sidebar, etc.).',
+					'description' => 'Filter template parts by area (header, footer, sidebar, etc.). Only applies to wp_template_part.',
 				),
 			),
 		);
@@ -97,13 +111,14 @@ class ListTemplates extends AbstractAbility {
 		$type = $args['type'] ?? 'wp_template';
 		$area = $args['area'] ?? null;
 
-		if ( ! current_theme_supports( 'block-templates' ) ) {
+		$template_types = array( 'wp_template', 'wp_template_part' );
+		if ( in_array( $type, $template_types, true ) && ! current_theme_supports( 'block-templates' ) ) {
 			return $this->error( 'Current theme does not support block templates.', 'not_supported' );
 		}
 
 		return $this->cached_success(
 			self::CACHE_KEY,
-			fn() => $this->fetch_templates( $type, $area ),
+			fn() => $this->fetch_items( $type, $area ),
 			self::CACHE_TTL,
 			array(
 				'type' => $type,
@@ -115,11 +130,18 @@ class ListTemplates extends AbstractAbility {
 	/**
 	 * @return array<string, mixed>
 	 */
-	private function fetch_templates( string $type, ?string $area ): array {
-		$templates = get_posts(
+	private function fetch_items( string $type, ?string $area ): array {
+		$template_types = array( 'wp_template', 'wp_template_part' );
+		$is_template    = in_array( $type, $template_types, true );
+
+		$post_status = $is_template
+			? array( 'publish', 'auto-draft' )
+			: array( 'publish', 'draft' );
+
+		$posts = get_posts(
 			array(
 				'post_type'      => $type,
-				'post_status'    => array( 'publish', 'auto-draft' ),
+				'post_status'    => $post_status,
 				'posts_per_page' => 100,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
@@ -128,21 +150,28 @@ class ListTemplates extends AbstractAbility {
 
 		$items = array();
 
-		foreach ( $templates as $template ) {
+		foreach ( $posts as $post ) {
 			$item = array(
-				'id'          => $template->ID,
-				'slug'        => $template->post_name,
-				'title'       => $template->post_title ?: $template->post_name,
-				'description' => $template->post_excerpt,
-				'status'      => $template->post_status,
-				'type'        => $type,
-				'modified'    => $template->post_modified,
-				'source'      => 'auto-draft' === $template->post_status ? 'theme' : 'custom',
+				'id'       => $post->ID,
+				'slug'     => $post->post_name,
+				'title'    => $post->post_title ?: $post->post_name,
+				'status'   => $post->post_status,
+				'type'     => $type,
+				'modified' => $post->post_modified,
 			);
 
+			if ( $is_template ) {
+				$item['description'] = $post->post_excerpt;
+				$item['source']      = 'auto-draft' === $post->post_status ? 'theme' : 'custom';
+			}
+
 			if ( 'wp_template_part' === $type ) {
-				$item_area    = get_post_meta( $template->ID, 'wp_template_part_area', true );
+				$item_area    = get_post_meta( $post->ID, 'wp_template_part_area', true );
 				$item['area'] = $item_area ?: 'uncategorized';
+			}
+
+			if ( 'wp_block' === $type ) {
+				$item['sync_status'] = get_post_meta( $post->ID, 'wp_pattern_sync_status', true ) ?: 'synced';
 			}
 
 			if ( $area && isset( $item['area'] ) && $item['area'] !== $area ) {

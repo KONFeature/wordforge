@@ -7,6 +7,7 @@ namespace WordForge;
 use WordForge\Abilities\Content\ListContent;
 use WordForge\Abilities\Content\SaveContent;
 use WordForge\Abilities\Content\DeleteContent;
+use WordForge\Abilities\Content\Revisions;
 use WordForge\Abilities\Blocks\GetBlocks;
 use WordForge\Abilities\Blocks\UpdateBlocks;
 use WordForge\Abilities\Styles\GetStyles;
@@ -38,6 +39,7 @@ class AbilityRegistry {
 		'wordforge/content'              => ListContent::class,
 		'wordforge/save-content'         => SaveContent::class,
 		'wordforge/delete-content'       => DeleteContent::class,
+		'wordforge/revisions'            => Revisions::class,
 		'wordforge/get-blocks'           => GetBlocks::class,
 		'wordforge/update-blocks'        => UpdateBlocks::class,
 		'wordforge/get-styles'           => GetStyles::class,
