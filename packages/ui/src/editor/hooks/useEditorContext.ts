@@ -1,6 +1,7 @@
 import { store as coreStore } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
+import { useMemo } from '@wordpress/element';
 import type { ScopedContext } from '../../chat/hooks/useContextInjection';
 
 interface EditorContextResult {
@@ -8,8 +9,37 @@ interface EditorContextResult {
   isLoading: boolean;
 }
 
-export const useEditorContext = (): EditorContextResult =>
-  useSelect((select) => {
+const getGutenbergCapabilities = () => {
+  const blocksApi = window.wp?.blocks;
+  const dataApi = window.wp?.data;
+
+  if (!blocksApi || !dataApi) {
+    return null;
+  }
+
+  const blockTypes = blocksApi.getBlockTypes?.() ?? [];
+  const blockEditorDispatch = dataApi.dispatch?.('core/block-editor');
+
+  const coreBlocks = blockTypes.filter((b: { name: string }) =>
+    b.name.startsWith('core/'),
+  );
+  const pluginBlocks = blockTypes.filter(
+    (b: { name: string }) => !b.name.startsWith('core/'),
+  );
+
+  return {
+    gutenbergBridge: true,
+    coreBlockCount: coreBlocks.length,
+    pluginBlockCount: pluginBlocks.length,
+    canInsertBlocks: !!blockEditorDispatch,
+    canSerializeBlocks: !!blocksApi.serialize,
+  };
+};
+
+export const useEditorContext = (): EditorContextResult => {
+  const editorCapabilities = useMemo(() => getGutenbergCapabilities(), []);
+
+  const selectResult = useSelect((select) => {
     const editorSelectors = select(editorStore) as {
       getCurrentPostId?: () => number | null;
       getCurrentPostType?: () => string | null;
@@ -46,38 +76,41 @@ export const useEditorContext = (): EditorContextResult =>
 
       return {
         context: {
-          type: 'template-editor',
+          type: 'template-editor' as const,
           templateId: template?.slug || String(postId),
           templateName:
             title || template?.title?.rendered || 'Untitled Template',
           templateType:
-            postType === 'wp_template_part' ? 'template-part' : 'template',
+            postType === 'wp_template_part'
+              ? ('template-part' as const)
+              : ('template' as const),
         },
         isLoading: false,
-      } as const;
-    }
-
-    if (postType === 'page') {
-      return {
-        context: {
-          type: 'page-editor',
-          pageId: postId,
-          pageTitle: title || 'Untitled Page',
-          blockCount: Array.isArray(blocks) ? blocks.length : undefined,
-          status,
-        },
-        isLoading: false,
-      } as const;
+      };
     }
 
     return {
       context: {
-        type: 'page-editor',
+        type: 'page-editor' as const,
         pageId: postId,
-        pageTitle: title || 'Untitled Post',
+        pageTitle:
+          title || (postType === 'page' ? 'Untitled Page' : 'Untitled Post'),
         blockCount: Array.isArray(blocks) ? blocks.length : undefined,
         status,
       },
       isLoading: false,
-    } as const;
+    };
   }, []);
+
+  if (!selectResult.context || selectResult.context.type !== 'page-editor') {
+    return selectResult;
+  }
+
+  return {
+    ...selectResult,
+    context: {
+      ...selectResult.context,
+      editorCapabilities: editorCapabilities ?? undefined,
+    },
+  };
+};

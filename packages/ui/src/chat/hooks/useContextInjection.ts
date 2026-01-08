@@ -14,6 +14,14 @@ export type ScopedContext =
   | CommentListContext
   | CustomContext;
 
+interface EditorCapabilities {
+  gutenbergBridge: boolean;
+  coreBlockCount: number;
+  pluginBlockCount: number;
+  canInsertBlocks: boolean;
+  canSerializeBlocks: boolean;
+}
+
 interface PageEditorContext {
   type: 'page-editor';
   pageId: number;
@@ -21,6 +29,7 @@ interface PageEditorContext {
   blockCount?: number;
   lastModified?: string;
   status?: string;
+  editorCapabilities?: EditorCapabilities;
 }
 
 interface PageListContext {
@@ -87,14 +96,40 @@ interface CustomContext {
 
 function buildContextMessage(context: ScopedContext): string {
   switch (context.type) {
-    case 'page-editor':
-      return `You are now helping the user edit Page ID ${context.pageId} titled "${context.pageTitle}".${
-        context.blockCount !== undefined
-          ? ` The page has ${context.blockCount} blocks.`
-          : ''
-      }${
-        context.status ? ` Status: ${context.status}.` : ''
-      } Use the wordforge/get-page-blocks and wordforge/update-page-blocks tools to work with this page.`;
+    case 'page-editor': {
+      const caps = context.editorCapabilities;
+      const hasGutenbergBridge = caps?.gutenbergBridge && caps?.canInsertBlocks;
+
+      let message = `You are now helping the user edit Page ID ${context.pageId} titled "${context.pageTitle}".`;
+
+      if (context.blockCount !== undefined) {
+        message += ` The page has ${context.blockCount} blocks.`;
+      }
+      if (context.status) {
+        message += ` Status: ${context.status}.`;
+      }
+
+      if (hasGutenbergBridge) {
+        message +=
+          '\n\nGUTENBERG BRIDGE ACTIVE: You can insert blocks DIRECTLY into the editor!';
+        message += `\nAvailable: ${caps.coreBlockCount} core blocks, ${caps.pluginBlockCount} plugin blocks.`;
+        message +=
+          '\n\nTo insert blocks, respond with a code block tagged "wordforge-blocks" containing JSON:';
+        message += '\n```wordforge-blocks';
+        message +=
+          '\n{"action": "insert", "blocks": [{"name": "core/paragraph", "attrs": {"content": "Hello!"}}]}';
+        message += '\n```';
+        message +=
+          '\n\nSupported actions: "insert" (add blocks), "replace" (replace selected), "serialize" (get HTML).';
+        message +=
+          '\nBlocks format: {"name": "core/group", "attrs": {...}, "innerBlocks": [...]}';
+      } else {
+        message +=
+          ' Use the wordforge/get-blocks and wordforge/update-blocks tools to work with this page.';
+      }
+
+      return message;
+    }
 
     case 'page-list':
       return `The user is viewing the Pages list. There are ${context.totalPosts} published${

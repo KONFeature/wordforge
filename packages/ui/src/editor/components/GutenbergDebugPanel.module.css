@@ -1,0 +1,126 @@
+.panel {
+  padding: var(--wf-spacing-xs) var(--wf-spacing-sm);
+  background: var(--wf-color-surface);
+  border-bottom: 1px solid var(--wf-color-border-light);
+  font-size: 11px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--wf-spacing-xs);
+  font-weight: 500;
+  color: var(--wf-color-text-secondary);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusDot.available {
+  background: var(--wf-color-success);
+}
+
+.statusDot.unavailable {
+  background: var(--wf-color-error);
+}
+
+.toggle {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--wf-color-text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.toggle:hover {
+  color: var(--wf-color-text);
+}
+
+.content {
+  margin-top: var(--wf-spacing-xs);
+  padding-top: var(--wf-spacing-xs);
+  border-top: 1px solid var(--wf-color-border-light);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--wf-spacing-xs);
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px;
+  background: var(--wf-color-white);
+  border-radius: 2px;
+}
+
+.statLabel {
+  color: var(--wf-color-text-secondary);
+}
+
+.statValue {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.categories {
+  margin-top: var(--wf-spacing-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.categoryTag {
+  padding: 1px 6px;
+  background: var(--wf-color-primary-light);
+  color: var(--wf-color-primary);
+  border-radius: 10px;
+  font-size: 10px;
+}
+
+.testSection {
+  margin-top: var(--wf-spacing-xs);
+  padding-top: var(--wf-spacing-xs);
+  border-top: 1px solid var(--wf-color-border-light);
+}
+
+.testButton {
+  font-size: 10px;
+  padding: 4px 8px;
+}
+
+.testResult {
+  margin-top: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs);
+  background: var(--wf-color-white);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.testResult.success {
+  border-left: 2px solid var(--wf-color-success);
+}
+
+.testResult.error {
+  border-left: 2px solid var(--wf-color-error);
+}
