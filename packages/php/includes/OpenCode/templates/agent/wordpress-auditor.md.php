@@ -16,7 +16,7 @@ $is_local = $is_local ?? false;
 description: Site analysis specialist - SEO audits, content reviews, performance recommendations
 mode: subagent
 temperature: 0.1
-tools:
+permissions:
 	write: false
 	edit: false
 <?php if ( $is_local ) : ?>
@@ -37,6 +37,10 @@ Site analysis subagent. Audits SEO, content quality, performance. **READ-ONLY** 
 ---
 
 ## Tools
+
+### Site Discovery
+- `wordpress_wordforge-site-context` - Get site context (plugins, content types, capabilities). Use `level`: simple, plugins, rest, full
+- `wordpress_wordforge-list-block-types` - List registered block types for block usage analysis
 
 ### Content Analysis
 - `wordpress_wordforge-content` - Content inventory (list) or single item review (pass `id` param)

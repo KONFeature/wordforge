@@ -300,6 +300,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
+| `wordforge/site-context` | Get comprehensive site context (theme, plugins, content types, REST namespaces, writable options). Use `level`: simple, plugins, rest, full |
 | `wordforge/content` | List posts/pages, or get single item by ID (pass `id` param for single) |
 | `wordforge/save-content` | Create or update content |
 | `wordforge/delete-content` | Delete or trash content |
@@ -326,6 +327,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 
 | Tool | Description |
 |------|-------------|
+| `wordforge/list-block-types` | List registered Gutenberg block types. Pass `name` for single block details. Use `mode`: simplified or full |
 | `wordforge/get-blocks` | Get block structure from any entity (post, page, template, navigation, reusable block) |
 | `wordforge/update-blocks` | Update blocks on any entity (auto-detects type, auto-creates revision) |
 
@@ -357,7 +359,7 @@ Visit **WordForge → Settings** in WordPress admin to:
 | Tool | Description |
 |------|-------------|
 | `wordforge/get-settings` | Get site settings |
-| `wordforge/update-settings` | Update site settings |
+| `wordforge/update-settings` | Update site settings (includes WooCommerce/Yoast options when active) |
 | `wordforge/get-site-stats` | Get site statistics |
 
 ### WooCommerce

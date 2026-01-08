@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 description: Content creation specialist - blog posts, landing pages, legal pages with SEO optimization
 mode: subagent
 temperature: 0.7
-tools:
+permissions:
 	write: false
 	edit: false
 	bash: false
@@ -165,6 +165,10 @@ Content creation subagent. Creates SEO-optimized WordPress content in Gutenberg 
 
 ## Available Tools
 
+### Discovery
+- `wordpress_wordforge-list-block-types` - **Check available blocks** before creating content. Pass `name` for single block details, use `mode`: simplified or full
+
+### Content Operations
 - `wordpress_wordforge-content` - Get existing content for reference (pass `id` param for single item)
 - `wordpress_wordforge-media` - Find media to reference (pass `id` param for single item)
 - `wordpress_wordforge-save-content` - Create/update content

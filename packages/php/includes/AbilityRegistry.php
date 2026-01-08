@@ -10,6 +10,8 @@ use WordForge\Abilities\Content\DeleteContent;
 use WordForge\Abilities\Content\Revisions;
 use WordForge\Abilities\Blocks\GetBlocks;
 use WordForge\Abilities\Blocks\UpdateBlocks;
+use WordForge\Abilities\Blocks\ListBlockTypes;
+use WordForge\Abilities\Context\SiteContext;
 use WordForge\Abilities\Styles\GetStyles;
 use WordForge\Abilities\Styles\UpdateGlobalStyles;
 use WordForge\Abilities\Media\ListMedia;
@@ -42,8 +44,13 @@ class AbilityRegistry {
 		'wordforge/revisions'            => Revisions::class,
 		'wordforge/get-blocks'           => GetBlocks::class,
 		'wordforge/update-blocks'        => UpdateBlocks::class,
+		'wordforge/list-block-types'     => ListBlockTypes::class,
 		'wordforge/get-styles'           => GetStyles::class,
 		'wordforge/update-global-styles' => UpdateGlobalStyles::class,
+	);
+
+	private const CONTEXT_ABILITIES = array(
+		'wordforge/site-context' => SiteContext::class,
 	);
 
 	private const MEDIA_ABILITIES = array(
@@ -100,6 +107,7 @@ class AbilityRegistry {
 
 	public function register_all(): void {
 		$this->register_abilities( self::CORE_ABILITIES );
+		$this->register_abilities( self::CONTEXT_ABILITIES );
 		$this->register_abilities( self::MEDIA_ABILITIES );
 		$this->register_abilities( self::TAXONOMY_ABILITIES );
 		$this->register_abilities( self::TEMPLATE_ABILITIES );
@@ -121,6 +129,7 @@ class AbilityRegistry {
 	public static function get_ability_names(): array {
 		$names = array_merge(
 			array_keys( self::CORE_ABILITIES ),
+			array_keys( self::CONTEXT_ABILITIES ),
 			array_keys( self::MEDIA_ABILITIES ),
 			array_keys( self::TAXONOMY_ABILITIES ),
 			array_keys( self::TEMPLATE_ABILITIES ),

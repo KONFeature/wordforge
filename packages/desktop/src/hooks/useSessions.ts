@@ -69,7 +69,7 @@ export function useSessions() {
     const childMap = new Map<string, Session[]>();
 
     for (const session of sessions) {
-      if (session.parentID) {
+      if (session?.parentID) {
         const existing = childMap.get(session.parentID) || [];
         childMap.set(session.parentID, [...existing, session]);
       }
@@ -78,7 +78,7 @@ export function useSessions() {
     const parentSessions: SessionWithChildren[] = [];
 
     for (const session of sessions) {
-      if (!session.parentID) {
+      if (!session?.parentID) {
         const children = childMap.get(session.id) || [];
         children.sort((a, b) => b.time.updated - a.time.updated);
         parentSessions.push({ ...session, children });

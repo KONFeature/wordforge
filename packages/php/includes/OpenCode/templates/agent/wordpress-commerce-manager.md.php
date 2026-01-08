@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 description: WooCommerce specialist - product management, inventory, pricing
 mode: subagent
 temperature: 0.3
-tools:
+permissions:
 	write: false
 	edit: false
 	bash: false
@@ -45,6 +45,10 @@ WooCommerce subagent. Manages products, inventory, pricing.
 - `wordpress_wordforge-save-term` - Create/update categories and tags
 - `wordpress_wordforge-media` - Find existing media
 - `wordpress_wordforge-upload-media` - Upload product images
+
+### Settings
+- `wordpress_wordforge-update-settings` - Update WooCommerce options (currency, store address, stock settings)
+- `wordpress_wordforge-site-context` - Get site context including WooCommerce writable options
 
 ---
 

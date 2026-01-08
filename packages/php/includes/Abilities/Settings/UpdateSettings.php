@@ -10,10 +10,13 @@ declare(strict_types=1);
 namespace WordForge\Abilities\Settings;
 
 use WordForge\Abilities\AbstractAbility;
+use WordForge\Abilities\Traits\PluginOptionsTrait;
 
 class UpdateSettings extends AbstractAbility {
 
-	private const WRITABLE_OPTIONS = array(
+	use PluginOptionsTrait;
+
+	private const CORE_WRITABLE_OPTIONS = array(
 		'blogname'                     => 'string',
 		'blogdescription'              => 'string',
 		'admin_email'                  => 'email',
@@ -71,12 +74,7 @@ class UpdateSettings extends AbstractAbility {
 	}
 
 	public function get_description(): string {
-		return __(
-			'Update WordPress site settings and options. Modify site configuration values including site title, tagline, ' .
-			'timezone, date/time formats, reading settings, discussion settings, and media sizes. Only safe, non-destructive ' .
-			'options can be modified. URL options (siteurl, home) and permalink structure are excluded for safety.',
-			'wordforge'
-		);
+		return __( 'Update WordPress site settings. Supports core options plus plugin options (auto-discovered).', 'wordforge' );
 	}
 
 	public function get_capability(): string {
@@ -99,6 +97,7 @@ class UpdateSettings extends AbstractAbility {
 
 	public function execute( array $args ): array {
 		$settings = $args['settings'] ?? array();
+		$writable = $this->get_writable_options();
 
 		if ( empty( $settings ) ) {
 			return $this->error( 'No settings provided.', 'empty_settings' );
@@ -109,7 +108,7 @@ class UpdateSettings extends AbstractAbility {
 		$previous = array();
 
 		foreach ( $settings as $key => $value ) {
-			if ( ! isset( self::WRITABLE_OPTIONS[ $key ] ) ) {
+			if ( ! isset( $writable[ $key ] ) ) {
 				$skipped[] = array(
 					'key'    => $key,
 					'reason' => 'Option not allowed',
@@ -117,7 +116,7 @@ class UpdateSettings extends AbstractAbility {
 				continue;
 			}
 
-			$sanitized = $this->sanitize_value( $value, self::WRITABLE_OPTIONS[ $key ] );
+			$sanitized = $this->sanitize_value( $value, $writable[ $key ] );
 
 			if ( null === $sanitized ) {
 				$skipped[] = array(
@@ -155,6 +154,25 @@ class UpdateSettings extends AbstractAbility {
 		);
 	}
 
+	/**
+	 * @return array<string, string>
+	 */
+	private function get_writable_options(): array {
+		$options = self::CORE_WRITABLE_OPTIONS;
+
+		$plugin_options = $this->get_all_plugin_option_names();
+		foreach ( $plugin_options as $option_name ) {
+			$options[ $option_name ] = $this->infer_option_type( $option_name );
+		}
+
+		/**
+		 * Filter the writable options list.
+		 *
+		 * @param array<string, string> $options Option name => type mapping.
+		 */
+		return apply_filters( 'wordforge_writable_options', $options );
+	}
+
 	private function sanitize_value( mixed $value, string $type ): mixed {
 		switch ( $type ) {
 			case 'string':
@@ -168,6 +186,9 @@ class UpdateSettings extends AbstractAbility {
 
 			case 'bool':
 				return is_bool( $value ) || is_numeric( $value ) ? ( $value ? '1' : '0' ) : null;
+
+			case 'array':
+				return is_array( $value ) ? $value : null;
 
 			default:
 				return null;

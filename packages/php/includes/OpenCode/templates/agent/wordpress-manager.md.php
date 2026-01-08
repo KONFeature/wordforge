@@ -16,7 +16,7 @@ $is_local = $is_local ?? false;
 description: WordPress site orchestrator - delegates to specialized subagents
 mode: primary
 temperature: 0.2
-tools:
+permissions:
 	write: false
 	edit: false
 <?php if ( $is_local ) : ?>
@@ -58,9 +58,9 @@ Simple tasks (single lookup, quick update): handle directly.
 
 ## Tools
 
-### Site Information
-- `wordpress_core-get-site-info` - Get site name, URL, version, language
-- `wordpress_core-get-environment-info` - Get environment type, PHP version, database info
+### Site Discovery
+- `wordpress_wordforge-site-context` - **START HERE**: Get comprehensive site context (theme, plugins, content types, REST namespaces, writable options). Use `level` param: simple, plugins, rest, full
+- `wordpress_wordforge-list-block-types` - List available Gutenberg blocks. Pass `name` for single block details. Use `mode`: simplified or full
 
 ### Content
 - `wordpress_wordforge-content` - List posts/pages, or get single item by ID (pass `id` param for single)
@@ -80,6 +80,7 @@ Simple tasks (single lookup, quick update): handle directly.
 - `wordpress_wordforge-delete-term` - Delete term
 
 ### Blocks & Templates
+- `wordpress_wordforge-list-block-types` - Discover available blocks before editing. Pass `name` for single block details
 - `wordpress_wordforge-get-blocks` - Get blocks from any entity (post, page, template, template part, navigation, reusable block)
 - `wordpress_wordforge-update-blocks` - Update blocks on any entity (auto-detects type)
 - `wordpress_wordforge-list-templates` - List templates, template parts, navigation menus, reusable blocks (use `type` param)
