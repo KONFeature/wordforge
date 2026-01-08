@@ -269,14 +269,19 @@ class ListBlockTypes extends AbstractAbility {
 	 * @return array<string, mixed>
 	 */
 	private function format_simplified( \WP_Block_Type $block ): array {
-		return array(
+		$data = array(
 			'name'        => $block->name,
 			'title'       => $block->title ?? $block->name,
 			'category'    => $block->category ?? 'uncategorized',
 			'description' => $block->description ?? '',
-			'icon'        => is_string( $block->icon ) ? $block->icon : null,
 			'keywords'    => $block->keywords ?? array(),
 		);
+
+		if ( is_string( $block->icon ) ) {
+			$data['icon'] = $block->icon;
+		}
+
+		return $data;
 	}
 
 	/**
@@ -309,13 +314,20 @@ class ListBlockTypes extends AbstractAbility {
 	 */
 	private function format_variations( array $variations ): array {
 		return array_map(
-			fn( $v ) => array(
-				'name'        => $v['name'] ?? '',
-				'title'       => $v['title'] ?? '',
-				'description' => $v['description'] ?? '',
-				'icon'        => is_string( $v['icon'] ?? null ) ? $v['icon'] : null,
-				'isDefault'   => $v['isDefault'] ?? false,
-			),
+			function ( $v ) {
+				$data = array(
+					'name'        => $v['name'] ?? '',
+					'title'       => $v['title'] ?? '',
+					'description' => $v['description'] ?? '',
+					'isDefault'   => $v['isDefault'] ?? false,
+				);
+
+				if ( is_string( $v['icon'] ?? null ) ) {
+					$data['icon'] = $v['icon'];
+				}
+
+				return $data;
+			},
 			$variations
 		);
 	}

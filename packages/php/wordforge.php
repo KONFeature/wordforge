@@ -121,6 +121,14 @@ function register_ability_categories(): void {
 	}
 
 	wp_register_ability_category(
+		'wordforge-context',
+		array(
+			'label'       => __( 'Site Context', 'wordforge' ),
+			'description' => __( 'Abilities for discovering WordPress site context and capabilities.', 'wordforge' ),
+		)
+	);
+
+	wp_register_ability_category(
 		'wordforge-content',
 		array(
 			'label'       => __( 'Content Management', 'wordforge' ),

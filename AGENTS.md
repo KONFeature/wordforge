@@ -1,206 +1,166 @@
 # AGENTS.md - WordForge Development Guide
 
-## Project Structure
+**Generated:** 2026-01-08 | **Branch:** cleanup | **Commit:** 8c9c764
+
+## Project Overview
+
+WordForge: AI-powered WordPress management via MCP (Model Context Protocol). Bun monorepo with 4 packages.
+
+## Structure
+
 ```
-wordforge/                    # Bun monorepo
+wordforge/
 ├── packages/
 │   ├── php/                  # WordPress plugin (PHP 8.0+, WPCS)
+│   │   ├── includes/Abilities/   # MCP tools (30 abilities)
+│   │   ├── includes/Admin/       # WP admin UI controllers
+│   │   ├── includes/Mcp/         # MCP server integration
+│   │   └── includes/OpenCode/    # OpenCode binary manager
 │   ├── ui/                   # React admin UI (WordPress bundled React)
-│   ├── mcp/                  # MCP server for Claude Desktop (Node 18+)
+│   │   ├── src/chat/             # Full chat interface
+│   │   ├── src/settings/         # Settings page
+│   │   ├── src/widget/           # Floating widget
+│   │   └── src/editor/           # Gutenberg sidebar
 │   └── desktop/              # Tauri desktop app (React + Rust)
-│       ├── src/              # React frontend (TanStack Router/Query)
-│       └── src-tauri/        # Rust backend (OpenCode sidecar manager)
-├── biome.json                # Shared TS/JS linting/formatting
-└── package.json              # Workspace root
+│       ├── src/                  # React frontend (TanStack Router/Query)
+│       └── src-tauri/            # Rust backend (OpenCode sidecar)
+├── biome.json                # Shared TS/JS linting
+├── build.sh                  # Root build script
+└── package.json              # Bun workspaces
 ```
+
+**Note:** `packages/mcp/` does NOT exist. MCP server is via `wordpress/mcp-adapter` in PHP.
 
 ## Commands
 
-### Root
 ```bash
-bun install                   # Install all dependencies
-bun run build                 # Build all packages
-bun run lint                  # Lint TypeScript/JavaScript
-bun run lint:fix              # Auto-fix lint issues
-bun run typecheck             # Type-check all packages
-bun run test                  # Run all tests
-bun run start                 # Start wp-env (localhost:8888)
-```
+# Root
+bun install                   # Install all deps
+bun run build                 # Build all (UI → PHP assets)
+bun run lint                  # Lint TS/JS (Biome)
+bun run lint:fix              # Auto-fix
+bun run typecheck             # Type-check all
+bun run start                 # wp-env (localhost:8888)
 
-### Package-specific
-```bash
-# @wordforge/mcp
-cd packages/mcp
-bun run build                 # Build with tsdown
-bun run test                  # Run all tests
-bun run test -- --run integration.test.ts           # Single file
-bun run test -- --run "should list abilities"       # Single test by name
-bun run typecheck             # Type-check
-
-# @wordforge/ui
-cd packages/ui
-bun run build                 # Build React → packages/php/assets/js/
-bun run start                 # Watch mode with HMR
-
-# @wordforge/php
-cd packages/php
-composer install
-composer run lint:php         # WordPress coding standards
-composer run lint:php:fix     # Auto-fix
-
-# @wordforge/desktop
-cd packages/desktop
-bun run tauri:dev             # Start Tauri dev mode with HMR
-bun run tauri:build           # Build production app
-bun run typecheck             # Type-check TypeScript
+# Package-specific
+cd packages/mcp && bun run build && bun run test
+cd packages/ui && bun run build        # → ../php/assets/js/
+cd packages/php && composer run lint:php
+cd packages/desktop && bun run tauri:dev
 ```
 
 ## Code Style
 
 ### TypeScript (Biome)
-- 2-space indentation, single quotes, semicolons required
+- 2-space indent, single quotes, semicolons
 - `import type` for type-only imports
-- `camelCase` functions/variables, `PascalCase` types/classes, `SCREAMING_SNAKE_CASE` constants
-- Strict mode enabled - avoid `any`, use `unknown` and narrow types
-- Never use `@ts-ignore` or `@ts-expect-error`
+- `camelCase` vars, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants
+- **Never** `as any`, `@ts-ignore`, `@ts-expect-error`
+
+### React Import Rules (CRITICAL)
+
+| Package | Import From | Why |
+|---------|-------------|-----|
+| `@wordforge/ui` | `@wordpress/element` | WordPress bundled React |
+| `@wordforge/desktop` | `react` | Standard React (Tauri) |
 
 ```typescript
-// Import order: external → internal → types
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { AbilitiesApiClient } from './abilities-client.js';
-import type { Config } from './types.js';
+// @wordforge/ui - ALWAYS WordPress React
+import { useState } from '@wordpress/element';
+import { Button } from '@wordpress/components';
+
+// @wordforge/desktop - Standard React
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 ```
-
-### React (@wordforge/ui)
-**CRITICAL: Use WordPress bundled React, never `import from 'react'`**
-```typescript
-import { useState, useEffect } from '@wordpress/element';
-import { Button, Card, Spinner } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
-```
-
-Components: Arrow functions, typed props, CSS Modules for styling.
-```typescript
-import styles from './MyComponent.module.css';
-
-interface MyComponentProps {
-  title: string;
-  onAction: () => void;
-}
-
-export const MyComponent = ({ title, onAction }: MyComponentProps) => {
-  const [state, setState] = useState<string>('');
-  return <div className={styles.container}>...</div>;
-};
-```
-
-### React (@wordforge/desktop)
-**Standard React** - Desktop app uses regular React imports (NOT WordPress bundled).
-```typescript
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/core';
-```
-
-Uses TanStack Router (file-based routing) and TanStack Query for state management.
-Hash history for Tauri compatibility (no web server).
 
 ### PHP (WordPress Coding Standards)
-- Tabs for indentation
-- Spaces inside parentheses: `function_name( $arg )`
-- Yoda conditions: `if ( 'value' === $variable )`
+- **Tabs** for indentation
+- Spaces inside parens: `function_name( $arg )`
+- Yoda conditions: `if ( 'value' === $var )`
 - PHP 8.0+ type declarations required
-- Prefix hooks/filters with `wordforge_`
+- Prefix hooks with `wordforge_`
+
+## Architecture
+
+### MCP Integration Flow
+
+```
+AI Client → MCP Protocol → /wp-json/wordforge/mcp → ServerManager
+                                                      ↓
+                                              AbilityRegistry
+                                                      ↓
+                                              Abilities/* → WordPress APIs
+```
+
+### Ability Pattern (PHP)
 
 ```php
-<?php
-declare(strict_types=1);
-
-namespace WordForge\Abilities\Content;
-
-use WordForge\Abilities\AbstractAbility;
-
-class ListContent extends AbstractAbility {
+class MyAbility extends AbstractAbility {
+    public function get_title(): string { return 'My Tool'; }
+    public function get_description(): string { return 'For AI agents'; }
+    public function get_input_schema(): array { return [...]; }
     public function execute( array $args ): array {
-        // Validate early
-        if ( ! post_type_exists( $args['post_type'] ) ) {
-            return $this->error( 'Invalid post type', 'invalid_post_type' );
-        }
-        return $this->success( $data, 'Optional message' );
+        return $this->success( $data ) or $this->error( 'msg', 'code' );
     }
 }
+// Register in AbilityRegistry.php
 ```
 
-## Error Handling
+### Desktop IPC Flow
 
-### TypeScript
+```
+React (invoke) → Tauri Commands → Rust Backend
+React (listen) ← Tauri Events   ← Rust Backend
+```
+
+## Anti-Patterns (THIS PROJECT)
+
+| Don't | Why |
+|-------|-----|
+| `import from 'react'` in UI package | Must use `@wordpress/element` |
+| `import from '@wordpress/element'` in desktop | Must use `react` |
+| Edit `.asset.php` files | Auto-generated by wp-scripts |
+| Edit `routeTree.gen.ts` | Auto-generated by TanStack Router |
+| `as any`, `@ts-ignore` | Type safety required |
+| Deploy full monorepo to WP | Only `packages/php/` contents |
+| Skip Yoda conditions in PHP | WPCS requires them |
+
+## Where to Look
+
+| Task | Location |
+|------|----------|
+| Add MCP ability | `packages/php/includes/Abilities/` + `AbilityRegistry.php` |
+| Modify chat UI | `packages/ui/src/chat/` |
+| Change settings | `packages/ui/src/settings/` |
+| Desktop features | `packages/desktop/src/` (React) + `src-tauri/` (Rust) |
+| OpenCode management | `packages/php/includes/OpenCode/` |
+| Build/deploy plugin | `packages/php/build.sh` |
+
+## Testing
+
+Tests in `packages/mcp/test/` using Vitest. Globals enabled.
+
 ```typescript
-try {
-  const result = await client.executeAbility(name, method, args);
-  return { content: [...], structuredContent: result };
-} catch (err) {
-  const message = err instanceof Error ? err.message : String(err);
-  logger.error(`Tool ${name} failed`, err);
-  return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
-}
-```
-
-### PHP
-```php
-return $this->success( $data );       // Success response
-return $this->error( 'msg', 'code' ); // Error response
-```
-
-## Testing (Vitest)
-
-Tests in `packages/mcp/test/`. Globals enabled (`describe`, `it`, `expect`).
-
-```typescript
-import { describe, it, expect, beforeAll } from 'vitest';
-
 describe('MyFeature', () => {
-  let client: AbilitiesApiClient;
-
-  beforeAll(() => {
-    client = new AbilitiesApiClient(TEST_URL, TEST_USER, TEST_PASS);
-  });
-
-  it('should do something', async () => {
-    const result = await client.executeAbility('wordforge/list-content', 'GET', {});
+  it('should work', async () => {
+    const result = await client.executeAbility('wordforge/my-ability', 'GET', {});
     expect(result.success).toBe(true);
   });
 });
 ```
 
-**Integration test env vars** (`.env` in packages/mcp):
+**Integration env vars** (`.env` in packages/mcp):
 ```
 TEST_WORDPRESS_URL=https://example.com/wp-json/wp-abilities/v1
 TEST_WORDPRESS_USER=admin
 TEST_WORDPRESS_PASS=xxxx xxxx xxxx
 ```
 
-## Architecture
-
-### MCP Package
-- `src/index.ts` - MCP server bootstrap, registers tools/prompts/resources
-- `abilities-client.ts` - HTTP client for WordPress Abilities API
-- `ability-loader.ts` - Transforms WordPress abilities to MCP format
-
-### UI Package
-- Entry points: `src/chat/index.tsx`, `src/settings/index.tsx`
-- Builds to `packages/php/assets/js/` via wp-scripts
-- Window config: `window.wordforgeChat`, `window.wordforgeSettings`
-
-### PHP Package
-- Entry: `wordforge.php` - plugin bootstrap
-- `AbilityRegistry.php` - registers abilities with WordPress
-- `Abilities/AbstractAbility.php` - base class with `success()`, `error()`, `format_post()`
-- Each ability implements: `get_title()`, `get_description()`, `get_input_schema()`, `execute()`
-
 ## Common Pitfalls
 
-1. **React imports** - Always `@wordpress/element`, never `react` directly
-2. **PHP "undefined function" errors** - WordPress functions work at runtime, not static analysis
-3. **Type suppression** - Never use `as any`, `@ts-ignore`, or `@ts-expect-error`
-4. **Asset files** - `.asset.php` files are auto-generated by wp-scripts, don't edit manually
-5. **Deploying** - Only deploy `packages/php/` contents to WordPress, not the monorepo
+1. **React imports** - Wrong package = runtime errors
+2. **PHP "undefined function"** - WordPress functions work at runtime, not static analysis
+3. **Asset files** - `.asset.php` auto-generated, don't edit
+4. **Deploying** - Only `packages/php/` goes to WordPress
+5. **Missing tests** - Test infrastructure exists but sparse coverage

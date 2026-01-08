@@ -169,29 +169,14 @@ class ListProducts extends AbstractAbility {
 			'downloadable'      => $product->is_downloadable(),
 			'tax_status'        => $product->get_tax_status(),
 			'tax_class'         => $product->get_tax_class(),
-			'categories'        => $this->get_terms( $product, 'product_cat' ),
-			'tags'              => $this->get_terms( $product, 'product_tag' ),
+			'categories'        => $this->get_term_names( $product, 'product_cat' ),
+			'tags'              => $this->get_term_names( $product, 'product_tag' ),
 			'images'            => $this->get_images( $product ),
 			'attributes'        => $this->get_attributes( $product ),
 			'meta_data'         => $product->get_meta_data(),
 			'permalink'         => $product->get_permalink(),
 			'date_created'      => $product->get_date_created()?->format( 'Y-m-d H:i:s' ),
 			'date_modified'     => $product->get_date_modified()?->format( 'Y-m-d H:i:s' ),
-		);
-	}
-
-	protected function get_terms( \WC_Product $product, string $taxonomy ): array {
-		$terms = get_the_terms( $product->get_id(), $taxonomy );
-		if ( ! $terms || is_wp_error( $terms ) ) {
-			return array();
-		}
-		return array_map(
-			fn( $term ) => array(
-				'id'   => $term->term_id,
-				'name' => $term->name,
-				'slug' => $term->slug,
-			),
-			$terms
 		);
 	}
 

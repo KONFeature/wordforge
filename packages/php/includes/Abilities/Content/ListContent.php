@@ -54,7 +54,20 @@ class ListContent extends AbstractAbility {
 					'date'       => array( 'type' => 'string' ),
 					'modified'   => array( 'type' => 'string' ),
 					'permalink'  => array( 'type' => 'string' ),
-					'taxonomies' => array( 'type' => 'object' ),
+					'taxonomies' => array(
+					'type'                 => 'object',
+					'additionalProperties' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type'       => 'object',
+							'properties' => array(
+								'id'   => array( 'type' => 'integer' ),
+								'name' => array( 'type' => 'string' ),
+								'slug' => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
 					'meta'       => array( 'type' => 'object' ),
 				),
 			),
@@ -264,20 +277,28 @@ class ListContent extends AbstractAbility {
 
 	private function format_single_content( \WP_Post $post ): array {
 		$data = array(
-			'id'         => $post->ID,
-			'title'      => $post->post_title,
-			'slug'       => $post->post_name,
-			'status'     => $post->post_status,
-			'type'       => $post->post_type,
-			'excerpt'    => $post->post_excerpt,
-			'author'     => (int) $post->post_author,
-			'date'       => $post->post_date,
-			'modified'   => $post->post_modified,
-			'parent'     => $post->post_parent,
-			'permalink'  => get_permalink( $post->ID ),
-			'taxonomies' => $this->get_post_taxonomies( $post ),
-			'meta'       => $this->get_post_meta( $post->ID ),
+			'id'        => $post->ID,
+			'title'     => $post->post_title,
+			'slug'      => $post->post_name,
+			'status'    => $post->post_status,
+			'type'      => $post->post_type,
+			'excerpt'   => $post->post_excerpt,
+			'author'    => (int) $post->post_author,
+			'date'      => $post->post_date,
+			'modified'  => $post->post_modified,
+			'parent'    => $post->post_parent,
+			'permalink' => get_permalink( $post->ID ),
 		);
+
+		$taxonomies = $this->get_post_taxonomies( $post );
+		if ( ! empty( $taxonomies ) ) {
+			$data['taxonomies'] = $taxonomies;
+		}
+
+		$meta = $this->get_post_meta( $post->ID );
+		if ( ! empty( $meta ) ) {
+			$data['meta'] = $meta;
+		}
 
 		$featured_image = get_post_thumbnail_id( $post->ID );
 		if ( $featured_image ) {
