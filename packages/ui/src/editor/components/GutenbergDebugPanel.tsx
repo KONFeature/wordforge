@@ -5,6 +5,7 @@ import { Icon } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
 import { useGutenbergBridge } from '../hooks/useGutenbergBridge';
 import { useBlockActions } from '../hooks/useBlockActions';
+import { useGutenbergPluginBridge } from '../hooks/useGutenbergPluginBridge';
 import styles from './GutenbergDebugPanel.module.css';
 
 interface TestResult {
@@ -18,6 +19,7 @@ export const GutenbergDebugPanel = () => {
 
   const { status, blockTypes } = useGutenbergBridge();
   const { insertBlocks, serializeBlocks, isReady } = useBlockActions();
+  const pluginBridge = useGutenbergPluginBridge();
 
   const handleTestSerialize = useCallback(() => {
     const result = serializeBlocks([
@@ -121,6 +123,48 @@ export const GutenbergDebugPanel = () => {
               )}
             </div>
           )}
+
+          <div className={styles.bridgeSection}>
+            <div className={styles.bridgeHeader}>
+              <span className={styles.bridgeLabel}>
+                {__('Plugin Bridge', 'wordforge')}
+              </span>
+              <span
+                className={`${styles.bridgeStatus} ${pluginBridge.status.connected ? styles.connected : ''}`}
+              >
+                {pluginBridge.status.connected
+                  ? __('Connected', 'wordforge')
+                  : __('Disconnected', 'wordforge')}
+              </span>
+            </div>
+            <div className={styles.bridgeControls}>
+              {pluginBridge.isActive ? (
+                <Button
+                  variant="secondary"
+                  size="small"
+                  className={styles.testButton}
+                  onClick={pluginBridge.stop}
+                >
+                  {__('Stop Bridge', 'wordforge')}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="small"
+                  className={styles.testButton}
+                  onClick={pluginBridge.start}
+                  disabled={!isReady}
+                >
+                  {__('Start Bridge', 'wordforge')}
+                </Button>
+              )}
+            </div>
+            {pluginBridge.status.lastError && (
+              <div className={`${styles.testResult} ${styles.error}`}>
+                {pluginBridge.status.lastError}
+              </div>
+            )}
+          </div>
 
           <div className={styles.testSection}>
             <Button

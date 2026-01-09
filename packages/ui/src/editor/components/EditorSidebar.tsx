@@ -9,7 +9,6 @@ import { useChat } from '../../chat/hooks/useChat';
 import type { ScopedContext } from '../../chat/hooks/useContextInjection';
 import { useExport } from '../../chat/hooks/useExport';
 import { useMessageSearch } from '../../chat/hooks/useMessageSearch';
-import { BlockCommandExecutor } from './BlockCommandExecutor';
 import styles from './EditorSidebar.module.css';
 import { GutenbergDebugPanel } from './GutenbergDebugPanel';
 import { SessionSelector } from './SessionSelector';
@@ -63,8 +62,6 @@ export const EditorSidebar = ({ context }: EditorSidebarProps) => {
       {context && <ContextBadge context={context} />}
 
       <GutenbergDebugPanel />
-
-      <BlockCommandExecutor messages={chat.messages} />
 
       <div className={styles.chatContainer}>
         <ChatInterface

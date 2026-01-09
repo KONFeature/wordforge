@@ -124,3 +124,40 @@
 .testResult.error {
   border-left: 2px solid var(--wf-color-error);
 }
+
+.bridgeSection {
+  margin-top: var(--wf-spacing-xs);
+  padding: var(--wf-spacing-xs);
+  background: var(--wf-color-white);
+  border-radius: 4px;
+  border: 1px solid var(--wf-color-border-light);
+}
+
+.bridgeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--wf-spacing-xs);
+}
+
+.bridgeLabel {
+  font-weight: 500;
+  color: var(--wf-color-text);
+}
+
+.bridgeStatus {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--wf-color-text-muted);
+  color: var(--wf-color-white);
+}
+
+.bridgeStatus.connected {
+  background: var(--wf-color-success);
+}
+
+.bridgeControls {
+  display: flex;
+  gap: var(--wf-spacing-xs);
+}

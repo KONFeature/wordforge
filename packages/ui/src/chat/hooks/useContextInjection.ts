@@ -111,18 +111,15 @@ function buildContextMessage(context: ScopedContext): string {
 
       if (hasGutenbergBridge) {
         message +=
-          '\n\nGUTENBERG BRIDGE ACTIVE: You can insert blocks DIRECTLY into the editor!';
+          '\n\nGUTENBERG BRIDGE ACTIVE: You can insert blocks DIRECTLY into the live editor!';
         message += `\nAvailable: ${caps.coreBlockCount} core blocks, ${caps.pluginBlockCount} plugin blocks.`;
+        message += '\n\nUse these tools for live editor manipulation:';
+        message += '\n- gutenberg-insert: Insert blocks into the editor';
+        message += '\n- gutenberg-blocks: Get current blocks in the editor';
+        message += '\n- gutenberg-list: List available block types';
+        message += '\n- gutenberg-serialize: Serialize blocks to HTML';
         message +=
-          '\n\nTo insert blocks, respond with a code block tagged "wordforge-blocks" containing JSON:';
-        message += '\n```wordforge-blocks';
-        message +=
-          '\n{"action": "insert", "blocks": [{"name": "core/paragraph", "attrs": {"content": "Hello!"}}]}';
-        message += '\n```';
-        message +=
-          '\n\nSupported actions: "insert" (add blocks), "replace" (replace selected), "serialize" (get HTML).';
-        message +=
-          '\nBlocks format: {"name": "core/group", "attrs": {...}, "innerBlocks": [...]}';
+          '\n\nBlock format: {"name": "core/paragraph", "attrs": {"content": "Hello!"}, "innerBlocks": [...]}';
       } else {
         message +=
           ' Use the wordforge/get-blocks and wordforge/update-blocks tools to work with this page.';

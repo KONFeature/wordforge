@@ -68,16 +68,6 @@ export interface BlockSpec {
 }
 
 /**
- * Block command from AI response
- */
-export interface BlockCommand {
-  action: 'insert' | 'replace' | 'remove' | 'serialize';
-  blocks?: BlockSpec[];
-  position?: 'before' | 'after' | number;
-  targetClientId?: string;
-}
-
-/**
  * Result of a block operation
  */
 export interface BlockOperationResult {

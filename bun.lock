@@ -47,6 +47,19 @@
         "vite": "^7.0.0",
       },
     },
+    "packages/opencode-plugin": {
+      "name": "@wordforge/opencode-plugin",
+      "version": "0.1.0",
+      "dependencies": {
+        "@opencode-ai/plugin": "^1.0.0",
+        "zod": "^3.24.0",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "bun-types": "^1.3.5",
+        "typescript": "^5.7.3",
+      },
+    },
     "packages/ui": {
       "name": "@wordforge/ui",
       "version": "1.0.0",
@@ -610,6 +623,8 @@
     "@nodelib/fs.stat": ["@nodelib/fs.stat@2.0.5", "", {}, "sha512-RkhPPp2zrqDAQA/2jNhnztcPAlv64XdhIp7a7454A5ovI7Bukxgt7MX7udwAu3zg1DcpPU0rz3VV1SeaqvY4+A=="],
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
+
+    "@opencode-ai/plugin": ["@opencode-ai/plugin@1.1.7", "", { "dependencies": { "@opencode-ai/sdk": "1.1.7", "zod": "4.1.8" } }, "sha512-fndtL2qGmh1tVt/ZjbqwBB4ArcZQ7ldp0ak9ByAWAbYtjbAywzQDzcOIi7TdEUgi+P2y25mbo0gJzVcL3Vr5OA=="],
 
     "@opencode-ai/sdk": ["@opencode-ai/sdk@1.1.1", "", {}, "sha512-PfXujMrHGeMnpS8Gd2BXSY+zZajlztcAvcokf06NtAhd0Mbo/hCLXgW0NBCQ+3FX3e/G2PNwz2DqMdtzyIZaCQ=="],
 
@@ -1254,6 +1269,8 @@
     "@webpack-cli/serve": ["@webpack-cli/serve@2.0.5", "", { "peerDependencies": { "webpack": "5.x.x", "webpack-cli": "5.x.x" } }, "sha512-lqaoKnRYBdo1UgDX8uF24AfGMifWK19TxPmM5FHc2vAGxrJ/qtyUyFBWoY1tISZdelsQ5fBcOusifo5o5wSJxQ=="],
 
     "@wordforge/desktop": ["@wordforge/desktop@workspace:packages/desktop"],
+
+    "@wordforge/opencode-plugin": ["@wordforge/opencode-plugin@workspace:packages/opencode-plugin"],
 
     "@wordforge/ui": ["@wordforge/ui@workspace:packages/ui"],
 
@@ -3818,6 +3835,10 @@
     "@keyv/bigmap/keyv": ["keyv@5.5.5", "", { "dependencies": { "@keyv/serialize": "^1.1.1" } }, "sha512-FA5LmZVF1VziNc0bIdCSA1IoSVnDCqE8HJIZZv2/W8YmoAM50+tnUgJR/gQZwEeIMleuIOnRnHA/UaZRNeV4iQ=="],
 
     "@kwsites/file-exists/debug": ["debug@4.4.3", "", { "dependencies": { "ms": "^2.1.3" } }, "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="],
+
+    "@opencode-ai/plugin/@opencode-ai/sdk": ["@opencode-ai/sdk@1.1.7", "", {}, "sha512-rE+Ks+iBt47Y057adzGf4/IZ/kWrfGdLJpX8LfZDeoeltbZff+6bqmAIsF5WCrcJHD+nanAihetCfSGIiT2auA=="],
+
+    "@opencode-ai/plugin/zod": ["zod@4.1.8", "", {}, "sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ=="],
 
     "@opentelemetry/core/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.28.0", "", {}, "sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA=="],
 
