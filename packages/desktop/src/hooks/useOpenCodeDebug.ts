@@ -62,10 +62,12 @@ export function useOpenCodeDebug() {
     debugInfo: debugInfo.data ?? null,
     logFiles: logFiles.data ?? [],
     isLoading: debugInfo.isLoading || logFiles.isLoading,
+    isRefetchingLogFiles: logFiles.isFetching,
     error: debugInfo.error || logFiles.error,
     refetch: () => {
       debugInfo.refetch();
       logFiles.refetch();
     },
+    refetchLogFiles: () => logFiles.refetch(),
   };
 }

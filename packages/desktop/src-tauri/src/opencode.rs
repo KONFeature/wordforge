@@ -212,6 +212,7 @@ impl OpenCodeManager {
         &mut self, 
         cors_origin: Option<String>,
         project_dir: Option<std::path::PathBuf>,
+        debug_mode: bool,
     ) -> Result<u16, Error> {
         if self.process.is_some() {
             return Err(Error::AlreadyRunning);
@@ -222,11 +223,15 @@ impl OpenCodeManager {
         }
 
         let port = self.get_or_assign_port().await?;
-        info!("Starting OpenCode on port {}", port);
+        info!("Starting OpenCode on port {} (debug_mode: {})", port, debug_mode);
 
         let binary = self.binary_path();
         let mut cmd = Command::new(&binary);
         cmd.args(["serve", "--port", &port.to_string()]);
+        
+        if debug_mode {
+            cmd.args(["--log-level", "DEBUG"]);
+        }
         
         if let Some(cors) = cors_origin {
             cmd.args(["--cors", &cors]);

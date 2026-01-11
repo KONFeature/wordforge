@@ -63,32 +63,40 @@ export function useOpenCodeStatus() {
 export function useOpenCodeActions() {
   const queryClient = useQueryClient();
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [pendingStart, setPendingStart] = useState(false);
+  const [pendingStop, setPendingStop] = useState(false);
 
-  const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: openCodeKeys.all });
+  const refetchStatus = useCallback(async () => {
+    await queryClient.refetchQueries({ queryKey: openCodeKeys.status() });
   }, [queryClient]);
 
   const startMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (debugMode?: boolean) => {
       setMutationError(null);
-      return invoke<number>('start_opencode');
+      setPendingStart(true);
+      return invoke<number>('start_opencode', { debugMode });
     },
-    onSuccess: invalidate,
+    onSettled: async () => {
+      await refetchStatus();
+      setPendingStart(false);
+    },
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
-      invalidate();
     },
   });
 
   const stopMutation = useMutation({
     mutationFn: async () => {
       setMutationError(null);
+      setPendingStop(true);
       await invoke('stop_opencode');
     },
-    onSuccess: invalidate,
+    onSettled: async () => {
+      await refetchStatus();
+      setPendingStop(false);
+    },
     onError: (error) => {
       setMutationError(error instanceof Error ? error.message : String(error));
-      invalidate();
     },
   });
 
@@ -103,17 +111,17 @@ export function useOpenCodeActions() {
 
   return {
     start: startMutation.mutateAsync,
-    isStarting: startMutation.isPending,
+    isStarting: startMutation.isPending || pendingStart,
 
     stop: stopMutation.mutateAsync,
-    isStopping: stopMutation.isPending,
+    isStopping: stopMutation.isPending || pendingStop,
 
     openView: openViewMutation.mutateAsync,
 
     error: mutationError,
     clearError: () => setMutationError(null),
 
-    refresh: invalidate,
+    refresh: refetchStatus,
   };
 }
 
@@ -170,7 +178,7 @@ export interface UseOpenCodeReturn {
   downloadProgress: DownloadProgress | null;
   error: string | null;
   download: () => Promise<void>;
-  start: () => Promise<number>;
+  start: (debugMode?: boolean) => Promise<number>;
   stop: () => Promise<void>;
   openView: () => Promise<void>;
   refresh: () => void;

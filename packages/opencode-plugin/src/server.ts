@@ -10,78 +10,42 @@ export interface BrowserServer {
   server: ReturnType<typeof Bun.serve>;
   waitForBrowser: WaitForBrowser;
   stop: () => void;
+  port: number;
 }
 
-export function createBrowserServer(port: number): BrowserServer {
+const MAX_PORT_ATTEMPTS = 10;
+
+export function createBrowserServer(basePort: number): BrowserServer {
   const pending = new Map<string, PendingRequest>();
   const queue: string[] = [];
 
-  const server = Bun.serve({
-    port,
-    fetch: async (req) => {
-      const url = new URL(req.url);
+  let server: ReturnType<typeof Bun.serve> | null = null;
+  let boundPort = basePort;
 
-      if (req.method === 'OPTIONS') {
-        return new Response(null, { headers: CORS_HEADERS });
-      }
-
-      if (url.pathname === '/pending' && req.method === 'GET') {
-        const nextId = queue.shift();
-        if (!nextId) {
-          return Response.json({ pending: null }, { headers: CORS_HEADERS });
-        }
-
-        const request = pending.get(nextId);
-        if (!request) {
-          return Response.json({ pending: null }, { headers: CORS_HEADERS });
-        }
-
-        return Response.json(
-          {
-            pending: {
-              id: request.id,
-              tool: request.tool,
-              args: request.args,
-            },
-          },
-          { headers: CORS_HEADERS },
+  for (let attempt = 0; attempt < MAX_PORT_ATTEMPTS; attempt++) {
+    const tryPort = basePort + attempt;
+    try {
+      server = Bun.serve({
+        port: tryPort,
+        fetch: async (req) => {
+          return handleRequest(req, pending, queue);
+        },
+      });
+      boundPort = tryPort;
+      break;
+    } catch (err) {
+      if (attempt === MAX_PORT_ATTEMPTS - 1) {
+        throw new Error(
+          `Failed to bind to any port in range ${basePort}-${basePort + MAX_PORT_ATTEMPTS - 1}. ` +
+            `All ports are in use. Original error: ${err}`,
         );
       }
+    }
+  }
 
-      if (url.pathname === '/result' && req.method === 'POST') {
-        const body = (await req.json()) as {
-          id: string;
-          result?: unknown;
-          error?: string;
-        };
-
-        const request = pending.get(body.id);
-        if (request) {
-          if (body.error) {
-            request.reject(new Error(body.error));
-          } else {
-            request.resolve(body.result);
-          }
-          pending.delete(body.id);
-        }
-
-        return Response.json({ ok: true }, { headers: CORS_HEADERS });
-      }
-
-      if (url.pathname === '/status' && req.method === 'GET') {
-        return Response.json(
-          {
-            status: 'ready',
-            pending: pending.size,
-            queue: queue.length,
-          },
-          { headers: CORS_HEADERS },
-        );
-      }
-
-      return new Response('Not found', { status: 404, headers: CORS_HEADERS });
-    },
-  });
+  if (!server) {
+    throw new Error('Failed to create browser server');
+  }
 
   const waitForBrowser: WaitForBrowser = <T>(
     tool: string,
@@ -119,8 +83,83 @@ export function createBrowserServer(port: number): BrowserServer {
   };
 
   const stop = () => {
-    server.stop();
+    server?.stop();
   };
 
-  return { server, waitForBrowser, stop };
+  return { server, waitForBrowser, stop, port: boundPort };
+}
+
+function handleRequest(
+  req: Request,
+  pending: Map<string, PendingRequest>,
+  queue: string[],
+): Response | Promise<Response> {
+  const url = new URL(req.url);
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  if (url.pathname === '/pending' && req.method === 'GET') {
+    const nextId = queue.shift();
+    if (!nextId) {
+      return Response.json({ pending: null }, { headers: CORS_HEADERS });
+    }
+
+    const request = pending.get(nextId);
+    if (!request) {
+      return Response.json({ pending: null }, { headers: CORS_HEADERS });
+    }
+
+    return Response.json(
+      {
+        pending: {
+          id: request.id,
+          tool: request.tool,
+          args: request.args,
+        },
+      },
+      { headers: CORS_HEADERS },
+    );
+  }
+
+  if (url.pathname === '/result' && req.method === 'POST') {
+    return handleResultPost(req, pending);
+  }
+
+  if (url.pathname === '/status' && req.method === 'GET') {
+    return Response.json(
+      {
+        status: 'ready',
+        pending: pending.size,
+        queue: queue.length,
+      },
+      { headers: CORS_HEADERS },
+    );
+  }
+
+  return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+}
+
+async function handleResultPost(
+  req: Request,
+  pending: Map<string, PendingRequest>,
+): Promise<Response> {
+  const body = (await req.json()) as {
+    id: string;
+    result?: unknown;
+    error?: string;
+  };
+
+  const request = pending.get(body.id);
+  if (request) {
+    if (body.error) {
+      request.reject(new Error(body.error));
+    } else {
+      request.resolve(body.result);
+    }
+    pending.delete(body.id);
+  }
+
+  return Response.json({ ok: true }, { headers: CORS_HEADERS });
 }

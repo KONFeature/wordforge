@@ -71,6 +71,7 @@ async fn download_opencode(
 async fn start_opencode(
     state: tauri::State<'_, Arc<Mutex<AppState>>>,
     site_manager: tauri::State<'_, Arc<Mutex<SiteManager>>>,
+    debug_mode: Option<bool>,
 ) -> Result<u16, String> {
     let mut state = state.lock().await;
     let mut site_manager = site_manager.lock().await;
@@ -81,7 +82,7 @@ async fn start_opencode(
     let cors_origin = active_site.as_ref().map(|s| s.url.clone());
     let project_dir = active_site.as_ref().map(|s| s.project_dir.clone());
     
-    let port = state.start_opencode_with_config(cors_origin, project_dir).await.map_err(|e| e.to_string())?;
+    let port = state.start_opencode_with_config(cors_origin, project_dir, debug_mode.unwrap_or(false)).await.map_err(|e| e.to_string())?;
     
     if let Some(site) = active_site {
         if let Err(e) = site_manager.sync_port_to_wordpress(&site, port, &device_id).await {
@@ -320,7 +321,7 @@ async fn refresh_site_config(
         
         let port = {
             let mut app_state = state.lock().await;
-            app_state.start_opencode_with_config(cors_origin, project_dir)
+            app_state.start_opencode_with_config(cors_origin, project_dir, false)
                 .await
                 .map_err(|e| e.to_string())?
         };

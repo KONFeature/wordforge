@@ -34,8 +34,9 @@ impl AppState {
         &mut self, 
         cors_origin: Option<String>,
         project_dir: Option<PathBuf>,
+        debug_mode: bool,
     ) -> Result<u16, crate::opencode::Error> {
-        self.opencode.start(cors_origin, project_dir).await
+        self.opencode.start(cors_origin, project_dir, debug_mode).await
     }
 
     pub async fn stop_opencode(&mut self) -> Result<(), crate::opencode::Error> {

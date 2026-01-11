@@ -1,0 +1,80 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.toggleContainer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.track {
+  display: block;
+  width: 40px;
+  height: 22px;
+  background-color: var(--color-border);
+  border-radius: 11px;
+  transition: background-color 0.2s ease;
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.input:checked + .track {
+  background-color: var(--color-primary);
+}
+
+.input:checked + .track .thumb {
+  transform: translateX(18px);
+}
+
+.input:focus-visible + .track {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.input:disabled + .track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wrapper:has(.input:disabled) {
+  cursor: not-allowed;
+}

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import logoWordforge from '../../assets/logo-wordforge.webp';
+import { useDebugMode } from '../../hooks/useDebugMode';
 import {
   useOpenCodeActions,
   useOpenCodeDownload,
@@ -190,6 +191,7 @@ function OpenCodeControls() {
   const { status, port } = useOpenCodeStatus();
   const { start, stop, isStarting } = useOpenCodeActions();
   const { download, isDownloading, downloadProgress } = useOpenCodeDownload();
+  const [debugMode] = useDebugMode();
 
   const isInstalled = status !== 'not_installed';
   const isRunning = status === 'running';
@@ -255,7 +257,7 @@ function OpenCodeControls() {
             <button
               type="button"
               className={styles.openCodeBtn}
-              onClick={() => start()}
+              onClick={() => start(debugMode)}
               disabled={isStartingStatus}
               title="Start OpenCode"
             >

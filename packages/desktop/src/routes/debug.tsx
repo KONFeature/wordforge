@@ -8,13 +8,15 @@ import {
   FileText,
   Folder,
   RefreshCw,
+  Settings,
   Terminal,
   Trash2,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Badge, Button, Card } from '../components/ui';
+import { Badge, Button, Card, Toggle } from '../components/ui';
 import { useSidebarNavItems } from '../context/SidebarContext';
+import { useDebugMode } from '../hooks/useDebugMode';
 import {
   useOpenCodeDebug,
   useOpenCodeLogContent,
@@ -29,12 +31,20 @@ export const Route = createFileRoute('/debug')({
 
 function DebugPage() {
   const { setNavItems } = useSidebarNavItems();
-  const { debugInfo, logFiles, isLoading, refetch } = useOpenCodeDebug();
+  const {
+    debugInfo,
+    logFiles,
+    isLoading,
+    refetch,
+    refetchLogFiles,
+    isRefetchingLogFiles,
+  } = useOpenCodeDebug();
   const { logs, clearLogs, hasErrors } = useOpenCodeLogs();
+  const [debugMode, setDebugMode] = useDebugMode();
   const [selectedLogFile, setSelectedLogFile] =
     useState<OpenCodeLogFile | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['status', 'live-logs']),
+    new Set(['status', 'settings', 'live-logs']),
   );
 
   useEffect(() => {
@@ -134,6 +144,26 @@ function DebugPage() {
           ) : (
             <p className={styles.loading}>Loading...</p>
           )}
+        </Section>
+
+        <Section
+          id="settings"
+          title="Settings"
+          icon={<Settings size={16} />}
+          expanded={expandedSections.has('settings')}
+          onToggle={() => toggleSection('settings')}
+        >
+          <div className={styles.settingsContent}>
+            <Toggle
+              label="Debug Logging"
+              description="Start OpenCode with --log-level DEBUG for verbose output"
+              checked={debugMode}
+              onChange={(e) => setDebugMode(e.target.checked)}
+            />
+            <p className={styles.settingsNote}>
+              Changes take effect on next OpenCode restart
+            </p>
+          </div>
         </Section>
 
         <Section
@@ -241,6 +271,20 @@ function DebugPage() {
           }
           expanded={expandedSections.has('log-files')}
           onToggle={() => toggleSection('log-files')}
+          actions={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refetchLogFiles()}
+              disabled={isRefetchingLogFiles}
+            >
+              <RefreshCw
+                size={12}
+                className={isRefetchingLogFiles ? styles.spinning : ''}
+              />
+              Refresh
+            </Button>
+          }
         >
           {logFiles.length > 0 ? (
             <div className={styles.logFilesContainer}>

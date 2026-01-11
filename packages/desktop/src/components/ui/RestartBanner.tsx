@@ -1,5 +1,6 @@
 import { RefreshCw, X } from 'lucide-react';
 import { useRestartRequired } from '../../context/RestartContext';
+import { useDebugMode } from '../../hooks/useDebugMode';
 import { useOpenCodeActions, useOpenCodeStatus } from '../../hooks/useOpenCode';
 import { Button } from './Button';
 import styles from './RestartBanner.module.css';
@@ -9,6 +10,7 @@ export function RestartBanner() {
     useRestartRequired();
   const { status } = useOpenCodeStatus();
   const { stop, start, isStarting } = useOpenCodeActions();
+  const [debugMode] = useDebugMode();
 
   const isRunning = status === 'running';
 
@@ -18,7 +20,7 @@ export function RestartBanner() {
 
   const handleRestart = async () => {
     await stop();
-    await start();
+    await start(debugMode);
     clearRestartRequired();
   };
 

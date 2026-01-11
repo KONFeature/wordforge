@@ -1,5 +1,6 @@
 import { Download, ExternalLink, Play, Square } from 'lucide-react';
 import { useOpenCodeClientSafe } from '../context/OpenCodeClientContext';
+import { useDebugMode } from '../hooks/useDebugMode';
 import {
   useOpenCodeActions,
   useOpenCodeDownload,
@@ -13,6 +14,7 @@ export function ServerControls() {
   const { start, stop, isStarting } = useOpenCodeActions();
   const { download, isDownloading, downloadProgress } = useOpenCodeDownload();
   const clientContext = useOpenCodeClientSafe();
+  const [debugMode] = useDebugMode();
 
   const isInstalled = status !== 'not_installed';
   const isRunning = status === 'running';
@@ -67,7 +69,7 @@ export function ServerControls() {
       <div className={styles.buttons}>
         <Button
           variant="success"
-          onClick={() => start()}
+          onClick={() => start(debugMode)}
           disabled={isRunning || isStartingStatus}
           isLoading={isStartingStatus}
           leftIcon={!isStartingStatus ? <Play size={18} /> : undefined}
