@@ -18,7 +18,7 @@ interface DownloadProgress {
 interface OpenCodeState {
   status: OpenCodeStatus;
   installedVersion: string | null;
-  latestVersion: string | null;
+  targetVersion: string | null;
   port: number | null;
   updateAvailable: boolean;
 }
@@ -29,18 +29,18 @@ const openCodeKeys = {
 };
 
 async function fetchOpenCodeState(): Promise<OpenCodeState> {
-  const [status, installedVersion, latestVersion, port, updateAvailable] =
+  const [status, installedVersion, targetVersion, port, updateAvailable] =
     await Promise.all([
       invoke<OpenCodeStatus>('get_status').catch(
         () => 'stopped' as OpenCodeStatus,
       ),
       invoke<string | null>('get_installed_version').catch(() => null),
-      invoke<string>('get_latest_version').catch(() => null),
+      invoke<string>('get_target_version').catch(() => null),
       invoke<number | null>('get_opencode_port').catch(() => null),
       invoke<boolean>('check_update_available').catch(() => false),
     ]);
 
-  return { status, installedVersion, latestVersion, port, updateAvailable };
+  return { status, installedVersion, targetVersion, port, updateAvailable };
 }
 
 export function useOpenCodeStatus() {
@@ -53,7 +53,7 @@ export function useOpenCodeStatus() {
   return {
     status: stateQuery.data?.status ?? 'not_installed',
     installedVersion: stateQuery.data?.installedVersion ?? null,
-    latestVersion: stateQuery.data?.latestVersion ?? null,
+    targetVersion: stateQuery.data?.targetVersion ?? null,
     updateAvailable: stateQuery.data?.updateAvailable ?? false,
     port: stateQuery.data?.port ?? null,
     isLoading: stateQuery.isLoading,
@@ -163,7 +163,7 @@ export function useOpenCodeDownload() {
 export interface UseOpenCodeReturn {
   status: OpenCodeStatus;
   installedVersion: string | null;
-  latestVersion: string | null;
+  targetVersion: string | null;
   updateAvailable: boolean;
   port: number | null;
   isDownloading: boolean;
@@ -188,7 +188,7 @@ export function useOpenCode(): UseOpenCodeReturn {
   return {
     status: computedStatus,
     installedVersion: statusHook.installedVersion,
-    latestVersion: statusHook.latestVersion,
+    targetVersion: statusHook.targetVersion,
     updateAvailable: statusHook.updateAvailable,
     port: statusHook.port,
     isDownloading: downloadHook.isDownloading,

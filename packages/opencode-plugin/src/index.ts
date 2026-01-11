@@ -164,9 +164,21 @@ const createTools = (waitForBrowser: WaitForBrowser) => ({
   }),
 });
 
-export const WordForgeGutenbergPlugin: Plugin = async () => {
-  const { waitForBrowser } = createBrowserServer(BROWSER_SERVER_PORT);
-  return { tool: createTools(waitForBrowser) };
+export const WordForgeGutenbergPlugin: Plugin = async ({ client }) => {
+  const { waitForBrowser, server } = createBrowserServer(BROWSER_SERVER_PORT);
+
+  await client.app.log({
+    body: {
+      service: 'gutenberg-bridge',
+      level: 'info',
+      message: `Gutenberg bridge server started on port ${BROWSER_SERVER_PORT}`,
+      extra: { port: BROWSER_SERVER_PORT, url: server.url.href },
+    },
+  });
+
+  return {
+    tool: createTools(waitForBrowser),
+  };
 };
 
 export default WordForgeGutenbergPlugin;

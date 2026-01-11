@@ -18,7 +18,7 @@ export const OAUTH_PROVIDERS: OAuthProvider[] = [
     name: 'OpenAI',
     description: 'Use your ChatGPT Plus/Pro subscription',
     providerID: 'openai',
-    plugin: AVAILABLE_PLUGINS.find((p) => p.id === 'openai-codex') ?? null,
+    plugin: null,
     color: '#10a37f',
   },
   {

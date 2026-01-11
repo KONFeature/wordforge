@@ -51,11 +51,11 @@ async fn get_installed_version(
 }
 
 #[tauri::command]
-async fn get_latest_version(
+async fn get_target_version(
     state: tauri::State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<String, String> {
     let state = state.lock().await;
-    state.get_latest_version().await.map_err(|e| e.to_string())
+    Ok(state.get_target_version())
 }
 
 #[tauri::command]
@@ -458,7 +458,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_status,
             get_installed_version,
-            get_latest_version,
+            get_target_version,
             download_opencode,
             start_opencode,
             stop_opencode,

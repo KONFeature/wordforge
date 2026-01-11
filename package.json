@@ -9,6 +9,7 @@
     "stop": "wp-env stop",
     "build": "./build.sh",
     "build:ui": "bun run --filter @wordforge/ui build",
+    "build:plugin": "bun run --filter @wordforge/opencode-plugin build && mkdir -p packages/php/assets/opencode-plugin && cp packages/opencode-plugin/dist/index.js packages/php/assets/opencode-plugin/gutenberg-bridge.js",
     "build:desktop": "bun run --filter @wordforge/desktop tauri:build",
     "dev": "bun run --filter @wordforge/ui start",
     "dev:desktop": "bun run --filter @wordforge/desktop tauri:dev",

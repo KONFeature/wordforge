@@ -11,7 +11,7 @@
     "lint:fix": "biome check --fix ."
   },
   "dependencies": {
-    "@opencode-ai/sdk": "^1.1.1",
+    "@opencode-ai/sdk": "1.1.13",
     "@tanstack/react-query": "^5.62.0",
     "@types/react-window": "^2.0.0",
     "@wordpress/api-fetch": "^7.0.0",

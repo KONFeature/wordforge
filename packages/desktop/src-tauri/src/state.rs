@@ -22,8 +22,8 @@ impl AppState {
         self.opencode.get_installed_version().await
     }
 
-    pub async fn get_latest_version(&self) -> Result<String, crate::opencode::Error> {
-        self.opencode.get_latest_version().await
+    pub fn get_target_version(&self) -> String {
+        self.opencode.get_target_version()
     }
 
     pub async fn download_opencode(&mut self, app: &AppHandle) -> Result<(), crate::opencode::Error> {

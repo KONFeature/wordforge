@@ -6,9 +6,10 @@ namespace WordForge\OpenCode;
 
 class BinaryManager {
 
+	private const TARGET_VERSION         = '1.1.13';
+
 	private const GITHUB_REPO            = 'sst/opencode';
 	private const GITHUB_API_LATEST      = 'https://api.github.com/repos/sst/opencode/releases/latest';
-	private const GITHUB_LATEST_DOWNLOAD = 'https://github.com/sst/opencode/releases/latest/download';
 	private const GITHUB_DOWNLOAD_BASE   = 'https://github.com/sst/opencode/releases/download';
 	private const CACHE_KEY              = 'wordforge_opencode_latest_release';
 	private const CACHE_EXPIRATION       = HOUR_IN_SECONDS;
@@ -266,38 +267,39 @@ class BinaryManager {
 	}
 
 	/**
-	 * @return array{available: bool, current: ?string, latest: string}|\WP_Error
+	 * Get the target version that will be installed.
 	 */
-	public static function check_for_update() {
-		$latest = self::fetch_latest_release();
+	public static function get_target_version(): string {
+		return self::TARGET_VERSION;
+	}
 
-		if ( is_wp_error( $latest ) ) {
-			return $latest;
-		}
-
+	/**
+	 * @return array{available: bool, current: ?string, target: string}
+	 */
+	public static function check_for_update(): array {
 		$current = self::get_installed_version();
+		$target  = self::TARGET_VERSION;
 
 		return array(
-			'available' => null === $current || version_compare( $current, $latest['version'], '<' ),
+			'available' => null === $current || version_compare( $current, $target, '<' ),
 			'current'   => $current,
-			'latest'    => $latest['version'],
+			'target'    => $target,
 		);
 	}
 
 	/**
-	 * Download and install the latest OpenCode binary.
-	 * Uses GitHub's redirect URL to avoid API rate limits.
+	 * Download and install the target OpenCode binary version.
 	 *
 	 * @param callable|null $progress_callback Receives (string $stage, string $message).
 	 * @return true|\WP_Error
 	 */
 	public static function download_latest( ?callable $progress_callback = null ) {
-		// Use the redirect URL pattern - no API call needed!
 		$archive_name = self::get_archive_name();
-		$download_url = self::GITHUB_LATEST_DOWNLOAD . '/' . $archive_name;
+		$version      = self::TARGET_VERSION;
+		$download_url = self::GITHUB_DOWNLOAD_BASE . "/v{$version}/{$archive_name}";
 
 		if ( $progress_callback ) {
-			$progress_callback( 'fetching', 'Fetching latest OpenCode...' );
+			$progress_callback( 'fetching', 'Fetching OpenCode v' . $version . '...' );
 		}
 
 		$dir = self::get_binary_dir();
@@ -343,13 +345,9 @@ class BinaryManager {
 			chmod( $binary_path, 0755 );
 		}
 
-		// Get version from the downloaded binary or fetch from API (cached).
-		$version = self::detect_installed_version( $binary_path );
-		if ( null === $version ) {
-			// Fallback: fetch from API (will be cached).
-			$release = self::fetch_latest_release();
-			$version = is_wp_error( $release ) ? 'unknown' : $release['version'];
-		}
+		// Get version from the downloaded binary or use target version.
+		$detected_version = self::detect_installed_version( $binary_path );
+		$version          = $detected_version ?? self::TARGET_VERSION;
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		file_put_contents( $dir . '/.version', $version );

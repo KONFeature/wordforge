@@ -11,9 +11,9 @@ use tokio::process::{Child, Command};
 use tokio::sync::watch;
 use tracing::{error, info};
 
-const GITHUB_REPO: &str = "sst/opencode";
-const GITHUB_API_URL: &str = "https://api.github.com";
-const GITHUB_LATEST_DOWNLOAD: &str = "https://github.com/sst/opencode/releases/latest/download";
+const TARGET_VERSION: &str = "1.1.13";
+
+const GITHUB_DOWNLOAD_BASE: &str = "https://github.com/sst/opencode/releases/download";
 const IDLE_TIMEOUT_SECS: u64 = 30 * 60;
 const IDLE_CHECK_INTERVAL_SECS: u64 = 60;
 
@@ -49,11 +49,6 @@ pub enum Status {
     Starting,
     Running,
     Error(String),
-}
-
-#[derive(Debug, Deserialize)]
-struct GitHubRelease {
-    tag_name: String,
 }
 
 #[derive(Deserialize)]
@@ -120,17 +115,16 @@ impl OpenCodeManager {
         tokio::fs::read_to_string(version_file).await.ok()
     }
 
-    pub async fn get_latest_version(&self) -> Result<String, Error> {
-        let release = self.fetch_latest_release().await?;
-        Ok(release.tag_name)
+    pub fn get_target_version(&self) -> String {
+        TARGET_VERSION.to_string()
     }
 
     pub async fn check_update_available(&self) -> Result<bool, Error> {
         let installed = self.get_installed_version().await;
-        let latest = self.get_latest_version().await?;
+        let target = TARGET_VERSION;
 
         match installed {
-            Some(v) => Ok(v.trim() != latest.trim()),
+            Some(v) => Ok(v.trim() != target),
             None => Ok(true),
         }
     }
@@ -140,7 +134,7 @@ impl OpenCodeManager {
         self.emit_progress(app, "Preparing download...", 0);
 
         let archive_name = get_archive_name()?;
-        let download_url = format!("{}/{}", GITHUB_LATEST_DOWNLOAD, archive_name);
+        let download_url = format!("{}/v{}/{}", GITHUB_DOWNLOAD_BASE, TARGET_VERSION, archive_name);
 
         self.emit_progress(app, "Creating directories...", 10);
         tokio::fs::create_dir_all(&self.install_dir).await?;
@@ -291,20 +285,6 @@ impl OpenCodeManager {
         let name = "opencode";
 
         self.install_dir.join(name)
-    }
-
-    async fn fetch_latest_release(&self) -> Result<GitHubRelease, Error> {
-        let url = format!("{}/repos/{}/releases/latest", GITHUB_API_URL, GITHUB_REPO);
-        let response = self
-            .client
-            .get(&url)
-            .header("User-Agent", "wordforge-desktop")
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<GitHubRelease>()
-            .await?;
-        Ok(response)
     }
 
     async fn download_file(

@@ -854,6 +854,11 @@ class OpenCodeController {
 			}
 		}
 
+		$plugin_path = WORDFORGE_PLUGIN_DIR . 'assets/opencode-plugin/gutenberg-bridge.js';
+		if ( file_exists( $plugin_path ) ) {
+			$zip->addFile( $plugin_path, '.opencode/plugin/gutenberg-bridge.js' );
+		}
+
 		$zip->close();
 
 		self::cleanup_temp_dir( $temp_dir );
