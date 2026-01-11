@@ -11,6 +11,33 @@ use tokio::process::{Child, Command};
 use tokio::sync::watch;
 use tracing::{error, info};
 
+/// Debug information about OpenCode installation and state
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DebugInfo {
+    pub install_dir: String,
+    pub binary_path: String,
+    pub binary_exists: bool,
+    pub state_dir: String,
+    pub config_dir: String,
+    pub log_dir: String,
+    pub port_file: String,
+    pub version_file: String,
+    pub installed_version: Option<String>,
+    pub target_version: String,
+    pub current_port: Option<u16>,
+    pub status: Status,
+    pub environment: Vec<(String, String)>,
+}
+
+/// A log file entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogFile {
+    pub name: String,
+    pub path: String,
+    pub size: u64,
+    pub modified: Option<u64>,
+}
+
 const TARGET_VERSION: &str = "1.1.13";
 
 const GITHUB_DOWNLOAD_BASE: &str = "https://github.com/sst/opencode/releases/download";
@@ -550,4 +577,105 @@ fn extract_zip(archive: &PathBuf, dest: &PathBuf) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+impl OpenCodeManager {
+    pub async fn get_debug_info(&self) -> DebugInfo {
+        let state_dir = self.isolated_state_dir();
+        let config_dir = self.install_dir.join("config");
+        let log_dir = state_dir.join("data").join("opencode").join("log");
+        
+        let environment = vec![
+            ("OPENCODE_CLIENT".to_string(), "wordforge-desktop".to_string()),
+            ("OPENCODE_AUTO_SHARE".to_string(), "false".to_string()),
+            ("OPENCODE_DISABLE_AUTOUPDATE".to_string(), "true".to_string()),
+            ("OPENCODE_DISABLE_LSP_DOWNLOAD".to_string(), "true".to_string()),
+            ("OPENCODE_FAKE_VCS".to_string(), "git".to_string()),
+            ("XDG_DATA_HOME".to_string(), state_dir.join("data").to_string_lossy().to_string()),
+            ("XDG_CONFIG_HOME".to_string(), state_dir.join("config").to_string_lossy().to_string()),
+            ("XDG_STATE_HOME".to_string(), state_dir.join("state").to_string_lossy().to_string()),
+            ("XDG_CACHE_HOME".to_string(), state_dir.join("cache").to_string_lossy().to_string()),
+            ("OPENCODE_CONFIG_DIR".to_string(), config_dir.to_string_lossy().to_string()),
+        ];
+
+        DebugInfo {
+            install_dir: self.install_dir.to_string_lossy().to_string(),
+            binary_path: self.binary_path().to_string_lossy().to_string(),
+            binary_exists: self.binary_path().exists(),
+            state_dir: state_dir.to_string_lossy().to_string(),
+            config_dir: config_dir.to_string_lossy().to_string(),
+            log_dir: log_dir.to_string_lossy().to_string(),
+            port_file: self.install_dir.join(".port").to_string_lossy().to_string(),
+            version_file: self.install_dir.join(".version").to_string_lossy().to_string(),
+            installed_version: self.get_installed_version().await,
+            target_version: TARGET_VERSION.to_string(),
+            current_port: self.port,
+            status: self.get_status().await,
+            environment,
+        }
+    }
+
+    pub fn list_log_files(&self) -> Vec<LogFile> {
+        let log_dir = self.isolated_state_dir()
+            .join("data")
+            .join("opencode")
+            .join("log");
+        
+        let mut files = Vec::new();
+        
+        if let Ok(entries) = std::fs::read_dir(&log_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map(|e| e == "log").unwrap_or(false) {
+                    if let Ok(metadata) = entry.metadata() {
+                        let modified = metadata.modified().ok()
+                            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                            .map(|d| d.as_secs());
+                        
+                        files.push(LogFile {
+                            name: entry.file_name().to_string_lossy().to_string(),
+                            path: path.to_string_lossy().to_string(),
+                            size: metadata.len(),
+                            modified,
+                        });
+                    }
+                }
+            }
+        }
+        
+        files.sort_by(|a, b| b.modified.cmp(&a.modified));
+        files
+    }
+
+    pub async fn read_log_file(&self, path: &str, tail_lines: Option<usize>) -> Result<String, Error> {
+        let log_dir = self.isolated_state_dir()
+            .join("data")
+            .join("opencode")
+            .join("log");
+        
+        let requested_path = PathBuf::from(path);
+        if !requested_path.starts_with(&log_dir) && !log_dir.join(path).exists() {
+            return Err(Error::Io(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Can only read files from the log directory",
+            )));
+        }
+        
+        let actual_path = if requested_path.is_absolute() {
+            requested_path
+        } else {
+            log_dir.join(path)
+        };
+        
+        let content = tokio::fs::read_to_string(&actual_path).await?;
+        
+        match tail_lines {
+            Some(n) => {
+                let lines: Vec<&str> = content.lines().collect();
+                let start = lines.len().saturating_sub(n);
+                Ok(lines[start..].join("\n"))
+            }
+            None => Ok(content),
+        }
+    }
 }

@@ -2,7 +2,7 @@ mod opencode;
 mod sites;
 mod state;
 
-use opencode::GlobalConfig;
+use opencode::{DebugInfo, GlobalConfig, LogFile};
 use sites::{ConfigSyncStatus, SiteManager, WordPressSite};
 use state::AppState;
 use std::collections::HashSet;
@@ -339,6 +339,32 @@ async fn refresh_site_config(
     Ok(new_hash)
 }
 
+#[tauri::command]
+async fn get_opencode_debug_info(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+) -> Result<DebugInfo, String> {
+    let state = state.lock().await;
+    Ok(state.get_debug_info().await)
+}
+
+#[tauri::command]
+async fn list_opencode_log_files(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+) -> Result<Vec<LogFile>, String> {
+    let state = state.lock().await;
+    Ok(state.list_log_files())
+}
+
+#[tauri::command]
+async fn read_opencode_log_file(
+    state: tauri::State<'_, Arc<Mutex<AppState>>>,
+    path: String,
+    tail_lines: Option<usize>,
+) -> Result<String, String> {
+    let state = state.lock().await;
+    state.read_log_file(&path, tail_lines).await.map_err(|e| e.to_string())
+}
+
 fn handle_deep_link(app: &tauri::AppHandle, processed: &Arc<std::sync::Mutex<ProcessedTokens>>, urls: Vec<url::Url>) {
     for url in urls {
         let url_str = url.to_string();
@@ -475,6 +501,9 @@ pub fn run() {
             open_site_folder,
             check_config_update,
             refresh_site_config,
+            get_opencode_debug_info,
+            list_opencode_log_files,
+            read_opencode_log_file,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

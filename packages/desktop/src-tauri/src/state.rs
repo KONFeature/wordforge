@@ -1,4 +1,4 @@
-use crate::opencode::{GlobalConfig, OpenCodeManager, Status};
+use crate::opencode::{DebugInfo, GlobalConfig, LogFile, OpenCodeManager, Status};
 use serde_json::Value;
 use std::path::PathBuf;
 use tauri::AppHandle;
@@ -56,5 +56,17 @@ impl AppState {
 
     pub async fn set_global_config(&self, config: Value) -> Result<(), crate::opencode::Error> {
         self.opencode.set_global_config(config).await
+    }
+
+    pub async fn get_debug_info(&self) -> DebugInfo {
+        self.opencode.get_debug_info().await
+    }
+
+    pub fn list_log_files(&self) -> Vec<LogFile> {
+        self.opencode.list_log_files()
+    }
+
+    pub async fn read_log_file(&self, path: &str, tail_lines: Option<usize>) -> Result<String, crate::opencode::Error> {
+        self.opencode.read_log_file(path, tail_lines).await
     }
 }

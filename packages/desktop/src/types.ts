@@ -198,8 +198,43 @@ export interface OpenCodePlugin {
   models: string;
   packageName: string;
   github: string;
-  /** Provider configuration to add when this plugin is enabled */
   providerConfig?: {
     [key: string]: ProviderConfig;
   };
+}
+
+export type OpenCodeStatus =
+  | 'not_installed'
+  | 'stopped'
+  | 'starting'
+  | 'running'
+  | { error: string };
+
+export interface OpenCodeDebugInfo {
+  install_dir: string;
+  binary_path: string;
+  binary_exists: boolean;
+  state_dir: string;
+  config_dir: string;
+  log_dir: string;
+  port_file: string;
+  version_file: string;
+  installed_version: string | null;
+  target_version: string;
+  current_port: number | null;
+  status: OpenCodeStatus;
+  environment: [string, string][];
+}
+
+export interface OpenCodeLogFile {
+  name: string;
+  path: string;
+  size: number;
+  modified: number | null;
+}
+
+export interface LogEntry {
+  timestamp: number;
+  level: 'stdout' | 'stderr';
+  message: string;
 }

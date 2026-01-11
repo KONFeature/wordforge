@@ -1,6 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import {
   BarChart2,
+  Bug,
   ChevronDown,
   Download,
   Home,
@@ -166,6 +167,13 @@ export function Sidebar({
 
       <div className={styles.footer}>
         <OpenCodeControls />
+        <Link
+          to="/debug"
+          className={`${styles.footerLink} ${location.pathname === '/debug' ? styles.footerLinkActive : ''}`}
+        >
+          <Bug size={18} />
+          <span>Debug</span>
+        </Link>
         <Link
           to="/settings"
           className={`${styles.footerLink} ${location.pathname === '/settings' ? styles.footerLinkActive : ''}`}
